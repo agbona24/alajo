@@ -8,3 +8,15 @@ export {
   CardContent,
   CardFooter,
 } from './Card';
+export { Badge } from './Badge';
+export { Modal, ModalFooter } from './Modal';
+export {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableHeader,
+  TableCell,
+} from './Table';
+export { Select } from './Select';
+export { EmptyState } from './EmptyState';
