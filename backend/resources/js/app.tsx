@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { useAppSelector } from './hooks/useAppSelector';
+import { ToastProvider } from './hooks/useToast';
 
 // Pages
 import { LandingPage } from './pages/landing/LandingPage';
@@ -120,7 +121,9 @@ function App() {
   return (
     <Provider store={store}>
       <BrowserRouter>
-        <AppRoutes />
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
       </BrowserRouter>
     </Provider>
   );
