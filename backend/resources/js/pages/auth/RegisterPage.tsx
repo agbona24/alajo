@@ -7,6 +7,7 @@ import { Button, Input, Card } from '../../components/common';
 import { useRegisterMutation } from '../../store/api/authApi';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { setCredentials } from '../../store/slices/authSlice';
+import { OnboardingModal } from '../../components/onboarding/OnboardingModal';
 import { PiggyBank, Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
 
 const registerSchema = z
@@ -32,6 +33,7 @@ export const RegisterPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const {
     register: registerField,
@@ -46,12 +48,18 @@ export const RegisterPage: React.FC = () => {
       setApiError('');
       const result = await register(data).unwrap();
       dispatch(setCredentials(result));
-      navigate('/dashboard');
+      // Show onboarding modal instead of navigating immediately
+      setShowOnboarding(true);
     } catch (error: any) {
       setApiError(
         error?.data?.message || 'Registration failed. Please try again.'
       );
     }
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    navigate('/dashboard');
   };
 
   return (
@@ -212,6 +220,12 @@ export const RegisterPage: React.FC = () => {
           </Link>
         </div>
       </div>
+
+      {/* Onboarding Modal */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onComplete={handleOnboardingComplete}
+      />
     </div>
   );
 };

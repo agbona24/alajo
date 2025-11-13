@@ -31,7 +31,13 @@ import { z } from 'zod';
 const createPlanSchema = z.object({
   name: z.string().min(3, 'Plan name must be at least 3 characters'),
   type: z.enum(['daily', 'weekly', 'monthly', 'goal_based']),
-  amount: z.string().min(1, 'Amount is required'),
+  amount: z
+    .string()
+    .min(1, 'Amount is required')
+    .refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 300;
+    }, 'Minimum contribution is ₦300'),
   frequency: z.enum(['daily', 'weekly', 'monthly']),
   targetAmount: z.string().optional(),
   startDate: z.string().min(1, 'Start date is required'),
@@ -304,8 +310,8 @@ export const SavingsPlansPage: React.FC = () => {
           <Input
             label="Amount Per Cycle"
             type="number"
-            placeholder="Enter amount"
-            helperText="How much do you want to save per cycle?"
+            placeholder="Enter amount (minimum ₦300)"
+            helperText="Minimum contribution is ₦300"
             error={errors.amount?.message}
             {...register('amount')}
           />
