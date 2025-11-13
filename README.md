@@ -196,7 +196,13 @@ php artisan migrate
 
 #### Step 7: Start Development Servers
 
-Open two terminal windows:
+**Option A: Use the dev script (Recommended)**
+```bash
+./dev.sh
+```
+This starts both Laravel and Vite automatically.
+
+**Option B: Manual start (Two terminals)**
 
 **Terminal 1 - Laravel Backend:**
 ```bash
@@ -212,10 +218,34 @@ npm run dev
 
 Open your browser and visit:
 
-- **Frontend (React SPA)**: http://localhost:8000
+- **Application**: http://localhost:8000 ⭐ **← Visit THIS URL**
 - **Backend API**: http://localhost:8000/api
 
-The Vite dev server will run on port 5173 in the background and hot-reload your React changes.
+⚠️ **IMPORTANT:**
+- Visit **http://localhost:8000** (Laravel serves React + API)
+- Do NOT visit http://localhost:5173 (that's just Vite's dev server)
+- Vite runs in the background for hot-reloading only
+
+### 🐛 Troubleshooting
+
+**Problem: I see "Vite + Laravel" default page**
+- **Solution**: You're visiting the wrong URL. Close http://localhost:5173 and visit http://localhost:8000
+
+**Problem: Blank page or errors**
+```bash
+# Clear cache
+php artisan optimize:clear
+
+# Restart servers
+# Terminal 1: php artisan serve
+# Terminal 2: npm run dev
+```
+
+**Problem: "Module not found" errors**
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
 
 ### 🎉 You're Ready!
 
