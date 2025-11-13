@@ -194,7 +194,18 @@ EXIT;
 php artisan migrate
 ```
 
-#### Step 7: Start Development Servers
+#### Step 7: Seed Database (Optional but Recommended)
+
+```bash
+php artisan db:seed
+```
+
+This creates:
+- Admin account: `admin@alajo.com` / `password`
+- Test user: `user@alajo.com` / `password`
+- 3 sample savings plans for the test user
+
+#### Step 8: Start Development Servers
 
 **Option A: Use the dev script (Recommended)**
 ```bash
@@ -214,7 +225,7 @@ php artisan serve
 npm run dev
 ```
 
-#### Step 8: Access the Application
+#### Step 9: Access the Application
 
 Open your browser and visit:
 
@@ -304,11 +315,11 @@ For detailed deployment instructions, see [CPANEL_DEPLOYMENT.md](./CPANEL_DEPLOY
 
 | Document | Description |
 |----------|-------------|
+| [SETUP_GUIDE.md](./SETUP_GUIDE.md) | Complete setup, installation, and deployment guide |
+| [API_TESTING.md](./API_TESTING.md) | API endpoints reference with cURL examples |
 | [PROJECT_PLAN.md](./PROJECT_PLAN.md) | Complete project plan with features, phases, and timeline |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | System architecture diagrams and technical design |
 | [TECH_STACK.md](./TECH_STACK.md) | Technology stack decisions and comparisons |
-| [CPANEL_DEPLOYMENT.md](./CPANEL_DEPLOYMENT.md) | Step-by-step cPanel deployment guide |
-| [QUICK_START.md](./QUICK_START.md) | Developer setup and getting started |
 
 ---
 
@@ -520,10 +531,13 @@ A native mobile app using React Native is planned for Phase 4, sharing the same 
 - [x] Frontend UI/UX design and implementation
 - [x] User dashboard and pages (Dashboard, Savings, Transactions, Withdrawals, Analytics, Profile, Settings)
 - [x] Admin dashboard and user management
-- [ ] Backend API development (In Progress)
-- [ ] Database migrations and models
-- [ ] Authentication system
+- [x] Backend API development
+- [x] Database migrations and models
+- [x] Authentication system (Laravel Sanctum)
+- [x] Frontend-Backend integration (RTK Query)
+- [x] Database seeders for test data
 - [ ] Payment integration (Paystack)
+- [ ] Notification system (Email/SMS)
 - [ ] Testing and quality assurance
 - [ ] Beta testing
 - [ ] Public launch
@@ -590,5 +604,5 @@ Ready to revolutionize savings in Africa? Let's make Alajo the #1 savings platfo
 ---
 
 **Last Updated**: 2025-11-13
-**Version**: 1.0.0-alpha
-**Status**: UI Development Complete - Backend API In Progress
+**Version**: 1.0.0-beta
+**Status**: Full-Stack Development Complete - Ready for Testing
