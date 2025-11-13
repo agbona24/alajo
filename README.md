@@ -40,18 +40,23 @@ Alajo (meaning "savings" in Yoruba) is a comprehensive digital savings platform 
 
 ### Frontend
 - **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **State Management**: Redux Toolkit
-- **UI Library**: Tailwind CSS + Shadcn/ui
+- **Build Tool**: Vite with Laravel Vite Plugin
+- **State Management**: Redux Toolkit + RTK Query
+- **Styling**: Tailwind CSS 4.0
+- **Animations**: Framer Motion
 - **Charts**: Recharts
-- **Deployment**: Static files (cPanel-friendly)
+- **Forms**: React Hook Form + Zod validation
+- **Routing**: React Router v6
+- **Icons**: Lucide React
+- **Deployment**: Static build (cPanel-friendly)
 
 ### Backend
-- **Framework**: Laravel 10 (PHP 8.2+)
-- **Authentication**: Laravel Sanctum
+- **Framework**: Laravel 12 (PHP 8.2+)
+- **Authentication**: Laravel Sanctum (SPA authentication)
 - **ORM**: Eloquent
 - **API**: RESTful with JSON responses
 - **Jobs**: Laravel Queue + Scheduler
+- **Validation**: Form Requests + Rules
 - **Deployment**: cPanel shared hosting or VPS
 
 ### Database
@@ -70,37 +75,47 @@ Alajo (meaning "savings" in Yoruba) is a comprehensive digital savings platform 
 
 ```
 alajo/
-├── frontend/              # React application
-│   ├── src/
-│   │   ├── components/   # Reusable UI components
-│   │   ├── pages/        # Page components
-│   │   ├── store/        # Redux store
-│   │   ├── hooks/        # Custom React hooks
-│   │   └── utils/        # Helper functions
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── backend/              # Laravel API
+├── backend/              # Laravel + React integrated application
 │   ├── app/
 │   │   ├── Http/
-│   │   │   ├── Controllers/
-│   │   │   └── Middleware/
-│   │   ├── Models/
-│   │   ├── Services/
-│   │   └── Jobs/
+│   │   │   ├── Controllers/   # API controllers
+│   │   │   └── Middleware/    # Custom middleware
+│   │   ├── Models/            # Eloquent models
+│   │   ├── Services/          # Business logic
+│   │   └── Jobs/              # Background jobs
 │   ├── database/
-│   │   └── migrations/
+│   │   └── migrations/        # Database migrations
 │   ├── routes/
-│   │   └── api.php
-│   └── composer.json
+│   │   ├── api.php           # API routes
+│   │   └── web.php           # Web routes (SPA)
+│   ├── resources/
+│   │   ├── js/               # React application
+│   │   │   ├── components/   # Reusable UI components
+│   │   │   ├── pages/        # Page components
+│   │   │   │   ├── admin/    # Admin dashboard pages
+│   │   │   │   ├── analytics/ # Analytics page
+│   │   │   │   ├── auth/     # Authentication pages
+│   │   │   │   ├── dashboard/ # User dashboard
+│   │   │   │   ├── landing/  # Landing page
+│   │   │   │   ├── profile/  # Profile page
+│   │   │   │   ├── savings/  # Savings pages
+│   │   │   │   ├── settings/ # Settings page
+│   │   │   │   ├── transactions/ # Transactions page
+│   │   │   │   └── withdrawal/ # Withdrawal pages
+│   │   │   ├── store/        # Redux store
+│   │   │   ├── hooks/        # Custom React hooks
+│   │   │   └── app.tsx       # React entry point
+│   │   ├── css/              # Tailwind CSS
+│   │   └── views/            # Blade templates
+│   ├── package.json          # Node dependencies
+│   ├── composer.json         # PHP dependencies
+│   └── vite.config.ts        # Vite configuration
 │
 ├── docs/                 # Documentation
-├── deployment/           # Deployment scripts
 ├── PROJECT_PLAN.md       # Detailed project plan
 ├── ARCHITECTURE.md       # System architecture
 ├── TECH_STACK.md         # Technology decisions
-├── CPANEL_DEPLOYMENT.md  # cPanel deployment guide
-└── QUICK_START.md        # Getting started guide
+└── CPANEL_DEPLOYMENT.md  # cPanel deployment guide
 ```
 
 ---
@@ -108,38 +123,150 @@ alajo/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 20+ and npm
-- PHP 8.2+ and Composer
-- MySQL 8.0+
-- Git
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** 20.x or higher ([Download](https://nodejs.org/))
+- **npm** or **yarn** (comes with Node.js)
+- **PHP** 8.2 or higher ([Download](https://www.php.net/downloads))
+- **Composer** 2.x ([Download](https://getcomposer.org/))
+- **MySQL** 8.0+ or **MariaDB** 10.6+ ([Download](https://www.mysql.com/downloads/))
+- **Git** ([Download](https://git-scm.com/))
 
 ### Installation
 
+#### Step 1: Clone the Repository
+
 ```bash
-# Clone the repository
 git clone https://github.com/yourusername/alajo.git
-cd alajo
+cd alajo/backend
+```
 
-# Setup Frontend
-cd frontend
-npm install
-cp .env.example .env
-npm run dev
+#### Step 2: Install PHP Dependencies
 
-# Setup Backend (in another terminal)
-cd backend
+```bash
 composer install
+```
+
+#### Step 3: Install Node Dependencies
+
+```bash
+npm install
+```
+
+#### Step 4: Environment Configuration
+
+```bash
+# Copy the environment file
 cp .env.example .env
+
+# Generate application key
 php artisan key:generate
+```
+
+#### Step 5: Configure Database
+
+Edit the `.env` file and set your database credentials:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=alajo
+DB_USERNAME=root
+DB_PASSWORD=your_password
+```
+
+Create the database:
+
+```bash
+# Login to MySQL
+mysql -u root -p
+
+# Create database
+CREATE DATABASE alajo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+EXIT;
+```
+
+#### Step 6: Run Database Migrations
+
+```bash
 php artisan migrate
+```
+
+#### Step 7: Start Development Servers
+
+Open two terminal windows:
+
+**Terminal 1 - Laravel Backend:**
+```bash
 php artisan serve
 ```
 
-Visit:
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8000/api
+**Terminal 2 - Vite Dev Server (React Frontend):**
+```bash
+npm run dev
+```
 
-For detailed setup instructions, see [QUICK_START.md](./QUICK_START.md)
+#### Step 8: Access the Application
+
+Open your browser and visit:
+
+- **Frontend (React SPA)**: http://localhost:8000
+- **Backend API**: http://localhost:8000/api
+
+The Vite dev server will run on port 5173 in the background and hot-reload your React changes.
+
+### 🎉 You're Ready!
+
+The application should now be running with:
+- ✅ Laravel backend serving the API
+- ✅ React frontend with hot module replacement
+- ✅ Database connected and migrated
+- ✅ Tailwind CSS configured
+- ✅ Redux store ready
+
+### 📝 Additional Configuration
+
+#### Sanctum Configuration (for API authentication)
+
+The app uses Laravel Sanctum for SPA authentication. Update your `.env`:
+
+```env
+SANCTUM_STATEFUL_DOMAINS=localhost:8000,localhost:5173
+SESSION_DOMAIN=localhost
+```
+
+#### Mail Configuration (for email notifications)
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=your_username
+MAIL_PASSWORD=your_password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@alajo.app
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+### 🏗️ Building for Production
+
+When you're ready to deploy:
+
+```bash
+# Build frontend assets
+npm run build
+
+# Optimize Laravel
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+The built assets will be placed in `public/build/` and automatically loaded by Laravel.
+
+For detailed deployment instructions, see [CPANEL_DEPLOYMENT.md](./CPANEL_DEPLOYMENT.md)
 
 ---
 
@@ -360,11 +487,18 @@ A native mobile app using React Native is planned for Phase 4, sharing the same 
 
 - [x] Project planning and architecture
 - [x] Technology stack selection
-- [ ] MVP development (In Progress)
+- [x] Frontend UI/UX design and implementation
+- [x] User dashboard and pages (Dashboard, Savings, Transactions, Withdrawals, Analytics, Profile, Settings)
+- [x] Admin dashboard and user management
+- [ ] Backend API development (In Progress)
+- [ ] Database migrations and models
+- [ ] Authentication system
+- [ ] Payment integration (Paystack)
+- [ ] Testing and quality assurance
 - [ ] Beta testing
 - [ ] Public launch
 - [ ] Group savings feature
-- [ ] Mobile app development
+- [ ] Mobile app development (PWA/APK)
 - [ ] International expansion
 
 ---
@@ -426,5 +560,5 @@ Ready to revolutionize savings in Africa? Let's make Alajo the #1 savings platfo
 ---
 
 **Last Updated**: 2025-11-13
-**Version**: 1.0.0
-**Status**: Planning Phase
+**Version**: 1.0.0-alpha
+**Status**: UI Development Complete - Backend API In Progress
