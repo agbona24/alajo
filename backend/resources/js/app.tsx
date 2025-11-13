@@ -12,6 +12,14 @@ import { LandingPage } from './pages/landing/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
+import { SavingsPlansPage } from './pages/savings/SavingsPlansPage';
+import { TransactionsPage } from './pages/transactions/TransactionsPage';
+import { WithdrawalsPage } from './pages/withdrawal/WithdrawalsPage';
+import { AnalyticsPage } from './pages/analytics/AnalyticsPage';
+import { ProfilePage } from './pages/profile/ProfilePage';
+import { SettingsPage } from './pages/settings/SettingsPage';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 // Protected Route Component
@@ -62,7 +70,7 @@ function AppRoutes() {
         }
       />
 
-      {/* Protected Routes */}
+      {/* Protected Routes - User Dashboard */}
       <Route
         path="/dashboard"
         element={
@@ -72,31 +80,25 @@ function AppRoutes() {
         }
       >
         <Route index element={<DashboardPage />} />
-        {/* Add more protected routes here */}
-        <Route
-          path="savings"
-          element={<div>Savings Plans Page (Coming Soon)</div>}
-        />
-        <Route
-          path="transactions"
-          element={<div>Transactions Page (Coming Soon)</div>}
-        />
-        <Route
-          path="withdrawals"
-          element={<div>Withdrawals Page (Coming Soon)</div>}
-        />
-        <Route
-          path="analytics"
-          element={<div>Analytics Page (Coming Soon)</div>}
-        />
-        <Route
-          path="profile"
-          element={<div>Profile Page (Coming Soon)</div>}
-        />
-        <Route
-          path="settings"
-          element={<div>Settings Page (Coming Soon)</div>}
-        />
+        <Route path="savings" element={<SavingsPlansPage />} />
+        <Route path="transactions" element={<TransactionsPage />} />
+        <Route path="withdrawals" element={<WithdrawalsPage />} />
+        <Route path="analytics" element={<AnalyticsPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="settings" element={<SettingsPage />} />
+      </Route>
+
+      {/* Protected Routes - Admin Dashboard */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboardPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
       </Route>
 
       {/* 404 Route */}
