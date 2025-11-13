@@ -10,26 +10,29 @@ export const authApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginCredentials>({
       query: (credentials) => ({
-        url: '/auth/login',
+        url: '/login',
         method: 'POST',
         body: credentials,
       }),
+      invalidatesTags: ['User'],
     }),
     register: builder.mutation<AuthResponse, RegisterCredentials>({
       query: (credentials) => ({
-        url: '/auth/register',
+        url: '/register',
         method: 'POST',
         body: credentials,
       }),
+      invalidatesTags: ['User'],
     }),
-    logout: builder.mutation<void, void>({
+    logout: builder.mutation<{ message: string }, void>({
       query: () => ({
-        url: '/auth/logout',
+        url: '/logout',
         method: 'POST',
       }),
+      invalidatesTags: ['User', 'SavingsPlan', 'Transaction', 'Withdrawal'],
     }),
     getCurrentUser: builder.query<User, void>({
-      query: () => '/auth/me',
+      query: () => '/user',
       providesTags: ['User'],
     }),
   }),
