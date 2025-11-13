@@ -11,6 +11,8 @@ import { useAppSelector } from './hooks/useAppSelector';
 import { LandingPage } from './pages/landing/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { SavingsPlansPage } from './pages/savings/SavingsPlansPage';
 import { TransactionsPage } from './pages/transactions/TransactionsPage';
@@ -20,6 +22,9 @@ import { ProfilePage } from './pages/profile/ProfilePage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AdminTransactionsPage } from './pages/admin/AdminTransactionsPage';
+import { AdminWithdrawalsPage } from './pages/admin/AdminWithdrawalsPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 // Protected Route Component
@@ -69,6 +74,8 @@ function AppRoutes() {
           </PublicOnlyRoute>
         }
       />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Protected Routes - User Dashboard */}
       <Route
@@ -99,10 +106,12 @@ function AppRoutes() {
       >
         <Route index element={<AdminDashboardPage />} />
         <Route path="users" element={<AdminUsersPage />} />
+        <Route path="transactions" element={<AdminTransactionsPage />} />
+        <Route path="withdrawals" element={<AdminWithdrawalsPage />} />
       </Route>
 
       {/* 404 Route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

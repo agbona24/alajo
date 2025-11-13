@@ -20,3 +20,5 @@ export {
 } from './Table';
 export { Select } from './Select';
 export { EmptyState } from './EmptyState';
+export { Toast, ToastContainer } from './Toast';
+export type { ToastType, ToastProps } from './Toast';
