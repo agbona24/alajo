@@ -26,6 +26,7 @@ import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 import { AdminTransactionsPage } from './pages/admin/AdminTransactionsPage';
 import { AdminWithdrawalsPage } from './pages/admin/AdminWithdrawalsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { TermsPage } from './pages/TermsPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 // Protected Route Component
@@ -77,6 +78,7 @@ function AppRoutes() {
       />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/terms" element={<TermsPage />} />
 
       {/* Protected Routes - User Dashboard */}
       <Route
