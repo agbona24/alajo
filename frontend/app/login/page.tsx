@@ -218,6 +218,20 @@ export default function LoginPage() {
               </button>
             </div>
 
+            {/* Dev Mode Bypass */}
+            <div className="mt-6">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="w-full py-3 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-xl font-bold hover:shadow-lg active:scale-98 transition-all flex items-center justify-center gap-2"
+              >
+                <span>🛠️</span>
+                <span>Skip Login (Dev Mode)</span>
+              </button>
+              <p className="text-xs text-center text-gray-500 mt-2">
+                For testing - bypasses authentication
+              </p>
+            </div>
+
             {/* Trust Badge */}
             <div className="mt-8 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl border border-green-200">
               <div className="flex items-center justify-center gap-3 text-sm">
