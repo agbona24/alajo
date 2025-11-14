@@ -25,6 +25,8 @@ class SavingsPlanSeeder extends Seeder
         SavingsPlan::create([
             'user_id' => $user->id,
             'name' => 'Emergency Fund',
+            'type' => 'goal_based',
+            'amount_per_cycle' => 500,
             'target_amount' => 50000,
             'current_balance' => 15000,
             'frequency' => 'daily',
@@ -38,6 +40,8 @@ class SavingsPlanSeeder extends Seeder
         SavingsPlan::create([
             'user_id' => $user->id,
             'name' => 'New Phone',
+            'type' => 'goal_based',
+            'amount_per_cycle' => 2000,
             'target_amount' => 100000,
             'current_balance' => 45000,
             'frequency' => 'weekly',
@@ -51,6 +55,8 @@ class SavingsPlanSeeder extends Seeder
         SavingsPlan::create([
             'user_id' => $user->id,
             'name' => 'Vacation Fund',
+            'type' => 'goal_based',
+            'amount_per_cycle' => 10000,
             'target_amount' => 200000,
             'current_balance' => 200000,
             'frequency' => 'monthly',
