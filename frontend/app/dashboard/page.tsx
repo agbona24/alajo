@@ -11,15 +11,25 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token')
-    const storedUser = localStorage.getItem('user')
+    // DEV MODE: Skip authentication for UI testing
+    // const token = localStorage.getItem('auth_token')
+    // const storedUser = localStorage.getItem('user')
 
-    if (!token || !storedUser) {
-      router.push('/login')
-      return
+    // if (!token || !storedUser) {
+    //   router.push('/login')
+    //   return
+    // }
+
+    // Mock user for UI testing
+    const mockUser = {
+      id: 1,
+      name: 'Chioma Adeyemi',
+      email: 'chioma.adeyemi@example.com',
+      phone: '+234 803 456 7890',
+      avatar: '👩🏾',
     }
 
-    setUser(JSON.parse(storedUser))
+    setUser(mockUser)
     setLoading(false)
   }, [router])
 
