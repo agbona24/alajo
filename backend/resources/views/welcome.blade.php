@@ -112,14 +112,11 @@
         </div>
 
         <div class="info-box">
-            <div class="info-title">📝 Next Steps</div>
+            <div class="info-title">🚀 Get Started</div>
             <div class="info-text">
-                Your fresh Laravel installation is ready!<br><br>
-                <strong>To get started:</strong><br>
-                • Define your routes in <code>routes/web.php</code> or <code>routes/api.php</code><br>
-                • Create controllers with <code>php artisan make:controller</code><br>
-                • Build your API endpoints<br>
-                • Connect your frontend separately
+                Ready to manage your savings?<br><br>
+                <a href="/login" style="display: inline-block; background: #667eea; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin-right: 10px; margin-top: 10px;">Login</a>
+                <a href="/register" style="display: inline-block; background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin-top: 10px;">Create Account</a>
             </div>
         </div>
 
