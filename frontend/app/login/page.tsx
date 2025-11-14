@@ -12,6 +12,7 @@ export default function LoginPage() {
   })
   const [errors, setErrors] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -28,17 +29,14 @@ export default function LoginPage() {
     try {
       const response = await authAPI.login(formData)
 
-      // Store token in localStorage
       if (response.token) {
         localStorage.setItem('auth_token', response.token)
         localStorage.setItem('user', JSON.stringify(response.user))
       }
 
-      // Redirect to dashboard
       router.push('/dashboard')
     } catch (error: any) {
       if (error.response?.data?.errors) {
-        // Laravel validation errors
         const errorMessages = Object.values(error.response.data.errors).flat() as string[]
         setErrors(errorMessages)
       } else if (error.response?.data?.message) {
@@ -52,90 +50,184 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-block">
-            <div className="text-5xl mb-2">💰</div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Alajo
-            </h1>
-            <p className="text-gray-600 mt-2">Welcome back!</p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Floating Coins */}
+        <div className="absolute top-20 left-10 text-6xl opacity-20 animate-float">💰</div>
+        <div className="absolute top-40 right-20 text-5xl opacity-15 animate-float-particle-delayed">🪙</div>
+        <div className="absolute bottom-32 left-20 text-7xl opacity-10 animate-float-particle-slow">💸</div>
+        <div className="absolute bottom-20 right-10 text-6xl opacity-20 animate-float">🎯</div>
+
+        {/* Decorative Circles */}
+        <div className="absolute -top-20 -left-20 w-64 h-64 bg-purple-200 rounded-full opacity-20 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-blue-200 rounded-full opacity-20 blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        {/* Header */}
+        <div className="p-6 pt-safe">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-gray-600 hover:text-primary transition active:scale-95"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="font-semibold">Back</span>
+          </button>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-white rounded-3xl shadow-xl p-8 animate-fade-in-up">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Login to Your Account</h2>
+        {/* Center Content */}
+        <div className="flex-1 flex items-center justify-center px-6 pb-12">
+          <div className="w-full max-w-md">
+            {/* Logo & Title */}
+            <div className="text-center mb-8 animate-fade-in-up">
+              {/* Animated Circle Badge */}
+              <div className="relative inline-block mb-6">
+                <div className="w-24 h-24 bg-gradient-to-br from-purple-600 to-blue-600 rounded-3xl rotate-12 shadow-2xl flex items-center justify-center animate-bounce-in">
+                  <span className="text-5xl -rotate-12">💰</span>
+                </div>
+                {/* Floating particles around badge */}
+                <div className="absolute -top-2 -right-2 w-4 h-4 bg-yellow-400 rounded-full animate-ping-slow"></div>
+                <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-green-400 rounded-full animate-ping-slower"></div>
+              </div>
 
-          {/* Error Messages */}
-          {errors.length > 0 && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-              <ul className="text-red-600 text-sm space-y-1">
-                {errors.map((error, index) => (
-                  <li key={index}>• {error}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                placeholder="you@example.com"
-              />
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                Welcome Back!
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Your savings journey continues ✨
+              </p>
             </div>
 
-            {/* Password Field */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                placeholder="••••••••"
-              />
+            {/* Error Messages */}
+            {errors.length > 0 && (
+              <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-scale-in">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">⚠️</span>
+                  <ul className="text-red-600 text-sm flex-1">
+                    {errors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+              {/* Email Field */}
+              <div className="relative">
+                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">
+                  📧 Email Address
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:outline-none transition text-base"
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div className="relative">
+                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">
+                  🔐 Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:outline-none transition pr-12 text-base"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl active:scale-90 transition"
+                  >
+                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Forgot Password */}
+              <div className="text-right">
+                <button
+                  type="button"
+                  className="text-sm font-semibold text-purple-600 hover:text-purple-700 active:scale-95 transition"
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-5 bg-gradient-to-r from-purple-600 via-purple-500 to-blue-500 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+              >
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Signing in...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Sign In</span>
+                      <span className="text-xl">→</span>
+                    </>
+                  )}
+                </span>
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4 my-8">
+              <div className="h-px bg-gray-300 flex-1"></div>
+              <span className="text-sm text-gray-500 font-medium">OR</span>
+              <div className="h-px bg-gray-300 flex-1"></div>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Logging in...' : 'Login'}
-            </button>
-          </form>
+            {/* Sign Up Link */}
+            <div className="text-center space-y-4">
+              <p className="text-gray-600">
+                Don't have an account yet?
+              </p>
+              <button
+                onClick={() => router.push('/register')}
+                className="w-full py-4 bg-white border-2 border-purple-300 text-purple-600 rounded-2xl font-bold hover:bg-purple-50 active:scale-98 transition-all shadow-sm"
+              >
+                Create Account 🚀
+              </button>
+            </div>
 
-          {/* Links */}
-          <div className="mt-6 text-center space-y-2">
-            <p className="text-gray-600">
-              Don't have an account?{' '}
-              <a href="/register" className="text-primary font-semibold hover:underline">
-                Sign up
-              </a>
-            </p>
-            <a href="/" className="block text-sm text-gray-500 hover:text-primary transition">
-              ← Back to Home
-            </a>
+            {/* Trust Badge */}
+            <div className="mt-8 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl border border-green-200">
+              <div className="flex items-center justify-center gap-3 text-sm">
+                <span className="text-2xl">🔒</span>
+                <div className="text-center">
+                  <div className="font-bold text-gray-900">Bank-Level Security</div>
+                  <div className="text-gray-600">Your data is encrypted & protected</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
