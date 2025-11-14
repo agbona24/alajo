@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { authAPI } from '@/lib/api'
+import MobileNav from '@/components/MobileNav'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -105,21 +106,29 @@ export default function DashboardPage() {
         <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
           <div className="grid md:grid-cols-4 gap-4">
-            <ActionButton icon="➕" label="New Savings Plan" onClick={() => alert('Coming soon!')} />
-            <ActionButton icon="💵" label="Make Contribution" onClick={() => alert('Coming soon!')} />
-            <ActionButton icon="📊" label="View Analytics" onClick={() => alert('Coming soon!')} />
-            <ActionButton icon="💳" label="Withdraw Funds" onClick={() => alert('Coming soon!')} />
+            <ActionButton icon="➕" label="New Savings Plan" onClick={() => router.push('/savings')} />
+            <ActionButton icon="💰" label="My Savings" onClick={() => router.push('/savings')} />
+            <ActionButton icon="📊" label="Transactions" onClick={() => router.push('/transactions')} />
+            <ActionButton icon="👤" label="Profile" onClick={() => router.push('/profile')} />
           </div>
         </div>
 
         {/* Savings Plans Section */}
         <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Your Savings Plans</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Your Savings Plans</h2>
+            <button
+              onClick={() => router.push('/savings')}
+              className="text-primary font-semibold hover:underline text-sm"
+            >
+              View All →
+            </button>
+          </div>
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📝</div>
-            <p className="text-gray-600 mb-4">You don't have any savings plans yet</p>
+            <p className="text-gray-600 mb-4">Start your savings journey today!</p>
             <button
-              onClick={() => alert('Coming soon!')}
+              onClick={() => router.push('/savings')}
               className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold hover:shadow-lg transition"
             >
               Create Your First Plan
@@ -128,7 +137,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="bg-white rounded-2xl shadow-sm p-6 mb-20 md:mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
           <div className="text-center py-8">
             <div className="text-4xl mb-2">📭</div>
@@ -136,6 +145,9 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   )
 }
