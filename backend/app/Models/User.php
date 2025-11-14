@@ -45,4 +45,52 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Relationships
+    public function savingsPlans()
+    {
+        return $this->hasMany(SavingsPlan::class);
+    }
+
+    public function contributions()
+    {
+        return $this->hasMany(Contribution::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    public function withdrawals()
+    {
+        return $this->hasMany(Withdrawal::class);
+    }
+
+    public function bankAccounts()
+    {
+        return $this->hasMany(BankAccount::class);
+    }
+
+    public function passbookRecords()
+    {
+        return $this->hasMany(PassbookRecord::class);
+    }
+
+    public function createdAjoGroups()
+    {
+        return $this->hasMany(AjoGroup::class, 'creator_id');
+    }
+
+    public function ajoGroups()
+    {
+        return $this->belongsToMany(AjoGroup::class, 'ajo_members')
+            ->withPivot(['position', 'status', 'is_admin', 'joined_at', 'payout_date', 'has_received_payout', 'total_contributed', 'current_cycle_paid'])
+            ->withTimestamps();
+    }
+
+    public function ajoMemberships()
+    {
+        return $this->hasMany(AjoMember::class);
+    }
 }
