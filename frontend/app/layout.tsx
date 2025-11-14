@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Alajo - Digital Savings Platform',
+  title: 'Hajo - Digital Savings Platform',
   description: 'Save smarter with digital ajo. Traditional savings meet modern technology.',
   manifest: '/manifest.json',
   themeColor: '#667eea',
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Alajo',
+    title: 'Hajo',
   },
 }
 

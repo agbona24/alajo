@@ -99,7 +99,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <span className="text-2xl">💰</span>
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Alajo
+                Hajo
               </span>
             </div>
             <div className="flex items-center gap-4">
