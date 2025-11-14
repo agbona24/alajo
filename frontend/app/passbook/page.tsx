@@ -12,7 +12,6 @@ const mockPassbookData = {
   memberSince: '2024-01-15',
   plan: {
     name: 'iPhone 15 Fund',
-    emoji: '=Ò',
     type: 'Daily Contribution',
   },
   currentMonth: 'November 2024',
@@ -58,10 +57,6 @@ export default function PassbookPage() {
         title="Digital Passbook"
         subtitle={data.accountHolder}
         showBack
-        action={{
-          icon: viewMode === 'cover' ? '=÷' : '=À',
-          onClick: () => setViewMode(viewMode === 'cover' ? 'monthly' : 'cover')
-        }}
       />
 
       <div className="px-4 pt-4 pb-24 max-w-4xl mx-auto">
@@ -75,7 +70,7 @@ export default function PassbookPage() {
 
               <div className="relative z-10">
                 <div className="text-center mb-8">
-                  <div className="text-6xl mb-4">=÷</div>
+                  <div className="text-6xl mb-4">üìñ</div>
                   <h1 className="text-4xl font-bold mb-2">HAJO</h1>
                   <p className="text-xl text-amber-100">Digital Savings Passbook</p>
                   <div className="mt-4 text-sm text-amber-200">Savings Saves Life</div>
@@ -105,7 +100,7 @@ export default function PassbookPage() {
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
                   <div className="text-amber-200 mb-2">Current Plan</div>
                   <div className="flex items-center gap-3">
-                    <span className="text-4xl">{data.plan.emoji}</span>
+                    <span className="text-4xl">üí∞</span>
                     <div>
                       <div className="font-bold text-xl">{data.plan.name}</div>
                       <div className="text-sm text-amber-200">{data.plan.type}</div>
@@ -119,40 +114,40 @@ export default function PassbookPage() {
               <h3 className="text-lg font-bold text-gray-900 mb-4">Services Available</h3>
               <div className="space-y-2 text-sm text-gray-700">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg"></span>
+                  <span className="text-lg">‚úì</span>
                   <span>Daily contribution tracking</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg"></span>
+                  <span className="text-lg">‚úì</span>
                   <span>Weekly contribution tracking</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg"></span>
+                  <span className="text-lg">‚úì</span>
                   <span>Monthly contribution tracking</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg"></span>
+                  <span className="text-lg">‚úì</span>
                   <span>Automated record keeping</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg"></span>
-                  <span>Digital signatures & verification</span>
+                  <span className="text-lg">‚úì</span>
+                  <span>Digital signatures and verification</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg"></span>
-                  <span>WhatsApp & SMS reminders</span>
+                  <span className="text-lg">‚úì</span>
+                  <span>WhatsApp and SMS reminders</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 mb-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span>=‹</span>
+                <span>üìú</span>
                 <span>Account Regulations</span>
               </h3>
               <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
                 <li>Report loss of passbook immediately</li>
-                <li>Minimum contribution: ¶300 per day</li>
+                <li>Minimum contribution: N300 per day</li>
                 <li>Verify passbook entries after each payment</li>
                 <li>Month ends on last day - no carryover</li>
                 <li>Working days: Monday to Saturday</li>
@@ -166,7 +161,7 @@ export default function PassbookPage() {
               onClick={() => setViewMode('monthly')}
               className="w-full py-5 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all"
             >
-              View Monthly Records í
+              View Monthly Records
             </button>
           </div>
         ) : (
@@ -229,9 +224,9 @@ export default function PassbookPage() {
                         </td>
                         <td className="py-3 px-2 text-center">
                           {contribution.verified ? (
-                            <span className="text-green-600 text-lg"></span>
+                            <span className="text-green-600 text-lg">‚úì</span>
                           ) : (
-                            <span className="text-red-600 text-lg"></span>
+                            <span className="text-red-600 text-lg">‚úó</span>
                           )}
                         </td>
                       </tr>
@@ -275,13 +270,13 @@ export default function PassbookPage() {
                 onClick={() => setViewMode('cover')}
                 className="py-4 border-2 border-gray-300 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 active:scale-95 transition"
               >
-                ê Cover Page
+                Cover Page
               </button>
               <button
                 onClick={() => alert('Print feature coming soon!')}
                 className="py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl active:scale-95 transition"
               >
-                =® Print
+                Print
               </button>
             </div>
           </div>
