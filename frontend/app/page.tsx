@@ -24,7 +24,7 @@ export default function Home() {
                 Login
               </a>
               <a
-                href="/register"
+                href="/onboarding"
                 className="px-6 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-full hover:shadow-lg transition font-semibold"
               >
                 Get Started
@@ -50,7 +50,7 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <a
-                  href="/register"
+                  href="/onboarding"
                   className="px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-full hover:shadow-xl transition font-semibold text-lg"
                 >
                   Start Saving Now
@@ -119,7 +119,7 @@ export default function Home() {
           <p className="text-xl mb-8 opacity-90">Join thousands of Nigerians achieving their financial goals with Alajo</p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
-              href="/register"
+              href="/onboarding"
               className="px-8 py-4 bg-white text-primary rounded-full hover:bg-gray-100 transition font-semibold text-lg"
             >
               Create Free Account
