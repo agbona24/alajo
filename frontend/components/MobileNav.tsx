@@ -7,42 +7,91 @@ export default function MobileNav() {
   const pathname = usePathname()
 
   const navItems = [
-    { icon: '🏠', label: 'Home', path: '/dashboard' },
-    { icon: '💰', label: 'Savings', path: '/savings' },
-    { icon: '📊', label: 'Transactions', path: '/transactions' },
-    { icon: '👤', label: 'Profile', path: '/profile' },
+    {
+      icon: '🏠',
+      activeIcon: '🏠',
+      label: 'Home',
+      path: '/dashboard',
+      color: 'from-blue-500 to-blue-600'
+    },
+    {
+      icon: '💰',
+      activeIcon: '💰',
+      label: 'Savings',
+      path: '/savings',
+      color: 'from-purple-500 to-purple-600'
+    },
+    {
+      icon: '📊',
+      activeIcon: '📊',
+      label: 'Activity',
+      path: '/transactions',
+      color: 'from-green-500 to-green-600'
+    },
+    {
+      icon: '👤',
+      activeIcon: '👤',
+      label: 'Profile',
+      path: '/profile',
+      color: 'from-pink-500 to-pink-600'
+    },
   ]
 
   const isActive = (path: string) => {
+    if (path === '/dashboard') {
+      return pathname === path
+    }
     return pathname === path || pathname?.startsWith(path + '/')
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50">
-      <div className="grid grid-cols-4 gap-1">
-        {navItems.map((item) => {
-          const active = isActive(item.path)
-          return (
-            <button
-              key={item.path}
-              onClick={() => router.push(item.path)}
-              className={`flex flex-col items-center justify-center py-3 transition ${
-                active
-                  ? 'text-primary'
-                  : 'text-gray-500 hover:text-primary'
-              }`}
-            >
-              <span className="text-2xl mb-1">{item.icon}</span>
-              <span className={`text-xs font-semibold ${active ? 'text-primary' : 'text-gray-600'}`}>
-                {item.label}
-              </span>
-              {active && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-primary rounded-b-full"></div>
-              )}
-            </button>
-          )
-        })}
-      </div>
-    </nav>
+    <>
+      {/* Safe area for iOS notch */}
+      <div className="h-20 md:hidden"></div>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50 safe-area-bottom">
+        <div className="grid grid-cols-4 h-16 relative">
+          {navItems.map((item) => {
+            const active = isActive(item.path)
+            return (
+              <button
+                key={item.path}
+                onClick={() => router.push(item.path)}
+                className={`relative flex flex-col items-center justify-center transition-all duration-200 ${
+                  active ? 'scale-110' : 'scale-100'
+                }`}
+                style={{
+                  transform: active ? 'translateY(-8px)' : 'translateY(0)',
+                }}
+              >
+                {/* Active indicator background */}
+                {active && (
+                  <div className={`absolute -top-1 w-14 h-14 bg-gradient-to-br ${item.color} rounded-2xl shadow-lg animate-fade-in-up flex items-center justify-center`}>
+                    <span className="text-2xl filter drop-shadow-sm">{item.activeIcon}</span>
+                  </div>
+                )}
+
+                {/* Inactive state */}
+                {!active && (
+                  <>
+                    <span className="text-2xl mb-1 opacity-60">{item.icon}</span>
+                    <span className="text-xs text-gray-500 font-medium">{item.label}</span>
+                  </>
+                )}
+
+                {/* Active label */}
+                {active && (
+                  <span className="text-xs text-white font-bold mt-16">{item.label}</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* iPhone safe area */}
+        <div className="h-safe-bottom bg-white"></div>
+      </nav>
+    </>
   )
 }

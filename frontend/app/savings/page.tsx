@@ -1,7 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import MobileNav from '@/components/MobileNav'
+import AppHeader from '@/components/AppHeader'
 
 interface SavingsPlan {
   id: number
@@ -16,7 +18,6 @@ interface SavingsPlan {
 export default function SavingsPage() {
   const router = useRouter()
   const [plans, setPlans] = useState<SavingsPlan[]>([
-    // Mock data for UI development
     {
       id: 1,
       name: 'Emergency Fund',
@@ -50,10 +51,26 @@ export default function SavingsPage() {
     }).format(amount)
   }
 
+  const totalSaved = plans.reduce((sum, plan) => sum + plan.current_amount, 0)
+  const totalTarget = plans.reduce((sum, plan) => sum + plan.target_amount, 0)
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Mobile Header */}
+      <div className="md:hidden">
+        <AppHeader
+          title="My Savings"
+          subtitle={`${plans.length} active plans`}
+          showBack
+          action={{
+            icon: '➕',
+            onClick: () => setShowCreateModal(true)
+          }}
+        />
+      </div>
+
+      {/* Desktop Header */}
+      <header className="hidden md:block bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <button
@@ -75,19 +92,43 @@ export default function SavingsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Summary Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 pb-24 md:pb-8">
+        {/* Summary Cards - Mobile Horizontal Scroll */}
+        <div className="md:hidden mb-6 -mx-4 px-4">
+          <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+            <MobileSummaryCard
+              icon="💰"
+              label="Total Saved"
+              value={formatCurrency(totalSaved)}
+              gradient="from-green-500 to-green-600"
+            />
+            <MobileSummaryCard
+              icon="🎯"
+              label="Total Target"
+              value={formatCurrency(totalTarget)}
+              gradient="from-blue-500 to-blue-600"
+            />
+            <MobileSummaryCard
+              icon="📊"
+              label="Active Plans"
+              value={plans.filter(p => p.status === 'active').length.toString()}
+              gradient="from-purple-500 to-purple-600"
+            />
+          </div>
+        </div>
+
+        {/* Desktop Summary Cards */}
+        <div className="hidden md:grid grid-cols-3 gap-6 mb-8">
           <SummaryCard
             icon="💰"
             title="Total Saved"
-            value={formatCurrency(plans.reduce((sum, plan) => sum + plan.current_amount, 0))}
+            value={formatCurrency(totalSaved)}
             subtitle="Across all plans"
           />
           <SummaryCard
             icon="🎯"
             title="Target Amount"
-            value={formatCurrency(plans.reduce((sum, plan) => sum + plan.target_amount, 0))}
+            value={formatCurrency(totalTarget)}
             subtitle="Total goals"
           />
           <SummaryCard
@@ -98,8 +139,28 @@ export default function SavingsPage() {
           />
         </div>
 
-        {/* Savings Plans Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Section Title - Mobile */}
+        <div className="md:hidden mb-4">
+          <h2 className="text-lg font-bold text-gray-900">Your Plans</h2>
+        </div>
+
+        {/* Savings Plans List - Mobile Cards */}
+        <div className="md:hidden space-y-3 mb-6">
+          {plans.map((plan, index) => (
+            <MobilePlanCard
+              key={plan.id}
+              plan={plan}
+              index={index}
+              onViewDetails={() => router.push(`/savings/${plan.id}`)}
+              onContribute={() => router.push(`/savings/${plan.id}/contribute`)}
+              formatCurrency={formatCurrency}
+              calculateProgress={calculateProgress}
+            />
+          ))}
+        </div>
+
+        {/* Desktop Savings Plans Grid */}
+        <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map((plan) => (
             <PlanCard
               key={plan.id}
@@ -122,6 +183,18 @@ export default function SavingsPage() {
         </div>
       </main>
 
+      {/* Mobile Navigation */}
+      <MobileNav />
+
+      {/* Floating Action Button - Mobile */}
+      <button
+        onClick={() => setShowCreateModal(true)}
+        className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-gradient-to-br from-primary to-secondary rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform z-40"
+        style={{ boxShadow: '0 10px 25px rgba(102, 126, 234, 0.4)' }}
+      >
+        ➕
+      </button>
+
       {/* Create Plan Modal */}
       {showCreateModal && (
         <CreatePlanModal
@@ -136,6 +209,107 @@ export default function SavingsPage() {
   )
 }
 
+// Mobile Summary Card
+function MobileSummaryCard({
+  icon,
+  label,
+  value,
+  gradient
+}: {
+  icon: string
+  label: string
+  value: string
+  gradient: string
+}) {
+  return (
+    <div className="min-w-[140px] bg-white rounded-2xl p-4 shadow-sm">
+      <div className={`w-10 h-10 bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center text-xl mb-3 shadow-sm`}>
+        {icon}
+      </div>
+      <p className="text-xl font-bold text-gray-900 mb-1">{value}</p>
+      <p className="text-xs text-gray-500">{label}</p>
+    </div>
+  )
+}
+
+// Mobile Plan Card
+function MobilePlanCard({
+  plan,
+  index,
+  onViewDetails,
+  onContribute,
+  formatCurrency,
+  calculateProgress,
+}: {
+  plan: SavingsPlan
+  index: number
+  onViewDetails: () => void
+  onContribute: () => void
+  formatCurrency: (amount: number) => string
+  calculateProgress: (current: number, target: number) => number
+}) {
+  const progress = calculateProgress(plan.current_amount, plan.target_amount)
+
+  const gradients = [
+    'from-purple-500 to-purple-600',
+    'from-blue-500 to-blue-600',
+    'from-green-500 to-green-600',
+    'from-pink-500 to-pink-600',
+  ]
+  const gradient = gradients[index % gradients.length]
+
+  return (
+    <div
+      className="bg-white rounded-2xl shadow-sm overflow-hidden animate-fade-in-up active:scale-98 transition-transform"
+      style={{ animationDelay: `${index * 100}ms` }}
+    >
+      {/* Header with gradient */}
+      <div className={`bg-gradient-to-br ${gradient} p-4 text-white relative overflow-hidden`}>
+        <div className="absolute top-0 right-0 opacity-20 text-6xl">💰</div>
+        <h3 className="text-lg font-bold mb-1 relative z-10">{plan.name}</h3>
+        <p className="text-sm opacity-90 relative z-10 capitalize">{plan.frequency} savings</p>
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        {/* Amount */}
+        <div className="mb-4">
+          <div className="flex justify-between items-baseline mb-2">
+            <span className="text-2xl font-bold text-gray-900">{formatCurrency(plan.current_amount)}</span>
+            <span className="text-sm text-gray-500">of {formatCurrency(plan.target_amount)}</span>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className={`absolute left-0 top-0 h-full bg-gradient-to-r ${gradient} rounded-full transition-all duration-500`}
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <div className="text-xs text-gray-600 text-right mt-1">{progress}% complete</div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={onContribute}
+            className={`flex-1 py-3 bg-gradient-to-r ${gradient} text-white rounded-xl font-semibold active:scale-95 transition-transform shadow-sm`}
+          >
+            Add Money
+          </button>
+          <button
+            onClick={onViewDetails}
+            className="px-4 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold active:scale-95 transition-transform"
+          >
+            View
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Desktop Components (unchanged from before)
 function SummaryCard({ icon, title, value, subtitle }: { icon: string; title: string; value: string; subtitle: string }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm p-6 animate-fade-in-up">
@@ -178,7 +352,6 @@ function PlanCard({
 
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition overflow-hidden animate-fade-in-up">
-      {/* Header */}
       <div className="bg-gradient-to-br from-primary to-secondary p-6 text-white">
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-xl font-bold">{plan.name}</h3>
@@ -190,7 +363,6 @@ function PlanCard({
         <div className="text-sm opacity-90">of {formatCurrency(plan.target_amount)}</div>
       </div>
 
-      {/* Progress Bar */}
       <div className="px-6 pt-4">
         <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
           <div
@@ -201,7 +373,6 @@ function PlanCard({
         <div className="text-sm text-gray-600 text-center font-semibold">{progress}% Complete</div>
       </div>
 
-      {/* Details */}
       <div className="px-6 py-4 space-y-3">
         <div className="flex items-center gap-2 text-gray-600">
           <span>{frequencyEmoji[plan.frequency]}</span>
@@ -213,7 +384,6 @@ function PlanCard({
         </div>
       </div>
 
-      {/* Actions */}
       <div className="px-6 pb-6 flex gap-3">
         <button
           onClick={onContribute}
@@ -248,7 +418,6 @@ function CreatePlanModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Create mock plan (will be replaced with API call)
     const newPlan: SavingsPlan = {
       id: Date.now(),
       name: formData.name,
@@ -263,20 +432,19 @@ function CreatePlanModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-3xl max-w-md w-full p-8 animate-fade-in-up">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 z-50 animate-fade-in-up">
+      <div className="bg-white rounded-t-3xl md:rounded-3xl max-w-md w-full p-6 md:p-8 animate-slide-in-up">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Create Savings Plan</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 active:scale-95 transition"
           >
-            ×
+            ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Plan Name */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Plan Name
@@ -291,7 +459,6 @@ function CreatePlanModal({
             />
           </div>
 
-          {/* Target Amount */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Target Amount (₦)
@@ -307,7 +474,6 @@ function CreatePlanModal({
             />
           </div>
 
-          {/* Frequency */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Contribution Frequency
@@ -323,10 +489,9 @@ function CreatePlanModal({
             </select>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold hover:shadow-lg transition"
+            className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold hover:shadow-lg active:scale-98 transition"
           >
             Create Plan
           </button>
