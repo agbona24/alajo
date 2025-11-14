@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import AppHeader from '@/components/AppHeader'
 
 const mockPlan = {
   id: 1,
@@ -64,20 +63,42 @@ export default function WithdrawPage() {
     setStep('success')
   }
 
+  const handleBack = () => {
+    if (step === 'amount') router.back()
+    else if (step === 'bank') setStep('amount')
+    else if (step === 'confirm') setStep('bank')
+  }
+
   const selectedBankAccount = bankAccounts.find(b => b.id === selectedBank)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
-      <AppHeader
-        title={step === 'success' ? 'Request Submitted' : 'Withdraw Money'}
-        subtitle={step !== 'success' ? plan.name : ''}
-        showBack={step !== 'success'}
-        onBack={() => {
-          if (step === 'amount') router.back()
-          else if (step === 'bank') setStep('amount')
-          else if (step === 'confirm') setStep('bank')
-        }}
-      />
+      {/* Custom Header */}
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
+        <div className="h-safe-top md:hidden"></div>
+        <div className="flex items-center justify-between px-4 h-14">
+          <div className="flex items-center gap-3">
+            {step !== 'success' && (
+              <button
+                onClick={handleBack}
+                className="w-9 h-9 rounded-full flex items-center justify-center transition active:scale-95 bg-gray-100 text-gray-700 active:bg-gray-200"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">
+                {step === 'success' ? 'Request Submitted' : 'Withdraw Money'}
+              </h1>
+              {step !== 'success' && plan.name && (
+                <p className="text-xs text-gray-500">{plan.name}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
 
       <div className="px-4 pt-4 pb-8 max-w-2xl mx-auto">
         {step !== 'success' && (
