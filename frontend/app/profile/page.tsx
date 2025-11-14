@@ -1,283 +1,357 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { authAPI } from '@/lib/api'
+import AppHeader from '@/components/AppHeader'
+import MobileNav from '@/components/MobileNav'
+
+const mockUser = {
+  name: 'Chioma Adeyemi',
+  email: 'chioma.adeyemi@example.com',
+  phone: '+234 803 456 7890',
+  avatar: '👩🏾',
+  memberSince: '2024-01-15',
+}
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(false)
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
+  const [user] = useState(mockUser)
+  const [notifications, setNotifications] = useState({
+    contributions: true,
+    withdrawals: true,
+    milestones: true,
+    groupActivity: false,
+    marketing: false,
   })
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    if (!storedUser) {
-      router.push('/login')
-      return
-    }
-
-    const userData = JSON.parse(storedUser)
-    setUser(userData)
-    setFormData({
-      name: userData.name || '',
-      email: userData.email || '',
-      phone: userData.phone || '',
-    })
-    setLoading(false)
-  }, [router])
-
-  const handleLogout = async () => {
-    if (confirm('Are you sure you want to logout?')) {
-      try {
-        await authAPI.logout()
-      } catch (error) {
-        console.error('Logout error:', error)
-      } finally {
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('user')
-        router.push('/login')
-      }
-    }
-  }
-
-  const handleSave = () => {
-    // TODO: Call API to update profile
-    const updatedUser = { ...user, ...formData }
-    localStorage.setItem('user', JSON.stringify(updatedUser))
-    setUser(updatedUser)
-    setEditing(false)
-    alert('Profile updated successfully!')
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-4">💰</div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
+  const handleLogout = () => {
+    router.push('/login')
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 md:pb-8">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-primary to-secondary text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="flex items-center gap-2 mb-4 opacity-90 hover:opacity-100 transition"
-          >
-            <span>←</span>
-            <span>Back to Dashboard</span>
-          </button>
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-4xl">
-              👤
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">{user?.name}</h1>
-              <p className="opacity-90">{user?.email}</p>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pb-safe">
+      <AppHeader
+        title="Profile"
+        subtitle="Manage your account"
+        showBack
+      />
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Profile Information */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Profile Information</h2>
-            {!editing ? (
-              <button
-                onClick={() => setEditing(true)}
-                className="px-4 py-2 border-2 border-primary text-primary rounded-lg hover:bg-purple-50 transition font-semibold"
-              >
-                Edit Profile
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setEditing(false)
-                    setFormData({
-                      name: user.name || '',
-                      email: user.email || '',
-                      phone: user.phone || '',
-                    })
-                  }}
-                  className="px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transition font-semibold"
-                >
-                  Save Changes
-                </button>
+      <div className="px-4 pt-4 pb-24 max-w-2xl mx-auto">
+        {/* Profile Card */}
+        <div className="bg-gradient-to-br from-primary to-secondary rounded-3xl p-6 text-white shadow-2xl mb-6 relative overflow-hidden animate-fade-in-up">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-4 right-4 w-32 h-32 border-2 border-white rounded-full"></div>
+            <div className="absolute bottom-4 left-4 w-24 h-24 border-2 border-white rounded-full"></div>
+          </div>
+
+          <div className="relative z-10">
+            <div className="flex items-start gap-4 mb-4">
+              {/* Avatar */}
+              <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-4xl border-2 border-white/30">
+                {user.avatar}
               </div>
-            )}
-          </div>
 
-          <div className="space-y-4">
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-              {editing ? (
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                />
-              ) : (
-                <p className="text-gray-900 text-lg">{user?.name}</p>
-              )}
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold mb-1">{user.name}</h2>
+                <p className="text-white/80 text-sm mb-1">{user.email}</p>
+                <p className="text-white/70 text-xs">
+                  Member since {new Date(user.memberSince).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+
+              <button
+                onClick={() => router.push('/profile/edit')}
+                className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center hover:bg-white/30 transition active:scale-95"
+              >
+                <span className="text-lg">✏️</span>
+              </button>
             </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-              {editing ? (
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                />
-              ) : (
-                <p className="text-gray-900 text-lg">{user?.email}</p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
-              {editing ? (
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+234 800 000 0000"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                />
-              ) : (
-                <p className="text-gray-900 text-lg">{user?.phone || 'Not set'}</p>
-              )}
+            {/* Quick Stats */}
+            <div className="grid grid-cols-3 gap-3 mt-6">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold mb-1">5</div>
+                <div className="text-xs text-white/80">Active Plans</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold mb-1">₦2.4M</div>
+                <div className="text-xs text-white/80">Total Saved</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold mb-1">48</div>
+                <div className="text-xs text-white/80">Contributions</div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Account Settings */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Account Settings</h2>
-          <div className="space-y-3">
+        {/* Account Section */}
+        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <h3 className="text-sm font-bold text-gray-500 uppercase mb-3 px-2">Account</h3>
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <SettingItem
-              icon="🔔"
-              title="Notifications"
-              description="Manage your notification preferences"
-              onClick={() => alert('Notifications settings coming soon!')}
-            />
-            <SettingItem
-              icon="🔒"
-              title="Security"
-              description="Change password and security settings"
-              onClick={() => alert('Security settings coming soon!')}
+              icon="👤"
+              label="Personal Information"
+              description="Name, email, phone number"
+              onClick={() => router.push('/profile/edit')}
             />
             <SettingItem
               icon="💳"
-              title="Payment Methods"
-              description="Manage your payment options"
-              onClick={() => alert('Payment methods coming soon!')}
+              label="Payment Methods"
+              description="Cards and bank accounts"
+              onClick={() => router.push('/profile/payment-methods')}
             />
             <SettingItem
-              icon="📄"
-              title="Documents"
-              description="View your statements and receipts"
-              onClick={() => alert('Documents coming soon!')}
+              icon="📍"
+              label="Address"
+              description="Manage your addresses"
+              onClick={() => router.push('/profile/address')}
+              showBorder={false}
             />
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Account Summary</h2>
-          <div className="grid md:grid-cols-3 gap-4">
-            <StatItem icon="📅" label="Member Since" value="November 2024" />
-            <StatItem icon="🎯" label="Active Plans" value="2 plans" />
-            <StatItem icon="💰" label="Total Saved" value="₦405,000" />
+        {/* Security Section */}
+        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <h3 className="text-sm font-bold text-gray-500 uppercase mb-3 px-2">Security</h3>
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <SettingItem
+              icon="🔐"
+              label="Change Password"
+              description="Update your password"
+              onClick={() => router.push('/profile/change-password')}
+            />
+            <SettingItem
+              icon="🛡️"
+              label="Two-Factor Authentication"
+              description="Add extra security"
+              onClick={() => router.push('/profile/2fa')}
+              badge="Recommended"
+            />
+            <SettingItem
+              icon="👆"
+              label="Biometric Login"
+              description="Use fingerprint or Face ID"
+              onClick={() => {}}
+              showBorder={false}
+              hasToggle
+              toggleValue={false}
+            />
           </div>
         </div>
 
-        {/* Danger Zone */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 border-2 border-red-200">
-          <h2 className="text-xl font-bold text-red-600 mb-4">Danger Zone</h2>
-          <div className="space-y-4">
-            <button
-              onClick={handleLogout}
-              className="w-full px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition font-semibold"
-            >
-              Logout
-            </button>
-            <button
-              onClick={() => {
-                if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-                  alert('Account deletion feature coming soon!')
-                }
-              }}
-              className="w-full px-6 py-3 border-2 border-red-500 text-red-500 rounded-xl hover:bg-red-50 transition font-semibold"
-            >
-              Delete Account
-            </button>
+        {/* Notifications Section */}
+        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <h3 className="text-sm font-bold text-gray-500 uppercase mb-3 px-2">Notifications</h3>
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <SettingItem
+              icon="💰"
+              label="Contribution Reminders"
+              description="Get notified when it's time to save"
+              hasToggle
+              toggleValue={notifications.contributions}
+              onToggle={() => setNotifications({...notifications, contributions: !notifications.contributions})}
+            />
+            <SettingItem
+              icon="💸"
+              label="Withdrawal Updates"
+              description="Status of your withdrawal requests"
+              hasToggle
+              toggleValue={notifications.withdrawals}
+              onToggle={() => setNotifications({...notifications, withdrawals: !notifications.withdrawals})}
+            />
+            <SettingItem
+              icon="🏆"
+              label="Milestone Achievements"
+              description="Celebrate when you hit goals"
+              hasToggle
+              toggleValue={notifications.milestones}
+              onToggle={() => setNotifications({...notifications, milestones: !notifications.milestones})}
+            />
+            <SettingItem
+              icon="👥"
+              label="Group Activity"
+              description="Updates from your ajo groups"
+              hasToggle
+              toggleValue={notifications.groupActivity}
+              onToggle={() => setNotifications({...notifications, groupActivity: !notifications.groupActivity})}
+            />
+            <SettingItem
+              icon="📢"
+              label="Marketing & Promotions"
+              description="Special offers and updates"
+              hasToggle
+              toggleValue={notifications.marketing}
+              onToggle={() => setNotifications({...notifications, marketing: !notifications.marketing})}
+              showBorder={false}
+            />
           </div>
         </div>
-      </main>
+
+        {/* Preferences Section */}
+        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <h3 className="text-sm font-bold text-gray-500 uppercase mb-3 px-2">Preferences</h3>
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <SettingItem
+              icon="🌍"
+              label="Language"
+              description="English (Nigeria)"
+              onClick={() => {}}
+              value="English"
+            />
+            <SettingItem
+              icon="💱"
+              label="Currency"
+              description="Nigerian Naira (₦)"
+              onClick={() => {}}
+              value="NGN"
+              showBorder={false}
+            />
+          </div>
+        </div>
+
+        {/* Help & Support Section */}
+        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <h3 className="text-sm font-bold text-gray-500 uppercase mb-3 px-2">Help & Support</h3>
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <SettingItem
+              icon="❓"
+              label="Help Center"
+              description="FAQs and guides"
+              onClick={() => {}}
+            />
+            <SettingItem
+              icon="💬"
+              label="Contact Support"
+              description="Chat with our team"
+              onClick={() => {}}
+            />
+            <SettingItem
+              icon="⭐"
+              label="Rate Hajo"
+              description="Share your feedback"
+              onClick={() => {}}
+              showBorder={false}
+            />
+          </div>
+        </div>
+
+        {/* Legal Section */}
+        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+          <h3 className="text-sm font-bold text-gray-500 uppercase mb-3 px-2">Legal</h3>
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <SettingItem
+              icon="📄"
+              label="Terms of Service"
+              description="Read our terms"
+              onClick={() => {}}
+            />
+            <SettingItem
+              icon="🔒"
+              label="Privacy Policy"
+              description="How we protect your data"
+              onClick={() => {}}
+            />
+            <SettingItem
+              icon="ℹ️"
+              label="About Hajo"
+              description="Version 1.0.0"
+              onClick={() => {}}
+              showBorder={false}
+            />
+          </div>
+        </div>
+
+        {/* Logout Button */}
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+          <button
+            onClick={handleLogout}
+            className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full font-bold shadow-lg hover:shadow-xl transition active:scale-95 flex items-center justify-center gap-2"
+          >
+            <span>🚪</span>
+            <span>Logout</span>
+          </button>
+        </div>
+
+        {/* App Version */}
+        <div className="text-center mt-6 text-sm text-gray-500">
+          Hajo v1.0.0 • Savings Saves Life 💚
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   )
 }
 
 function SettingItem({
   icon,
-  title,
+  label,
   description,
   onClick,
+  showBorder = true,
+  badge,
+  value,
+  hasToggle = false,
+  toggleValue = false,
+  onToggle,
 }: {
   icon: string
-  title: string
+  label: string
   description: string
-  onClick: () => void
+  onClick?: () => void
+  showBorder?: boolean
+  badge?: string
+  value?: string
+  hasToggle?: boolean
+  toggleValue?: boolean
+  onToggle?: () => void
 }) {
   return (
     <button
-      onClick={onClick}
-      className="w-full flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition text-left"
+      onClick={hasToggle ? onToggle : onClick}
+      className={`w-full p-4 flex items-center gap-4 hover:bg-gray-50 transition active:bg-gray-100 text-left ${
+        showBorder ? 'border-b border-gray-100' : ''
+      }`}
     >
-      <span className="text-3xl">{icon}</span>
-      <div className="flex-1">
-        <div className="font-semibold text-gray-900">{title}</div>
-        <div className="text-sm text-gray-600">{description}</div>
+      {/* Icon */}
+      <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
+        {icon}
       </div>
-      <span className="text-gray-400">→</span>
-    </button>
-  )
-}
 
-function StatItem({ icon, label, value }: { icon: string; label: string; value: string }) {
-  return (
-    <div className="text-center p-4">
-      <div className="text-3xl mb-2">{icon}</div>
-      <div className="text-sm text-gray-600 mb-1">{label}</div>
-      <div className="text-lg font-bold text-gray-900">{value}</div>
-    </div>
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="font-semibold text-gray-900">{label}</span>
+          {badge && (
+            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+              {badge}
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-gray-500 truncate">{description}</p>
+      </div>
+
+      {/* Right Element */}
+      {hasToggle ? (
+        <div
+          className={`w-12 h-7 rounded-full transition-colors ${
+            toggleValue ? 'bg-green-500' : 'bg-gray-300'
+          }`}
+        >
+          <div
+            className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200 mt-1 ${
+              toggleValue ? 'translate-x-6 ml-1' : 'translate-x-1'
+            }`}
+          />
+        </div>
+      ) : value ? (
+        <span className="text-sm font-medium text-gray-500">{value}</span>
+      ) : (
+        <span className="text-gray-400 text-xl">›</span>
+      )}
+    </button>
   )
 }
