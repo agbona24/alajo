@@ -2,30 +2,43 @@
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 overflow-hidden">
+      {/* Floating Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 text-6xl opacity-10 animate-float">💰</div>
+        <div className="absolute top-40 right-20 text-4xl opacity-10 animate-float" style={{ animationDelay: '1s' }}>🎯</div>
+        <div className="absolute bottom-40 left-20 text-5xl opacity-10 animate-float" style={{ animationDelay: '2s' }}>📊</div>
+        <div className="absolute bottom-20 right-40 text-3xl opacity-10 animate-float" style={{ animationDelay: '0.5s' }}>🔒</div>
+      </div>
+
       {/* Navbar */}
-      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md shadow-sm z-50 animate-slide-down">
+      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-xl shadow-sm z-50 animate-slide-down border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              💰 Hajo
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-md">
+                <span className="text-xl">💰</span>
+              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                Hajo
+              </span>
             </div>
-            <div className="flex items-center gap-4">
-              <a href="#features" className="hidden sm:block text-gray-700 hover:text-primary transition">
+            <div className="flex items-center gap-3 md:gap-4">
+              <a href="#features" className="hidden sm:block text-gray-700 hover:text-primary transition font-medium">
                 Features
               </a>
-              <a href="#how-it-works" className="hidden sm:block text-gray-700 hover:text-primary transition">
+              <a href="#how-it-works" className="hidden sm:block text-gray-700 hover:text-primary transition font-medium">
                 How It Works
               </a>
               <a
                 href="/login"
-                className="px-6 py-2 border-2 border-primary text-primary rounded-full hover:bg-primary hover:text-white transition font-semibold"
+                className="px-4 md:px-6 py-2 border-2 border-primary text-primary rounded-full hover:bg-primary hover:text-white transition font-semibold active:scale-95"
               >
                 Login
               </a>
               <a
                 href="/onboarding"
-                className="px-6 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-full hover:shadow-lg transition font-semibold"
+                className="px-4 md:px-6 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-full hover:shadow-lg transition font-semibold active:scale-95"
               >
                 Get Started
               </a>
@@ -35,41 +48,118 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 overflow-hidden">
+      <section className="pt-24 md:pt-32 pb-12 md:pb-20 px-4 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="animate-fade-in-left">
-              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-                Save Smarter with{' '}
-                <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Digital Ajo
+          <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+            {/* Left Content */}
+            <div className="animate-fade-in-left text-center lg:text-left">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full mb-6 border border-primary/20 backdrop-blur-sm">
+                <span className="text-lg">🎉</span>
+                <span className="text-sm font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Join 10,000+ Happy Savers
                 </span>
+              </div>
+
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+                Your Money,{' '}
+                <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Your Future
+                </span>
+                <br />
+                <span className="text-3xl md:text-4xl lg:text-5xl">Na Digital Ajo!</span>
               </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Traditional savings meet modern technology. Join thousands saving together through our trusted digital platform.
+
+              <p className="text-lg md:text-xl text-gray-600 mb-4 leading-relaxed">
+                <strong>Small small, e go plenty!</strong> Save with your people, track every kobo, and achieve your dreams.
               </p>
-              <div className="flex flex-wrap gap-4">
+
+              <p className="text-base md:text-lg text-gray-500 mb-8 leading-relaxed">
+                Whether na new phone, school fees, rent, or owambe money - Hajo get you covered.
+                Traditional ajo meet modern tech. No wahala, just results! 💪
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center lg:justify-start mb-8">
                 <a
                   href="/onboarding"
-                  className="px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-full hover:shadow-xl transition font-semibold text-lg"
+                  className="px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-full hover:shadow-xl transition font-semibold text-lg active:scale-95 flex items-center justify-center gap-2"
                 >
-                  Start Saving Now
+                  <span>Start Saving Now</span>
+                  <span>🚀</span>
                 </a>
                 <a
                   href="#how-it-works"
-                  className="px-8 py-4 border-2 border-primary text-primary rounded-full hover:bg-primary hover:text-white transition font-semibold text-lg"
+                  className="px-8 py-4 border-2 border-primary text-primary rounded-full hover:bg-primary hover:text-white transition font-semibold text-lg active:scale-95"
                 >
-                  Learn More
+                  See How It Works
                 </a>
               </div>
+
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <span className="text-green-500 text-xl">✓</span>
+                  <span className="font-medium">100% Secure</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-green-500 text-xl">✓</span>
+                  <span className="font-medium">₦500 to Start</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-green-500 text-xl">✓</span>
+                  <span className="font-medium">No Hidden Charges</span>
+                </div>
+              </div>
             </div>
-            <div className="animate-fade-in-right">
-              <div className="relative">
-                <div className="w-full max-w-md mx-auto h-96 bg-white rounded-3xl shadow-2xl p-5 animate-float">
-                  <div className="w-full h-full bg-gradient-to-br from-primary to-secondary rounded-2xl flex flex-col items-center justify-center text-white">
-                    <div className="text-6xl mb-4">💰</div>
-                    <div className="text-3xl font-bold">Hajo</div>
-                    <div className="text-sm mt-2 opacity-90">Your Savings Partner</div>
+
+            {/* Right Visual */}
+            <div className="animate-fade-in-right relative">
+              {/* Floating Coins Around Main Card */}
+              <div className="absolute -top-4 left-10 text-5xl animate-float z-10">💰</div>
+              <div className="absolute top-20 -right-4 text-4xl animate-float z-10" style={{ animationDelay: '0.5s' }}>💸</div>
+              <div className="absolute bottom-20 -left-4 text-4xl animate-float z-10" style={{ animationDelay: '1s' }}>🎯</div>
+
+              {/* Main Card */}
+              <div className="relative max-w-md mx-auto">
+                {/* Pulsing Ring */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl animate-ping-slow"></div>
+
+                {/* Card */}
+                <div className="relative w-full h-96 bg-white rounded-3xl shadow-2xl p-6 animate-float">
+                  {/* Card Header */}
+                  <div className="bg-gradient-to-br from-primary to-secondary rounded-2xl p-6 h-48 relative overflow-hidden">
+                    {/* Animated Pattern */}
+                    <div className="absolute inset-0 opacity-20">
+                      <div className="absolute top-2 left-2 w-20 h-20 border-2 border-white rounded-full"></div>
+                      <div className="absolute bottom-2 right-2 w-16 h-16 border-2 border-white rounded-full"></div>
+                      <div className="absolute top-1/2 left-1/2 w-12 h-12 border-2 border-white rounded-full animate-ping"></div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="relative text-white">
+                      <div className="text-sm opacity-90 mb-2">Total Savings</div>
+                      <div className="text-4xl font-bold mb-1">₦2,450,000</div>
+                      <div className="text-sm opacity-90">Across all plans</div>
+                    </div>
+
+                    <div className="absolute bottom-4 right-4 w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                      <span className="text-3xl">💰</span>
+                    </div>
+                  </div>
+
+                  {/* Quick Stats */}
+                  <div className="mt-6 grid grid-cols-2 gap-3">
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
+                      <div className="text-2xl mb-1">🎯</div>
+                      <div className="text-sm text-gray-600">Active Goals</div>
+                      <div className="text-2xl font-bold text-gray-900">8</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
+                      <div className="text-2xl mb-1">📈</div>
+                      <div className="text-sm text-gray-600">This Month</div>
+                      <div className="text-2xl font-bold text-gray-900">+15%</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -78,92 +168,306 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 bg-white">
+      {/* Stats Section */}
+      <section className="py-12 md:py-16 bg-gradient-to-r from-primary to-secondary text-white">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-16 animate-fade-in-up">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose Hajo?</h2>
-            <p className="text-xl text-gray-600">Everything you need to grow your savings, digitally</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            <div className="text-center animate-fade-in-up">
+              <div className="text-3xl md:text-5xl font-bold mb-2">10,000+</div>
+              <div className="text-sm md:text-base opacity-90">Active Savers</div>
+            </div>
+            <div className="text-center animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+              <div className="text-3xl md:text-5xl font-bold mb-2">₦2.5B+</div>
+              <div className="text-sm md:text-base opacity-90">Total Saved</div>
+            </div>
+            <div className="text-center animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="text-3xl md:text-5xl font-bold mb-2">500+</div>
+              <div className="text-sm md:text-base opacity-90">Active Groups</div>
+            </div>
+            <div className="text-center animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+              <div className="text-3xl md:text-5xl font-bold mb-2">99.9%</div>
+              <div className="text-sm md:text-base opacity-90">Success Rate</div>
+            </div>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FeatureCard icon="🎯" title="Goal-Based Savings" description="Set your financial goals and watch your savings grow automatically with our smart savings plans." />
-            <FeatureCard icon="📊" title="Track Progress" description="Monitor your savings journey with beautiful analytics and detailed contribution history." />
-            <FeatureCard icon="🔒" title="100% Secure" description="Bank-level encryption and security measures to keep your money and data safe." />
-            <FeatureCard icon="⚡" title="Instant Withdrawals" description="Access your savings anytime with quick withdrawal processing and approval." />
-            <FeatureCard icon="📱" title="Mobile First" description="Save on the go with our responsive platform that works on any device." />
-            <FeatureCard icon="👥" title="Community Savings" description="Join traditional ajo groups digitally and save together with friends and family." />
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-16 md:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12 md:mb-16 animate-fade-in-up">
+            <div className="inline-block px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full mb-4">
+              <span className="text-sm font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                WHY CHOOSE HAJO
+              </span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Everything Wey You Need</h2>
+            <p className="text-lg md:text-xl text-gray-600">Save smart, save together, achieve your dreams</p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            <FeatureCard
+              icon="🎯"
+              title="Goal-Based Savings"
+              description="Set your target - whether na iPhone 15, school fees, or owanbe money. We go help you reach am!"
+              gradient="from-purple-500 to-purple-600"
+            />
+            <FeatureCard
+              icon="📊"
+              title="Track Progress Real-Time"
+              description="See your money grow every day with beautiful charts. No hiding, everything transparent!"
+              gradient="from-blue-500 to-blue-600"
+            />
+            <FeatureCard
+              icon="🔒"
+              title="100% Secure & Safe"
+              description="Bank-level security wey go make your money dey safer than safe. E get 2FA, encryption, everything!"
+              gradient="from-green-500 to-green-600"
+            />
+            <FeatureCard
+              icon="⚡"
+              title="Instant Withdrawals"
+              description="Your money no dey lock forever. Whenever you need am, just request and collect. Simple!"
+              gradient="from-yellow-500 to-orange-600"
+            />
+            <FeatureCard
+              icon="📱"
+              title="Mobile-First Experience"
+              description="Use am for phone like native app. Smooth animations, easy navigation, no stress at all!"
+              gradient="from-pink-500 to-rose-600"
+            />
+            <FeatureCard
+              icon="👥"
+              title="Community Ajo Groups"
+              description="Join traditional ajo with your people. Save together, grow together, chop together! 🎉"
+              gradient="from-indigo-500 to-purple-600"
+            />
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20 bg-gradient-to-br from-purple-50 to-blue-50">
+      <section id="how-it-works" className="py-16 md:py-20 bg-gradient-to-br from-purple-50 via-blue-50 to-purple-50">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
-            <p className="text-xl text-gray-600">Start your savings journey in 4 simple steps</p>
+          <div className="text-center mb-12 md:mb-16">
+            <div className="inline-block px-4 py-2 bg-white rounded-full mb-4 shadow-sm">
+              <span className="text-sm font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                EASY AS 1-2-3-4
+              </span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">How E Dey Work</h2>
+            <p className="text-lg md:text-xl text-gray-600">Start your savings journey in 4 simple steps</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <Step number={1} title="Create Account" description="Sign up in seconds with just your email and password" />
-            <Step number={2} title="Set Your Goal" description="Create savings plans with target amounts and frequencies" />
-            <Step number={3} title="Start Saving" description="Make contributions daily, weekly, or monthly" />
-            <Step number={4} title="Reach Your Goal" description="Withdraw anytime or let your savings grow" />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+            <Step
+              number={1}
+              title="Create Account"
+              description="Just your email and password. No long story, no wahala. 2 minutes max!"
+              gradient="from-purple-500 to-purple-600"
+            />
+            <Step
+              number={2}
+              title="Set Your Goal"
+              description="Wetin you wan buy? How much? When you wan get am? We go help you plan!"
+              gradient="from-blue-500 to-blue-600"
+            />
+            <Step
+              number={3}
+              title="Start Saving"
+              description="Daily, weekly, monthly - na you sabi! Small small, the money go plenty!"
+              gradient="from-green-500 to-green-600"
+            />
+            <Step
+              number={4}
+              title="Reach Your Goal"
+              description="Collect your money or let am dey grow. The choice na yours! 💪"
+              gradient="from-orange-500 to-orange-600"
+            />
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-gradient-to-r from-primary to-secondary text-white">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4">Ready to Start Saving?</h2>
-          <p className="text-xl mb-8 opacity-90">Join thousands of Nigerians achieving their financial goals with Hajo</p>
-          <div className="flex flex-wrap justify-center gap-4">
+      {/* Testimonial Section */}
+      <section className="py-16 md:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Wetin People Dey Talk</h2>
+            <p className="text-lg md:text-xl text-gray-600">Real stories from real savers</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+            <TestimonialCard
+              quote="I buy iPhone 15 Pro Max after 6 months of saving! Hajo na the real deal! 🔥"
+              name="Chioma A."
+              role="Lagos, Nigeria"
+              avatar="👩🏾"
+            />
+            <TestimonialCard
+              quote="Our ajo group don save ₦5M together! E never sweet like this before 💯"
+              name="Emeka O."
+              role="Abuja, Nigeria"
+              avatar="👨🏿"
+            />
+            <TestimonialCard
+              quote="I pay my school fees without stress. Small small contributions add up! 🎓"
+              name="Aisha M."
+              role="Kano, Nigeria"
+              avatar="👩🏾"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-16 md:py-20 bg-gradient-to-r from-primary via-secondary to-primary text-white relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-40 h-40 bg-white rounded-full animate-float"></div>
+          <div className="absolute bottom-10 right-10 w-60 h-60 bg-white rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-white rounded-full animate-float" style={{ animationDelay: '0.5s' }}></div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+          <div className="text-6xl mb-6 animate-bounce-in">💰</div>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Your Journey?</h2>
+          <p className="text-lg md:text-xl mb-8 opacity-90">
+            Join 10,000+ Nigerians wey don achieve their financial goals with Hajo.
+            <br className="hidden md:block" />
+            E go reach your turn! 🚀
+          </p>
+          <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
             <a
               href="/onboarding"
-              className="px-8 py-4 bg-white text-primary rounded-full hover:bg-gray-100 transition font-semibold text-lg"
+              className="px-8 py-4 bg-white text-primary rounded-full hover:bg-gray-100 transition font-semibold text-lg active:scale-95 shadow-xl"
             >
-              Create Free Account
+              Create Free Account Now
             </a>
             <a
               href="/login"
-              className="px-8 py-4 border-2 border-white text-white rounded-full hover:bg-white hover:text-primary transition font-semibold text-lg"
+              className="px-8 py-4 border-2 border-white text-white rounded-full hover:bg-white hover:text-primary transition font-semibold text-lg active:scale-95"
             >
               Login to Dashboard
             </a>
+          </div>
+
+          {/* Trust Badges */}
+          <div className="flex flex-wrap justify-center gap-6 mt-10 text-sm opacity-90">
+            <div className="flex items-center gap-2">
+              <span>🔒</span>
+              <span>Secure & Encrypted</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>⚡</span>
+              <span>Instant Setup</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>💯</span>
+              <span>No Hidden Fees</span>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="opacity-80">&copy; 2024 Hajo. Savings Saves Life. All rights reserved.</p>
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
+                  <span className="text-xl">💰</span>
+                </div>
+                <span className="text-xl font-bold">Hajo</span>
+              </div>
+              <p className="text-gray-400 text-sm">
+                Your trusted digital ajo platform. Save together, prosper together.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold mb-4">Product</h3>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="#features" className="hover:text-white transition">Features</a></li>
+                <li><a href="#how-it-works" className="hover:text-white transition">How It Works</a></li>
+                <li><a href="/onboarding" className="hover:text-white transition">Get Started</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-bold mb-4">Company</h3>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="#" className="hover:text-white transition">About Us</a></li>
+                <li><a href="#" className="hover:text-white transition">Contact</a></li>
+                <li><a href="#" className="hover:text-white transition">Support</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-bold mb-4">Legal</h3>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="#" className="hover:text-white transition">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white transition">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-white transition">Security</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
+            <p>&copy; 2024 Hajo. Savings Saves Life. All rights reserved. 💚</p>
+          </div>
         </div>
       </footer>
     </div>
   )
 }
 
-function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
+function FeatureCard({ icon, title, description, gradient }: {
+  icon: string
+  title: string
+  description: string
+  gradient: string
+}) {
   return (
-    <div className="p-8 bg-gray-50 rounded-2xl hover:shadow-xl transition duration-300 hover:-translate-y-2">
-      <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center text-3xl mb-4">
+    <div className="group p-6 md:p-8 bg-white rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+      <div className={`w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center text-2xl md:text-3xl mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 leading-relaxed">{description}</p>
+      <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">{title}</h3>
+      <p className="text-gray-600 leading-relaxed text-sm md:text-base">{description}</p>
     </div>
   )
 }
 
-function Step({ number, title, description }: { number: number; title: string; description: string }) {
+function Step({ number, title, description, gradient }: {
+  number: number
+  title: string
+  description: string
+  gradient: string
+}) {
   return (
-    <div className="text-center">
-      <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 shadow-lg">
+    <div className="text-center group">
+      <div className={`w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br ${gradient} text-white rounded-2xl flex items-center justify-center text-2xl md:text-3xl font-bold mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
         {number}
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
+      <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">{title}</h3>
+      <p className="text-gray-600 text-sm md:text-base leading-relaxed">{description}</p>
+    </div>
+  )
+}
+
+function TestimonialCard({ quote, name, role, avatar }: {
+  quote: string
+  name: string
+  role: string
+  avatar: string
+}) {
+  return (
+    <div className="p-6 md:p-8 bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+      <div className="text-4xl mb-4">{avatar}</div>
+      <p className="text-gray-700 mb-4 italic leading-relaxed">"{quote}"</p>
+      <div>
+        <div className="font-bold text-gray-900">{name}</div>
+        <div className="text-sm text-gray-500">{role}</div>
+      </div>
+      <div className="flex gap-1 mt-3">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span key={star} className="text-yellow-400">⭐</span>
+        ))}
+      </div>
     </div>
   )
 }
