@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 const onboardingSlides = [
   {
     id: 1,
-    title: "Welcome to Alajo",
+    title: "Welcome to Hajo",
     subtitle: "Save Together, Prosper Together",
     description: "Join the digital revolution of traditional Nigerian ajo savings",
     illustration: "🎯",
@@ -107,7 +107,7 @@ export default function OnboardingPage() {
         <div className="flex items-center gap-2">
           <span className="text-2xl">💰</span>
           <span className="font-bold text-lg bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Alajo
+            Hajo
           </span>
         </div>
         <div className="w-16"></div>

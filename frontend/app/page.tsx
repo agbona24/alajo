@@ -8,7 +8,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              💰 Alajo
+              💰 Hajo
             </div>
             <div className="flex items-center gap-4">
               <a href="#features" className="hidden sm:block text-gray-700 hover:text-primary transition">
@@ -68,7 +68,7 @@ export default function Home() {
                 <div className="w-full max-w-md mx-auto h-96 bg-white rounded-3xl shadow-2xl p-5 animate-float">
                   <div className="w-full h-full bg-gradient-to-br from-primary to-secondary rounded-2xl flex flex-col items-center justify-center text-white">
                     <div className="text-6xl mb-4">💰</div>
-                    <div className="text-3xl font-bold">Alajo</div>
+                    <div className="text-3xl font-bold">Hajo</div>
                     <div className="text-sm mt-2 opacity-90">Your Savings Partner</div>
                   </div>
                 </div>
@@ -82,7 +82,7 @@ export default function Home() {
       <section id="features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16 animate-fade-in-up">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose Alajo?</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose Hajo?</h2>
             <p className="text-xl text-gray-600">Everything you need to grow your savings, digitally</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -116,7 +116,7 @@ export default function Home() {
       <section className="py-20 bg-gradient-to-r from-primary to-secondary text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Start Saving?</h2>
-          <p className="text-xl mb-8 opacity-90">Join thousands of Nigerians achieving their financial goals with Alajo</p>
+          <p className="text-xl mb-8 opacity-90">Join thousands of Nigerians achieving their financial goals with Hajo</p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
               href="/onboarding"
@@ -137,7 +137,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="opacity-80">&copy; 2024 Alajo. Savings Saves Life. All rights reserved.</p>
+          <p className="opacity-80">&copy; 2024 Hajo. Savings Saves Life. All rights reserved.</p>
         </div>
       </footer>
     </div>

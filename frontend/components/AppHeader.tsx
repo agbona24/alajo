@@ -59,7 +59,7 @@ export default function AppHeader({
             <div className="flex items-center gap-2">
               <span className="text-2xl">💰</span>
               <span className={`text-lg font-bold ${gradient ? 'text-white' : 'bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent'}`}>
-                Alajo
+                Hajo
               </span>
             </div>
           )}
