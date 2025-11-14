@@ -6,6 +6,8 @@
   --primary: #667eea;
   --secondary: #764ba2;
   --accent: #10b981;
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
 }
 
 @layer utilities {
@@ -14,18 +16,187 @@
   }
 
   .animate-fade-in-up {
-    animation: fadeInUp 0.6s ease-out;
+    animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  /* Safe areas for iOS notch */
+  .h-safe-top {
+    height: var(--safe-area-top);
+  }
+
+  .h-safe-bottom {
+    height: var(--safe-area-bottom);
+  }
+
+  .pt-safe {
+    padding-top: var(--safe-area-top);
+  }
+
+  .pb-safe {
+    padding-bottom: var(--safe-area-bottom);
+  }
+
+  /* Touch feedback */
+  .touch-feedback {
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .touch-feedback:active {
+    transform: scale(0.96);
+    opacity: 0.8;
+  }
+
+  /* Card swipe */
+  .swipeable {
+    touch-action: pan-y;
+    user-select: none;
+  }
+
+  /* Smooth scrolling for mobile */
+  .smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 }
 
+/* Animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Hide scrollbar on mobile */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
@@ -35,4 +206,32 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Remove default input styling on mobile */
+input, textarea, button, select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Disable pull-to-refresh on Chrome mobile */
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  /* Prevent zoom on input focus */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  /* Improve touch targets */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
