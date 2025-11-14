@@ -8,37 +8,45 @@ const onboardingSlides = [
     id: 1,
     title: "Welcome to Hajo",
     subtitle: "Save Together, Prosper Together",
-    description: "Join the digital revolution of traditional Nigerian ajo savings",
+    quote: "\"Small drops of water make a mighty ocean\"",
+    description: "Your mama taught you the power of ajo. Now save the modern way - anytime, anywhere, with people you trust.",
     illustration: "🎯",
     gradient: "from-purple-600 via-purple-500 to-pink-500",
-    pattern: "dots"
+    pattern: "dots",
+    highlight: "Join 10,000+ savers"
   },
   {
     id: 2,
-    title: "Traditional Ajo",
-    subtitle: "Modernized",
-    description: "Experience the trust and community of ajo with the convenience of technology",
+    title: "Your Goals, Our Mission",
+    subtitle: "Dream Big, Save Small",
+    quote: "\"Every great achievement starts with a single naira\"",
+    description: "New phone? School fees? House rent? Wedding? No goal is too big when you save consistently. Start with as little as ₦500.",
     illustration: "🤝",
     gradient: "from-blue-600 via-blue-500 to-cyan-500",
-    pattern: "circles"
+    pattern: "circles",
+    highlight: "₦500 to start"
   },
   {
     id: 3,
-    title: "Save Smart",
-    subtitle: "Achieve Your Goals",
-    description: "Set targets, track progress, and watch your savings grow with ease",
+    title: "Track Every Kobo",
+    subtitle: "See Your Progress Daily",
+    quote: "\"Money wey you no see na im dey disappear\"",
+    description: "Watch your savings grow with beautiful charts. Get reminders. Celebrate milestones. Your money, always visible.",
     illustration: "💰",
     gradient: "from-green-600 via-green-500 to-emerald-500",
-    pattern: "waves"
+    pattern: "waves",
+    highlight: "Real-time tracking"
   },
   {
     id: 4,
-    title: "Secure & Trusted",
-    subtitle: "Your Money, Safe",
-    description: "Bank-level security protecting your savings every step of the way",
+    title: "Your Money is Safe",
+    subtitle: "Protected 24/7",
+    quote: "\"Trust na the foundation of every good ajo\"",
+    description: "Bank-level encryption, secure wallets, and instant withdrawals when you need them. Your hustle deserves protection.",
     illustration: "🔒",
     gradient: "from-orange-600 via-orange-500 to-amber-500",
-    pattern: "grid"
+    pattern: "grid",
+    highlight: "100% Secure"
   }
 ]
 
@@ -163,10 +171,24 @@ export default function OnboardingPage() {
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">
                   {slide.title}
                 </h1>
-                <h2 className={`text-2xl font-bold bg-gradient-to-r ${slide.gradient} bg-clip-text text-transparent mb-4`}>
+                <h2 className={`text-2xl font-bold bg-gradient-to-r ${slide.gradient} bg-clip-text text-transparent mb-3`}>
                   {slide.subtitle}
                 </h2>
-                <p className="text-gray-600 text-lg leading-relaxed">
+
+                {/* Quote */}
+                <p className="text-sm italic text-gray-500 mb-4 px-4">
+                  {slide.quote}
+                </p>
+
+                {/* Highlight Badge */}
+                <div className={`inline-flex items-center gap-1 px-4 py-2 bg-gradient-to-r ${slide.gradient} bg-opacity-10 rounded-full mb-4 backdrop-blur-sm border border-gray-200`}>
+                  <span className="text-lg">✨</span>
+                  <span className={`text-sm font-bold bg-gradient-to-r ${slide.gradient} bg-clip-text text-transparent`}>
+                    {slide.highlight}
+                  </span>
+                </div>
+
+                <p className="text-gray-600 text-base leading-relaxed px-2">
                   {slide.description}
                 </p>
               </div>
