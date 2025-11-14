@@ -37,7 +37,7 @@ export default function SavingsPage() {
       created_at: '2024-09-15',
     },
   ])
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  // Removed modal state - now using dedicated create page
 
   const calculateProgress = (current: number, target: number) => {
     return Math.min(Math.round((current / target) * 100), 100)
@@ -64,7 +64,7 @@ export default function SavingsPage() {
           showBack
           action={{
             icon: '➕',
-            onClick: () => setShowCreateModal(true)
+            onClick: () => router.push('/savings/create')
           }}
         />
       </div>
@@ -82,7 +82,7 @@ export default function SavingsPage() {
             </button>
             <h1 className="text-2xl font-bold text-gray-900">My Savings Plans</h1>
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => router.push('/savings/create')}
               className="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:shadow-lg transition font-semibold"
             >
               + New Plan
@@ -174,7 +174,7 @@ export default function SavingsPage() {
 
           {/* Add New Plan Card */}
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => router.push('/savings/create')}
             className="min-h-[300px] border-2 border-dashed border-gray-300 rounded-2xl hover:border-primary hover:bg-purple-50 transition flex flex-col items-center justify-center gap-4 text-gray-500 hover:text-primary"
           >
             <div className="text-5xl">➕</div>
@@ -188,23 +188,12 @@ export default function SavingsPage() {
 
       {/* Floating Action Button - Mobile */}
       <button
-        onClick={() => setShowCreateModal(true)}
+        onClick={() => router.push('/savings/create')}
         className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-gradient-to-br from-primary to-secondary rounded-full shadow-lg flex items-center justify-center text-white text-2xl active:scale-90 transition-transform z-40"
         style={{ boxShadow: '0 10px 25px rgba(102, 126, 234, 0.4)' }}
       >
         ➕
       </button>
-
-      {/* Create Plan Modal */}
-      {showCreateModal && (
-        <CreatePlanModal
-          onClose={() => setShowCreateModal(false)}
-          onSuccess={(newPlan) => {
-            setPlans([...plans, newPlan])
-            setShowCreateModal(false)
-          }}
-        />
-      )}
     </div>
   )
 }
@@ -402,101 +391,4 @@ function PlanCard({
   )
 }
 
-function CreatePlanModal({
-  onClose,
-  onSuccess,
-}: {
-  onClose: () => void
-  onSuccess: (plan: SavingsPlan) => void
-}) {
-  const [formData, setFormData] = useState({
-    name: '',
-    target_amount: '',
-    frequency: 'monthly',
-  })
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const newPlan: SavingsPlan = {
-      id: Date.now(),
-      name: formData.name,
-      target_amount: Number(formData.target_amount),
-      current_amount: 0,
-      frequency: formData.frequency as any,
-      status: 'active',
-      created_at: new Date().toISOString(),
-    }
-
-    onSuccess(newPlan)
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 z-50 animate-fade-in-up">
-      <div className="bg-white rounded-t-3xl md:rounded-3xl max-w-md w-full p-6 md:p-8 animate-slide-in-up">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Create Savings Plan</h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 active:scale-95 transition"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Plan Name
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              placeholder="e.g., Emergency Fund, New Car"
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Target Amount (₦)
-            </label>
-            <input
-              type="number"
-              value={formData.target_amount}
-              onChange={(e) => setFormData({ ...formData, target_amount: e.target.value })}
-              required
-              min="1000"
-              placeholder="500000"
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Contribution Frequency
-            </label>
-            <select
-              value={formData.frequency}
-              onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-            >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold hover:shadow-lg active:scale-98 transition"
-          >
-            Create Plan
-          </button>
-        </form>
-      </div>
-    </div>
-  )
-}
+// CreatePlanModal removed - now using dedicated /savings/create page
