@@ -1,6 +1,6 @@
-# Alajo Frontend - Next.js PWA
+# Hajo Frontend - Next.js PWA
 
-Modern, mobile-first Progressive Web App for Alajo savings platform.
+Modern, mobile-first Progressive Web App for Hajo savings platform.
 
 ## 🚀 Features
 
