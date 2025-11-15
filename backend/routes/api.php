@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\AjoGroupController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\BankAccountController;
+use App\Http\Controllers\Api\DailyPaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,4 +74,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ajo-groups/{id}/members', [AjoGroupController::class, 'getMembers']);
     Route::get('/ajo-groups/{id}/schedule', [AjoGroupController::class, 'getSchedule']);
     Route::post('/ajo-groups/{id}/contribute', [AjoGroupController::class, 'contribute']);
+
+    // Daily Payment Tracking
+    Route::prefix('ajo-groups/{groupId}/payments')->group(function () {
+        Route::get('/', [DailyPaymentController::class, 'index']);
+        Route::post('/mark', [DailyPaymentController::class, 'markPayment']);
+        Route::post('/bulk-mark', [DailyPaymentController::class, 'bulkMark']);
+        Route::get('/summary', [DailyPaymentController::class, 'summary']);
+        Route::get('/calendar', [DailyPaymentController::class, 'calendar']);
+    });
 });

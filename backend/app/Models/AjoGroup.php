@@ -66,4 +66,9 @@ class AjoGroup extends Model
     {
         return $this->hasMany(Transaction::class);
     }
+
+    public function dailyPayments()
+    {
+        return $this->hasMany(DailyPayment::class);
+    }
 }

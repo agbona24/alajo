@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [CollectorController::class, 'dashboard'])->name('dashboard');
         Route::get('/group/{groupId}/cashbook', [CollectorController::class, 'cashbook'])->name('cashbook');
         Route::post('/group/{groupId}/mark-payment', [CollectorController::class, 'markPayment'])->name('mark-payment');
+        Route::post('/group/{groupId}/bulk-mark-payments', [CollectorController::class, 'bulkMarkPayments'])->name('bulk-mark-payments');
         Route::post('/group/{groupId}/send-reminders', [CollectorController::class, 'sendReminders'])->name('send-reminders');
     });
 
