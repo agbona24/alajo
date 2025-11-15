@@ -99,4 +99,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(DailyPayment::class);
     }
+
+    public function ajoContributions()
+    {
+        return $this->hasMany(AjoContribution::class);
+    }
+
+    public function ajoPayouts()
+    {
+        return $this->hasMany(AjoPayout::class);
+    }
+
+    public function ajoActivities()
+    {
+        return $this->hasMany(AjoActivity::class);
+    }
 }

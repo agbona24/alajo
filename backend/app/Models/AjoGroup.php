@@ -71,4 +71,57 @@ class AjoGroup extends Model
     {
         return $this->hasMany(DailyPayment::class);
     }
+
+    public function ajoContributions()
+    {
+        return $this->hasMany(AjoContribution::class);
+    }
+
+    public function payouts()
+    {
+        return $this->hasMany(AjoPayout::class);
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(AjoActivity::class);
+    }
+
+    // Helper methods
+    public function isRecruiting()
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isActive()
+    {
+        return $this->status === 'active';
+    }
+
+    public function isCompleted()
+    {
+        return $this->status === 'completed';
+    }
+
+    public function isCancelled()
+    {
+        return $this->status === 'cancelled';
+    }
+
+    public function isFull()
+    {
+        return $this->current_members >= $this->group_size;
+    }
+
+    public function canStart()
+    {
+        return $this->current_members >= 3 && $this->current_members === $this->group_size;
+    }
+
+    public function generateJoinCode()
+    {
+        $this->code = strtoupper(substr(md5(uniqid(rand(), true)), 0, 6));
+        $this->save();
+        return $this->code;
+    }
 }
