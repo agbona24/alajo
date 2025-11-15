@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('savings_plan_id')->constrained()->onDelete('cascade');
-            $table->foreignId('bank_account_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('bank_account_id');
             $table->decimal('amount', 15, 2);
             $table->string('reference')->unique();
             $table->enum('status', ['pending', 'approved', 'processing', 'completed', 'rejected'])->default('pending');

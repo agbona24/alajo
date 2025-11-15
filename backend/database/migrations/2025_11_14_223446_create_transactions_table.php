@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('savings_plan_id')->nullable()->constrained()->onDelete('cascade');
-            $table->foreignId('ajo_group_id')->nullable()->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('savings_plan_id')->nullable();
+            $table->unsignedBigInteger('ajo_group_id')->nullable();
             $table->string('reference')->unique();
             $table->enum('type', ['contribution', 'withdrawal', 'interest', 'refund'])->default('contribution');
             $table->decimal('amount', 15, 2);
