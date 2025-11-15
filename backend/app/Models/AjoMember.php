@@ -41,4 +41,40 @@ class AjoMember extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function contributions()
+    {
+        return $this->hasMany(AjoContribution::class);
+    }
+
+    public function payouts()
+    {
+        return $this->hasMany(AjoPayout::class);
+    }
+
+    // Helper methods
+    public function isActive()
+    {
+        return $this->status === 'active';
+    }
+
+    public function isPending()
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isRemoved()
+    {
+        return $this->status === 'removed';
+    }
+
+    public function hasReceivedPayout()
+    {
+        return $this->has_received_payout;
+    }
+
+    public function isOrganizer()
+    {
+        return $this->is_admin;
+    }
 }
