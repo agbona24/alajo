@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('savings_plan_id')->constrained()->onDelete('cascade');
-            $table->foreignId('ajo_group_id')->nullable()->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('ajo_group_id')->nullable();
             $table->decimal('amount', 15, 2);
             $table->enum('payment_method', ['card', 'bank_transfer', 'wallet', 'cash'])->default('card');
             $table->string('reference')->unique();
