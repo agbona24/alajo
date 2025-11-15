@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
+import { savingsAPI } from '@/lib/api'
+import useAPI from '@/lib/hooks/useAPI'
+import { toast } from '@/lib/utils/toast'
 
 const planEmojis = ['🎯', '💰', '🏠', '🚗', '📱', '💍', '🎓', '✈️', '🏥', '👶', '🎉', '💼', '🏍️', '⚽', '🎸', '📚']
 
@@ -41,14 +44,27 @@ export default function CreateSavingsPlan() {
     planType: 'personal',
     description: '',
   })
+  const { loading, execute } = useAPI()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: API call to create savings plan
-    console.log('Creating plan:', formData)
 
-    // Show success and redirect
-    router.push('/savings')
+    try {
+      await execute(() => savingsAPI.createPlan({
+        name: formData.name,
+        emoji: formData.emoji,
+        target_amount: parseFloat(formData.targetAmount),
+        frequency: formData.frequency,
+        duration: parseInt(formData.duration),
+        plan_type: formData.planType,
+        description: formData.description,
+      }))
+
+      toast.success('Savings plan created successfully! 🎉')
+      router.push('/savings')
+    } catch (error) {
+      toast.error('Failed to create savings plan. Please try again.')
+    }
   }
 
   const updateFormData = (field: string, value: string) => {
@@ -387,10 +403,20 @@ export default function CreateSavingsPlan() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition active:scale-95 flex items-center justify-center gap-2"
+                  disabled={loading}
+                  className="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>Create Plan</span>
-                  <span>🚀</span>
+                  {loading ? (
+                    <>
+                      <span>Creating...</span>
+                      <span className="animate-spin">⏳</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Plan</span>
+                      <span>🚀</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
