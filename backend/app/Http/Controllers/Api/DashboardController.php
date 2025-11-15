@@ -14,12 +14,12 @@ class DashboardController extends Controller
 
         // Get savings summary
         $savingsSummary = $user->savingsPlans()
-            ->selectRaw('
+            ->selectRaw("
                 COUNT(*) as total_plans,
-                SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_plans,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_plans,
                 SUM(current_amount) as total_savings,
                 SUM(target_amount) as total_target
-            ')
+            ")
             ->first();
 
         // Get total withdrawn
@@ -46,11 +46,11 @@ class DashboardController extends Controller
         $ajoSummary = DB::table('ajo_members')
             ->join('ajo_groups', 'ajo_members.ajo_group_id', '=', 'ajo_groups.id')
             ->where('ajo_members.user_id', $user->id)
-            ->selectRaw('
+            ->selectRaw("
                 COUNT(*) as total_groups,
-                SUM(CASE WHEN ajo_groups.status = "active" THEN 1 ELSE 0 END) as active_groups,
+                SUM(CASE WHEN ajo_groups.status = 'active' THEN 1 ELSE 0 END) as active_groups,
                 SUM(ajo_members.total_contributed) as total_contributed
-            ')
+            ")
             ->first();
 
         return response()->json([
@@ -80,12 +80,12 @@ class DashboardController extends Controller
         $monthlyTrends = $user->contributions()
             ->where('status', 'completed')
             ->where('created_at', '>=', now()->subMonths(6))
-            ->selectRaw('
-                MONTH(created_at) as month,
-                YEAR(created_at) as year,
+            ->selectRaw("
+                EXTRACT(MONTH FROM created_at) as month,
+                EXTRACT(YEAR FROM created_at) as year,
                 SUM(amount) as total_amount,
                 COUNT(*) as count
-            ')
+            ")
             ->groupBy('year', 'month')
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
