@@ -8,6 +8,9 @@ use App\Http\Controllers\Api\ContributionController;
 use App\Http\Controllers\Api\WithdrawalController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\AjoGroupController;
+use App\Http\Controllers\Api\AjoContributionController;
+use App\Http\Controllers\Api\AjoPayoutController;
+use App\Http\Controllers\Api\AjoActivityController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\BankAccountController;
@@ -83,4 +86,24 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/summary', [DailyPaymentController::class, 'summary']);
         Route::get('/calendar', [DailyPaymentController::class, 'calendar']);
     });
+
+    // Ajo Contributions
+    Route::prefix('ajo-groups/{groupId}/contributions')->group(function () {
+        Route::post('/', [AjoContributionController::class, 'store']);
+        Route::get('/', [AjoContributionController::class, 'index']);
+        Route::get('/my-contributions', [AjoContributionController::class, 'myContributions']);
+        Route::get('/statistics', [AjoContributionController::class, 'statistics']);
+    });
+
+    // Ajo Payouts
+    Route::prefix('ajo-groups/{groupId}/payouts')->group(function () {
+        Route::post('/', [AjoPayoutController::class, 'store']);
+        Route::get('/', [AjoPayoutController::class, 'index']);
+        Route::post('/{payoutId}/complete', [AjoPayoutController::class, 'complete']);
+        Route::get('/schedule', [AjoPayoutController::class, 'schedule']);
+        Route::get('/my-payout', [AjoPayoutController::class, 'myPayout']);
+    });
+
+    // Ajo Activities
+    Route::get('/ajo-groups/{groupId}/activities', [AjoActivityController::class, 'index']);
 });
