@@ -94,4 +94,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(AjoMember::class);
     }
+
+    public function dailyPayments()
+    {
+        return $this->hasMany(DailyPayment::class);
+    }
 }
