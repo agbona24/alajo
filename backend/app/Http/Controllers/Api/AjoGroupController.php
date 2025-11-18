@@ -301,4 +301,143 @@ class AjoGroupController extends Controller
             return response()->json(['message' => 'Contribution failed', 'error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Delete an Ajo group (only creator or admin can delete)
+     */
+    public function destroy($id)
+    {
+        $group = AjoGroup::findOrFail($id);
+
+        // Check if user is the creator
+        if ($group->creator_id !== Auth::id()) {
+            return response()->json(['message' => 'Only the group creator can delete the group'], 403);
+        }
+
+        // Check if group can be deleted (no active contributions)
+        if ($group->status === 'active' && $group->contributions()->count() > 0) {
+            return response()->json([
+                'message' => 'Cannot delete an active group with contributions. Please complete or cancel the group first.'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Delete all member relationships
+            $group->members()->detach();
+
+            // Delete the group
+            $group->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Group deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to delete group', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Leave an Ajo group
+     */
+    public function leave($id)
+    {
+        $group = AjoGroup::findOrFail($id);
+
+        // Check if user is a member
+        $member = $group->ajoMembers()->where('user_id', Auth::id())->first();
+        if (!$member) {
+            return response()->json(['message' => 'You are not a member of this group'], 400);
+        }
+
+        // Creator cannot leave their own group
+        if ($group->creator_id === Auth::id()) {
+            return response()->json([
+                'message' => 'Group creator cannot leave. Please delete the group or transfer ownership.'
+            ], 400);
+        }
+
+        // Cannot leave if group is active and member has received payout
+        if ($group->status === 'active' && $member->has_received_payout) {
+            return response()->json([
+                'message' => 'Cannot leave after receiving payout. Please wait for group to complete.'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Remove member
+            $group->members()->detach(Auth::id());
+
+            // Decrement current members if member was active
+            if ($member->status === 'active') {
+                $group->decrement('current_members');
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Successfully left the group'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to leave group', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Remove a member from the group (admin only)
+     */
+    public function removeMember($groupId, $userId)
+    {
+        $group = AjoGroup::findOrFail($groupId);
+
+        // Check if current user is admin
+        $admin = $group->ajoMembers()->where('user_id', Auth::id())->first();
+        if (!$admin || !$admin->is_admin) {
+            return response()->json(['message' => 'Only admins can remove members'], 403);
+        }
+
+        // Cannot remove the group creator
+        if ($group->creator_id == $userId) {
+            return response()->json(['message' => 'Cannot remove the group creator'], 400);
+        }
+
+        // Check if the member exists
+        $member = $group->ajoMembers()->where('user_id', $userId)->first();
+        if (!$member) {
+            return response()->json(['message' => 'Member not found in this group'], 404);
+        }
+
+        // Cannot remove member if they have received payout
+        if ($member->has_received_payout) {
+            return response()->json([
+                'message' => 'Cannot remove member who has already received payout'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Remove member
+            $group->members()->detach($userId);
+
+            // Decrement current members if member was active
+            if ($member->status === 'active') {
+                $group->decrement('current_members');
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Member removed successfully',
+                'group' => $group->fresh(['creator', 'ajoMembers.user']),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to remove member', 'error' => $e->getMessage()], 500);
+        }
+    }
 }

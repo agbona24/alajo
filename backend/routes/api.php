@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\DailyPaymentController;
+use App\Http\Controllers\Api\PassbookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Dashboard
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    Route::get('/dashboard/activities', [AjoActivityController::class, 'recentActivities']);
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'show']);
@@ -72,8 +74,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ajo-groups/search', [AjoGroupController::class, 'searchByCode']);
     Route::get('/ajo-groups/{id}', [AjoGroupController::class, 'show']);
     Route::put('/ajo-groups/{id}', [AjoGroupController::class, 'update']);
+    Route::delete('/ajo-groups/{id}', [AjoGroupController::class, 'destroy']);
     Route::post('/ajo-groups/{id}/join', [AjoGroupController::class, 'join']);
+    Route::post('/ajo-groups/{id}/leave', [AjoGroupController::class, 'leave']);
     Route::post('/ajo-groups/{groupId}/members/{memberId}/approve', [AjoGroupController::class, 'approveMember']);
+    Route::delete('/ajo-groups/{groupId}/members/{userId}', [AjoGroupController::class, 'removeMember']);
     Route::get('/ajo-groups/{id}/members', [AjoGroupController::class, 'getMembers']);
     Route::get('/ajo-groups/{id}/schedule', [AjoGroupController::class, 'getSchedule']);
     Route::post('/ajo-groups/{id}/contribute', [AjoGroupController::class, 'contribute']);
@@ -106,4 +111,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Ajo Activities
     Route::get('/ajo-groups/{groupId}/activities', [AjoActivityController::class, 'index']);
+
+    // Passbook
+    Route::get('/passbook', [PassbookController::class, 'index']);
+    Route::get('/passbook/plan/{planId}', [PassbookController::class, 'byPlan']);
+    Route::get('/passbook/summary', [PassbookController::class, 'summary']);
 });
