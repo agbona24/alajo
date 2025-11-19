@@ -2,22 +2,24 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { ajoGroupsAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
 
-const mockGroup = {
-  code: 'AJO-XYZ123',
-  name: 'Office Squad Savings',
-  description: 'Monthly savings for office colleagues',
-  contributionAmount: 20000,
-  groupSize: 10,
-  currentMembers: 7,
-  rotationType: 'Monthly',
-  startDate: '2024-12-01',
-  collector: {
-    name: 'Chioma Adeyemi',
-    avatar: '👩🏾',
-  },
-  requiresApproval: true,
+interface AjoGroup {
+  id: number
+  code: string
+  name: string
+  description?: string
+  contribution_amount: number
+  group_size: number
+  current_members: number
+  rotation_type: string
+  start_date: string
+  collector?: {
+    name: string
+    avatar?: string
+  }
+  require_approval: boolean
 }
 
 export default function JoinAjoGroupPage() {
@@ -27,27 +29,44 @@ export default function JoinAjoGroupPage() {
 
   const [groupCode, setGroupCode] = useState(codeFromUrl)
   const [loading, setLoading] = useState(false)
-  const [group, setGroup] = useState<typeof mockGroup | null>(null)
+  const [joining, setJoining] = useState(false)
+  const [group, setGroup] = useState<AjoGroup | null>(null)
   const [error, setError] = useState('')
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
+    if (!groupCode) return
+
     setLoading(true)
     setError('')
 
-    // Simulate API call
-    setTimeout(() => {
-      if (groupCode.toUpperCase() === mockGroup.code) {
-        setGroup(mockGroup)
-      } else {
-        setError('Group code not found. Check and try again.')
-      }
+    try {
+      const foundGroup = await ajoGroupsAPI.searchByCode(groupCode.toUpperCase())
+      setGroup(foundGroup)
+    } catch (error: any) {
+      console.error('Failed to search group:', error)
+      setError(error.response?.data?.message || 'Group code not found. Check and try again.')
+      setGroup(null)
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
-  const handleJoinRequest = () => {
-    console.log('Joining group:', group?.code)
-    router.push(`/ajo/${group?.code}?joined=true`)
+  const handleJoinRequest = async () => {
+    if (!group) return
+
+    setJoining(true)
+    setError('')
+
+    try {
+      await ajoGroupsAPI.join(group.id)
+      // Redirect to the group details page
+      router.push(`/ajo/${group.id}`)
+    } catch (error: any) {
+      console.error('Failed to join group:', error)
+      setError(error.response?.data?.message || 'Failed to join group. Please try again.')
+    } finally {
+      setJoining(false)
+    }
   }
 
   const formatCurrency = (amount: number) => {
@@ -183,40 +202,42 @@ export default function JoinAjoGroupPage() {
                   <InfoCard
                     icon="💰"
                     label="Contribution"
-                    value={formatCurrency(group.contributionAmount)}
+                    value={formatCurrency(group.contribution_amount)}
                   />
                   <InfoCard
                     icon="👥"
                     label="Members"
-                    value={`${group.currentMembers}/${group.groupSize}`}
+                    value={`${group.current_members}/${group.group_size}`}
                   />
                   <InfoCard
                     icon="🔄"
                     label="Rotation"
-                    value={group.rotationType}
+                    value={group.rotation_type}
                   />
                   <InfoCard
                     icon="📅"
                     label="Start Date"
-                    value={new Date(group.startDate).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}
+                    value={new Date(group.start_date).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}
                   />
                 </div>
 
-                <div className="pt-4 border-t border-gray-100">
-                  <div className="text-sm font-bold text-gray-500 uppercase mb-2">Collector</div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-xl">
-                      {group.collector.avatar}
+                {group.collector && (
+                  <div className="pt-4 border-t border-gray-100">
+                    <div className="text-sm font-bold text-gray-500 uppercase mb-2">Collector</div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-xl">
+                        {group.collector.avatar || '👤'}
+                      </div>
+                      <div className="font-semibold text-gray-900">{group.collector.name}</div>
                     </div>
-                    <div className="font-semibold text-gray-900">{group.collector.name}</div>
                   </div>
-                </div>
+                )}
 
                 <div className="pt-4 border-t border-gray-100">
                   <div className="bg-purple-50 rounded-xl p-4">
                     <div className="font-bold text-gray-900 mb-2">Total Payout Per Member</div>
                     <div className="text-3xl font-bold text-purple-700">
-                      {formatCurrency(group.contributionAmount * group.groupSize)}
+                      {formatCurrency(group.contribution_amount * group.group_size)}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">
                       You go collect this amount when na your turn
@@ -226,8 +247,18 @@ export default function JoinAjoGroupPage() {
               </div>
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div className="p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-scale-in">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">⚠️</span>
+                  <p className="text-red-600 text-sm flex-1">{error}</p>
+                </div>
+              </div>
+            )}
+
             {/* Requirements Notice */}
-            {group.requiresApproval && (
+            {group.require_approval && (
               <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4">
                 <div className="flex items-start gap-3">
                   <span className="text-2xl">⏳</span>
@@ -243,13 +274,25 @@ export default function JoinAjoGroupPage() {
             <div className="space-y-3">
               <button
                 onClick={handleJoinRequest}
-                className="w-full py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all"
+                disabled={joining}
+                className="w-full py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {group.requiresApproval ? 'Request to Join' : 'Join Group'} ✓
+                {joining ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>Joining...</span>
+                  </>
+                ) : (
+                  <>{group.require_approval ? 'Request to Join' : 'Join Group'} ✓</>
+                )}
               </button>
               <button
-                onClick={() => setGroup(null)}
-                className="w-full py-4 border-2 border-gray-300 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 active:scale-95 transition"
+                onClick={() => {
+                  setGroup(null)
+                  setError('')
+                }}
+                disabled={joining}
+                className="w-full py-4 border-2 border-gray-300 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Search Another Group
               </button>
