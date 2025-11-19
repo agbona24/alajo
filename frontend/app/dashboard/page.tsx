@@ -2,35 +2,53 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { authAPI } from '@/lib/api'
+import { authAPI, dashboardAPI } from '@/lib/api'
 import MobileNav from '@/components/MobileNav'
 
 export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
+  const [stats, setStats] = useState<any>({
+    totalSavings: 0,
+    activePlans: 0,
+    thisMonth: 0
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // DEV MODE: Skip authentication for UI testing
-    // const token = localStorage.getItem('auth_token')
-    // const storedUser = localStorage.getItem('user')
+    const fetchDashboardData = async () => {
+      try {
+        // Check if user is logged in
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          router.push('/login')
+          return
+        }
 
-    // if (!token || !storedUser) {
-    //   router.push('/login')
-    //   return
-    // }
+        // Fetch user data and stats in parallel
+        const [userData, statsData] = await Promise.all([
+          authAPI.getUser(),
+          dashboardAPI.getStats()
+        ])
 
-    // Mock user for UI testing
-    const mockUser = {
-      id: 1,
-      name: 'Chioma Adeyemi',
-      email: 'chioma.adeyemi@example.com',
-      phone: '+234 803 456 7890',
-      avatar: '👩🏾',
+        setUser(userData)
+        setStats({
+          totalSavings: statsData.total_savings || 0,
+          activePlans: statsData.active_plans || 0,
+          thisMonth: statsData.this_month || 0
+        })
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error)
+        // If unauthorized, redirect to login
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('user')
+        router.push('/login')
+      } finally {
+        setLoading(false)
+      }
     }
 
-    setUser(mockUser)
-    setLoading(false)
+    fetchDashboardData()
   }, [router])
 
   const handleLogout = async () => {
@@ -80,21 +98,21 @@ export default function DashboardPage() {
             <MobileStatCard
               icon="💰"
               label="Total Savings"
-              value="₦0"
+              value={`₦${stats.totalSavings.toLocaleString()}`}
               gradient="from-blue-500 to-blue-600"
               delay={0}
             />
             <MobileStatCard
               icon="🎯"
               label="Active Plans"
-              value="0"
+              value={stats.activePlans.toString()}
               gradient="from-purple-500 to-purple-600"
               delay={100}
             />
             <MobileStatCard
               icon="📈"
               label="This Month"
-              value="₦0"
+              value={`₦${stats.thisMonth.toLocaleString()}`}
               gradient="from-green-500 to-green-600"
               delay={200}
             />
@@ -135,9 +153,9 @@ export default function DashboardPage() {
 
         {/* Desktop Stats Grid */}
         <div className="hidden md:grid grid-cols-3 gap-6 mb-8">
-          <StatCard icon="💰" title="Total Savings" value="₦0.00" subtitle="Across all plans" />
-          <StatCard icon="🎯" title="Active Plans" value="0" subtitle="Savings plans" />
-          <StatCard icon="📈" title="This Month" value="₦0.00" subtitle="Contributions" />
+          <StatCard icon="💰" title="Total Savings" value={`₦${stats.totalSavings.toLocaleString()}`} subtitle="Across all plans" />
+          <StatCard icon="🎯" title="Active Plans" value={stats.activePlans.toString()} subtitle="Savings plans" />
+          <StatCard icon="📈" title="This Month" value={`₦${stats.thisMonth.toLocaleString()}`} subtitle="Contributions" />
         </div>
 
         {/* Quick Actions - Mobile Grid */}

@@ -327,7 +327,13 @@ export const profileAPI = {
 export const dashboardAPI = {
   // Get dashboard summary
   getSummary: async () => {
-    const response = await api.get('/dashboard')
+    const response = await api.get('/dashboard/summary')
+    return response.data
+  },
+
+  // Get dashboard stats
+  getStats: async () => {
+    const response = await api.get('/dashboard/stats')
     return response.data
   },
 

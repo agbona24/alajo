@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { savingsAPI } from '@/lib/api'
 import MobileNav from '@/components/MobileNav'
 import AppHeader from '@/components/AppHeader'
+import LoadingScreen from '@/components/LoadingScreen'
 
 interface SavingsPlan {
   id: number
@@ -17,27 +19,23 @@ interface SavingsPlan {
 
 export default function SavingsPage() {
   const router = useRouter()
-  const [plans, setPlans] = useState<SavingsPlan[]>([
-    {
-      id: 1,
-      name: 'Emergency Fund',
-      target_amount: 500000,
-      current_amount: 125000,
-      frequency: 'monthly',
-      status: 'active',
-      created_at: '2024-10-01',
-    },
-    {
-      id: 2,
-      name: 'New Laptop',
-      target_amount: 300000,
-      current_amount: 280000,
-      frequency: 'weekly',
-      status: 'active',
-      created_at: '2024-09-15',
-    },
-  ])
-  // Removed modal state - now using dedicated create page
+  const [plans, setPlans] = useState<SavingsPlan[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const data = await savingsAPI.getPlans()
+        setPlans(data)
+      } catch (error) {
+        console.error('Failed to fetch savings plans:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPlans()
+  }, [])
 
   const calculateProgress = (current: number, target: number) => {
     return Math.min(Math.round((current / target) * 100), 100)
@@ -53,6 +51,10 @@ export default function SavingsPage() {
 
   const totalSaved = plans.reduce((sum, plan) => sum + plan.current_amount, 0)
   const totalTarget = plans.reduce((sum, plan) => sum + plan.target_amount, 0)
+
+  if (loading) {
+    return <LoadingScreen />
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
