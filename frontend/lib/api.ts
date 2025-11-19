@@ -346,6 +346,58 @@ export const dashboardAPI = {
   },
 }
 
+export const dailyPaymentAPI = {
+  // Get payment calendar for a month
+  getCalendar: async (groupId: number, month?: string) => {
+    const response = await api.get(`/ajo-groups/${groupId}/daily-payments/calendar`, {
+      params: { month }
+    })
+    return response.data
+  },
+
+  // Get payment records
+  getPayments: async (groupId: number, params?: {
+    start_date?: string
+    end_date?: string
+    user_id?: number
+  }) => {
+    const response = await api.get(`/ajo-groups/${groupId}/daily-payments`, {
+      params
+    })
+    return response.data
+  },
+
+  // Mark a payment
+  markPayment: async (groupId: number, data: {
+    user_id: number
+    payment_date: string
+    status: 'paid' | 'pending' | 'missed'
+    payment_method?: 'cash' | 'bank_transfer' | 'card' | 'wallet'
+    notes?: string
+  }) => {
+    const response = await api.post(`/ajo-groups/${groupId}/daily-payments/mark`, data)
+    return response.data
+  },
+
+  // Bulk mark payments
+  bulkMark: async (groupId: number, data: {
+    user_id: number
+    start_date: string
+    end_date: string
+    status: 'paid' | 'pending' | 'missed'
+    payment_method?: 'cash' | 'bank_transfer' | 'card' | 'wallet'
+  }) => {
+    const response = await api.post(`/ajo-groups/${groupId}/daily-payments/bulk-mark`, data)
+    return response.data
+  },
+
+  // Get payment summary
+  getSummary: async (groupId: number) => {
+    const response = await api.get(`/ajo-groups/${groupId}/daily-payments/summary`)
+    return response.data
+  },
+}
+
 // Error handler
 api.interceptors.response.use(
   (response) => response,

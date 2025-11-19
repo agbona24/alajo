@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { dailyPaymentAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
+import LoadingScreen from '@/components/LoadingScreen'
 
 interface DailyPayment {
   day: number
@@ -19,59 +21,83 @@ interface Member {
   payments: DailyPayment[]
 }
 
-// Mock data for demonstration
-const mockCashbookData = {
-  groupId: 1,
-  groupName: 'Office Squad Savings',
-  month: 'November 2024',
-  dailyAmount: 1000, // ₦1,000 per day
-  totalDays: 30,
-  members: [
-    {
-      id: 1,
-      name: 'Chioma Adeyemi',
-      avatar: '👩🏾',
-      payments: Array.from({ length: 30 }, (_, i) => ({
-        day: i + 1,
-        date: `2024-11-${String(i + 1).padStart(2, '0')}`,
-        isPaid: i < 15, // First 15 days paid
-        paidAt: i < 15 ? `2024-11-${String(i + 1).padStart(2, '0')}T10:00:00` : undefined,
-        amount: 1000,
-      })),
-    },
-    {
-      id: 2,
-      name: 'Ade Bakare',
-      avatar: '👨🏾',
-      payments: Array.from({ length: 30 }, (_, i) => ({
-        day: i + 1,
-        date: `2024-11-${String(i + 1).padStart(2, '0')}`,
-        isPaid: i < 12,
-        paidAt: i < 12 ? `2024-11-${String(i + 1).padStart(2, '0')}T11:00:00` : undefined,
-        amount: 1000,
-      })),
-    },
-    {
-      id: 3,
-      name: 'Ngozi Okafor',
-      avatar: '👩🏾',
-      payments: Array.from({ length: 30 }, (_, i) => ({
-        day: i + 1,
-        date: `2024-11-${String(i + 1).padStart(2, '0')}`,
-        isPaid: i < 10,
-        paidAt: i < 10 ? `2024-11-${String(i + 1).padStart(2, '0')}T09:30:00` : undefined,
-        amount: 1000,
-      })),
-    },
-  ],
+interface CashbookData {
+  groupId: number
+  groupName: string
+  month: string
+  dailyAmount: number
+  totalDays: number
+  members: Member[]
 }
 
 export default function DailyCashbookPage() {
   const router = useRouter()
   const params = useParams()
-  const [cashbook, setCashbook] = useState(mockCashbookData)
+  const [cashbook, setCashbook] = useState<CashbookData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedMember, setSelectedMember] = useState<number | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [selectedMonth, setSelectedMonth] = useState<string>('')
+
+  useEffect(() => {
+    const fetchCashbook = async () => {
+      try {
+        const groupId = Number(params.id)
+        const month = selectedMonth || new Date().toISOString().slice(0, 7) // YYYY-MM format
+
+        const calendarData = await dailyPaymentAPI.getCalendar(groupId, month)
+
+        // Transform API data to match the component's expected format
+        const membersMap = new Map()
+
+        calendarData.members.forEach((member: any) => {
+          membersMap.set(member.user_id, {
+            id: member.user_id,
+            name: member.user?.name || 'Unknown',
+            avatar: member.user?.avatar || '👤',
+            payments: []
+          })
+        })
+
+        // Process calendar data to build member payments
+        calendarData.calendar.forEach((dayData: any) => {
+          calendarData.members.forEach((member: any) => {
+            const memberPayment = dayData.payments.find((p: any) => p.user_id === member.user_id)
+            const memberData = membersMap.get(member.user_id)
+
+            if (memberData) {
+              memberData.payments.push({
+                day: dayData.day,
+                date: dayData.date,
+                isPaid: memberPayment?.status === 'paid',
+                paidAt: memberPayment?.paid_at,
+                amount: calendarData.group.contribution_amount
+              })
+            }
+          })
+        })
+
+        setCashbook({
+          groupId: calendarData.group.id,
+          groupName: calendarData.group.name,
+          month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          dailyAmount: calendarData.group.contribution_amount,
+          totalDays: calendarData.calendar.length,
+          members: Array.from(membersMap.values())
+        })
+      } catch (error: any) {
+        console.error('Failed to fetch cashbook:', error)
+        setError(error.response?.data?.message || 'Failed to load cashbook. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchCashbook()
+    }
+  }, [params.id, selectedMonth])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -81,31 +107,56 @@ export default function DailyCashbookPage() {
     }).format(amount)
   }
 
-  const togglePayment = (memberId: number, day: number) => {
-    setCashbook(prev => ({
-      ...prev,
-      members: prev.members.map(member => {
-        if (member.id === memberId) {
-          return {
-            ...member,
-            payments: member.payments.map(payment => {
-              if (payment.day === day) {
-                return {
-                  ...payment,
-                  isPaid: !payment.isPaid,
-                  paidAt: !payment.isPaid ? new Date().toISOString() : undefined,
-                }
+  const togglePayment = async (memberId: number, day: number) => {
+    if (!cashbook) return
+
+    try {
+      const member = cashbook.members.find(m => m.id === memberId)
+      const payment = member?.payments.find(p => p.day === day)
+      if (!payment) return
+
+      const newStatus = payment.isPaid ? 'pending' : 'paid'
+
+      await dailyPaymentAPI.markPayment(Number(params.id), {
+        user_id: memberId,
+        payment_date: payment.date,
+        status: newStatus,
+        payment_method: 'cash'
+      })
+
+      // Update local state
+      setCashbook(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          members: prev.members.map(member => {
+            if (member.id === memberId) {
+              return {
+                ...member,
+                payments: member.payments.map(p => {
+                  if (p.day === day) {
+                    return {
+                      ...p,
+                      isPaid: !p.isPaid,
+                      paidAt: !p.isPaid ? new Date().toISOString() : undefined,
+                    }
+                  }
+                  return p
+                }),
               }
-              return payment
-            }),
-          }
+            }
+            return member
+          }),
         }
-        return member
-      }),
-    }))
+      })
+    } catch (error: any) {
+      console.error('Failed to mark payment:', error)
+      setError(error.response?.data?.message || 'Failed to update payment. Please try again.')
+    }
   }
 
   const getMemberStats = (member: Member) => {
+    if (!cashbook) return { paidDays: 0, totalAmount: 0, percentage: 0 }
     const paidDays = member.payments.filter(p => p.isPaid).length
     const totalAmount = paidDays * cashbook.dailyAmount
     const percentage = (paidDays / cashbook.totalDays) * 100
@@ -114,6 +165,90 @@ export default function DailyCashbookPage() {
 
   const getTodayDay = () => {
     return new Date().getDate()
+  }
+
+  const handleMarkAllUpToToday = async (member: Member) => {
+    if (!cashbook) return
+
+    try {
+      const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+      const firstDayOfMonth = new Date(member.payments[0].date).toISOString().slice(0, 10)
+
+      await dailyPaymentAPI.bulkMark(Number(params.id), {
+        user_id: member.id,
+        start_date: firstDayOfMonth,
+        end_date: today,
+        status: 'paid',
+        payment_method: 'cash'
+      })
+
+      // Refresh cashbook data
+      setLoading(true)
+      const month = selectedMonth || new Date().toISOString().slice(0, 7)
+      const calendarData = await dailyPaymentAPI.getCalendar(Number(params.id), month)
+
+      // Re-transform data (same logic as useEffect)
+      const membersMap = new Map()
+      calendarData.members.forEach((m: any) => {
+        membersMap.set(m.user_id, {
+          id: m.user_id,
+          name: m.user?.name || 'Unknown',
+          avatar: m.user?.avatar || '👤',
+          payments: []
+        })
+      })
+
+      calendarData.calendar.forEach((dayData: any) => {
+        calendarData.members.forEach((m: any) => {
+          const memberPayment = dayData.payments.find((p: any) => p.user_id === m.user_id)
+          const memberData = membersMap.get(m.user_id)
+          if (memberData) {
+            memberData.payments.push({
+              day: dayData.day,
+              date: dayData.date,
+              isPaid: memberPayment?.status === 'paid',
+              paidAt: memberPayment?.paid_at,
+              amount: calendarData.group.contribution_amount
+            })
+          }
+        })
+      })
+
+      setCashbook({
+        groupId: calendarData.group.id,
+        groupName: calendarData.group.name,
+        month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        dailyAmount: calendarData.group.contribution_amount,
+        totalDays: calendarData.calendar.length,
+        members: Array.from(membersMap.values())
+      })
+      setLoading(false)
+    } catch (error: any) {
+      console.error('Failed to bulk mark payments:', error)
+      setError(error.response?.data?.message || 'Failed to mark payments. Please try again.')
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  if (!cashbook) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">📅</div>
+          <p className="text-lg text-gray-600 mb-4">{error || 'No cashbook data available'}</p>
+          <button
+            onClick={() => router.back()}
+            className="px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl font-semibold"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -129,6 +264,24 @@ export default function DailyCashbookPage() {
       />
 
       <div className="px-4 pt-4 pb-24 max-w-6xl mx-auto">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div className="flex-1">
+                <p className="text-red-600 text-sm">{error}</p>
+                <button
+                  onClick={() => setError(null)}
+                  className="mt-2 text-xs font-semibold text-red-700 underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Summary Card */}
         <div className="bg-gradient-to-br from-green-600 to-teal-600 rounded-3xl p-6 text-white shadow-xl mb-6 animate-fade-in-up">
           <div className="flex items-start justify-between mb-4">
@@ -302,15 +455,7 @@ export default function DailyCashbookPage() {
                     {/* Quick Actions */}
                     <div className="grid grid-cols-2 gap-2 mt-4">
                       <button
-                        onClick={() => {
-                          // Mark all unpaid days up to today as paid
-                          const today = getTodayDay()
-                          member.payments.forEach(payment => {
-                            if (!payment.isPaid && payment.day <= today) {
-                              togglePayment(member.id, payment.day)
-                            }
-                          })
-                        }}
+                        onClick={() => handleMarkAllUpToToday(member)}
                         className="py-2 bg-green-500 text-white rounded-lg font-semibold text-sm hover:bg-green-600 active:scale-95 transition"
                       >
                         ✓ Mark All Up to Today
