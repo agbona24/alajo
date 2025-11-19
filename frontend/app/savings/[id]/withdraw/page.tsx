@@ -1,33 +1,84 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { savingsAPI, profileAPI, withdrawalsAPI } from '@/lib/api'
+import LoadingScreen from '@/components/LoadingScreen'
 
-const mockPlan = {
-  id: 1,
-  name: 'iPhone 15 Fund',
-  emoji: '📱',
-  current_amount: 245000,
-  target_amount: 500000,
+interface SavingsPlan {
+  id: number
+  name: string
+  emoji?: string
+  current_amount: number
+  target_amount: number
 }
 
-const mockBankAccounts = [
-  { id: 1, bank: 'GTBank', accountNumber: '0123456789', accountName: 'Chioma Adeyemi' },
-  { id: 2, bank: 'Access Bank', accountNumber: '9876543210', accountName: 'Chioma Adeyemi' },
-]
+interface BankAccount {
+  id: number
+  bank: string
+  account_number: string
+  account_name: string
+}
 
 type StepType = 'amount' | 'bank' | 'confirm' | 'success'
 
 export default function WithdrawPage() {
   const router = useRouter()
   const params = useParams()
-  const [plan] = useState(mockPlan)
-  const [bankAccounts] = useState(mockBankAccounts)
+  const [plan, setPlan] = useState<SavingsPlan | null>(null)
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<StepType>('amount')
   const [amount, setAmount] = useState('')
   const [selectedBank, setSelectedBank] = useState<number | null>(null)
   const [reason, setReason] = useState('')
   const [withdrawType, setWithdrawType] = useState<'partial' | 'full'>('partial')
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const planId = Number(params.id)
+        const [planData, accountsData] = await Promise.all([
+          savingsAPI.getPlan(planId),
+          profileAPI.getBankAccounts()
+        ])
+        setPlan(planData)
+        setBankAccounts(accountsData)
+      } catch (error) {
+        console.error('Failed to fetch data:', error)
+        setError('Failed to load withdrawal page. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchData()
+    }
+  }, [params.id])
+
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  if (!plan) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😕</div>
+          <p className="text-lg text-gray-600 mb-4">Plan not found</p>
+          <button
+            onClick={() => router.push('/savings')}
+            className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold"
+          >
+            Back to Savings
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(value)
@@ -59,8 +110,28 @@ export default function WithdrawPage() {
     return selectedBank !== null
   }
 
-  const handleSubmit = () => {
-    setStep('success')
+  const handleSubmit = async () => {
+    if (!selectedBank) return
+
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      await withdrawalsAPI.create({
+        plan_id: plan.id,
+        amount: parseInt(amount),
+        bank_account_id: selectedBank,
+        reason: reason || undefined,
+        type: withdrawType
+      })
+      setStep('success')
+    } catch (error: any) {
+      console.error('Withdrawal failed:', error)
+      setError(error.response?.data?.message || 'Failed to submit withdrawal request. Please try again.')
+      setStep('amount')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleBack = () => {
@@ -101,6 +172,16 @@ export default function WithdrawPage() {
       </header>
 
       <div className="px-4 pt-4 pb-8 max-w-2xl mx-auto">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <p className="text-red-600 text-sm flex-1">{error}</p>
+            </div>
+          </div>
+        )}
+
         {step !== 'success' && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
@@ -157,24 +238,41 @@ export default function WithdrawPage() {
               <div className="text-3xl font-bold">{formatCurrency(parseInt(amount))}</div>
             </div>
 
-            <div className="space-y-3">
-              {bankAccounts.map((account) => (
-                <button key={account.id} onClick={() => setSelectedBank(account.id)} className={`w-full p-4 rounded-2xl border-2 transition text-left ${selectedBank === account.id ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'}`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${selectedBank === account.id ? 'bg-orange-500 text-white' : 'bg-gray-100'}`}>{selectedBank === account.id ? '✓' : '🏦'}</div>
-                    <div>
-                      <div className="font-bold text-gray-900">{account.bank}</div>
-                      <div className="text-sm text-gray-600">{account.accountNumber}</div>
-                    </div>
-                  </div>
+            {bankAccounts.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-2xl border-2 border-gray-200">
+                <div className="text-6xl mb-4">🏦</div>
+                <p className="text-lg font-semibold text-gray-900 mb-2">No Bank Accounts</p>
+                <p className="text-gray-600 mb-4">Add a bank account to withdraw funds</p>
+                <button
+                  onClick={() => router.push('/profile/payment-methods')}
+                  className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold"
+                >
+                  Add Bank Account
                 </button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {bankAccounts.map((account) => (
+                    <button key={account.id} onClick={() => setSelectedBank(account.id)} className={`w-full p-4 rounded-2xl border-2 transition text-left ${selectedBank === account.id ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'}`}>
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${selectedBank === account.id ? 'bg-orange-500 text-white' : 'bg-gray-100'}`}>{selectedBank === account.id ? '✓' : '🏦'}</div>
+                        <div>
+                          <div className="font-bold text-gray-900">{account.bank}</div>
+                          <div className="text-sm text-gray-600">{account.account_number}</div>
+                          <div className="text-xs text-gray-500">{account.account_name}</div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
 
-            <div className="flex gap-3">
-              <button onClick={() => setStep('amount')} className="flex-1 py-4 border-2 border-gray-300 text-gray-700 rounded-2xl font-bold">← Back</button>
-              <button onClick={() => setStep('confirm')} disabled={!canProceedFromBank()} className="flex-1 py-4 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl font-bold shadow-lg disabled:opacity-50">Continue →</button>
-            </div>
+                <div className="flex gap-3">
+                  <button onClick={() => setStep('amount')} className="flex-1 py-4 border-2 border-gray-300 text-gray-700 rounded-2xl font-bold">← Back</button>
+                  <button onClick={() => setStep('confirm')} disabled={!canProceedFromBank()} className="flex-1 py-4 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl font-bold shadow-lg disabled:opacity-50">Continue →</button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -196,13 +294,33 @@ export default function WithdrawPage() {
               <div className="p-6">
                 <div className="text-xs font-bold text-gray-500 uppercase mb-2">Bank Account</div>
                 <div className="font-bold text-gray-900">{selectedBankAccount?.bank}</div>
-                <div className="text-sm text-gray-600">{selectedBankAccount?.accountNumber}</div>
+                <div className="text-sm text-gray-600">{selectedBankAccount?.account_number}</div>
+                <div className="text-xs text-gray-500 mt-1">{selectedBankAccount?.account_name}</div>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setStep('bank')} className="flex-1 py-4 border-2 border-gray-300 text-gray-700 rounded-2xl font-bold">← Back</button>
-              <button onClick={handleSubmit} className="flex-1 py-5 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl font-bold text-lg shadow-xl">Submit ✓</button>
+              <button
+                onClick={() => setStep('bank')}
+                disabled={submitting}
+                className="flex-1 py-4 border-2 border-gray-300 text-gray-700 rounded-2xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="flex-1 py-5 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl font-bold text-lg shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {submitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  <>Submit ✓</>
+                )}
+              </button>
             </div>
           </div>
         )}

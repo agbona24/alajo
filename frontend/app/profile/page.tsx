@@ -1,21 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { authAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
 import MobileNav from '@/components/MobileNav'
+import LoadingScreen from '@/components/LoadingScreen'
 
-const mockUser = {
-  name: 'Chioma Adeyemi',
-  email: 'chioma.adeyemi@example.com',
-  phone: '+234 803 456 7890',
-  avatar: '👩🏾',
-  memberSince: '2024-01-15',
+interface User {
+  name: string
+  email: string
+  phone?: string
+  avatar?: string
+  created_at: string
 }
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [user] = useState(mockUser)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   const [notifications, setNotifications] = useState({
     contributions: true,
     withdrawals: true,
@@ -24,8 +27,42 @@ export default function ProfilePage() {
     marketing: false,
   })
 
-  const handleLogout = () => {
-    router.push('/login')
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await authAPI.getUser()
+        setUser(userData)
+      } catch (error) {
+        console.error('Failed to fetch user:', error)
+        // If auth fails, redirect to login
+        router.push('/login')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUser()
+  }, [router])
+
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  if (!user) {
+    return null
+  }
+
+  const handleLogout = async () => {
+    try {
+      await authAPI.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // Clear local storage and redirect
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user')
+      router.push('/login')
+    }
   }
 
   return (
@@ -49,14 +86,15 @@ export default function ProfilePage() {
             <div className="flex items-start gap-4 mb-4">
               {/* Avatar */}
               <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-4xl border-2 border-white/30">
-                {user.avatar}
+                {user.avatar || '👤'}
               </div>
 
               <div className="flex-1">
                 <h2 className="text-2xl font-bold mb-1">{user.name}</h2>
                 <p className="text-white/80 text-sm mb-1">{user.email}</p>
+                {user.phone && <p className="text-white/70 text-xs mb-1">{user.phone}</p>}
                 <p className="text-white/70 text-xs">
-                  Member since {new Date(user.memberSince).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' })}
+                  Member since {new Date(user.created_at).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' })}
                 </p>
               </div>
 
