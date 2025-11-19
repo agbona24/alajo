@@ -1,38 +1,83 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { passbookAPI, authAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
 import MobileNav from '@/components/MobileNav'
+import LoadingScreen from '@/components/LoadingScreen'
 
-const mockPassbookData = {
-  accountHolder: 'Chioma Adeyemi',
-  phone: '+234 803 456 7890',
-  accountNumber: 'HJ-2024-001234',
-  memberSince: '2024-01-15',
-  plan: {
-    name: 'iPhone 15 Fund',
-    type: 'Daily Contribution',
-  },
-  currentMonth: 'November 2024',
-  contributions: [
-    { day: 1, date: '2024-11-01', amount: 1000, signature: 'CA', verified: true },
-    { day: 2, date: '2024-11-02', amount: 1000, signature: 'CA', verified: true },
-    { day: 3, date: '2024-11-03', amount: 0, signature: '', verified: false },
-    { day: 4, date: '2024-11-04', amount: 1500, signature: 'CA', verified: true },
-    { day: 5, date: '2024-11-05', amount: 1000, signature: 'CA', verified: true },
-    { day: 6, date: '2024-11-06', amount: 2000, signature: 'CA', verified: true },
-    { day: 7, date: '2024-11-07', amount: 1000, signature: 'CA', verified: true },
-    { day: 8, date: '2024-11-08', amount: 1000, signature: 'CA', verified: true },
-    { day: 9, date: '2024-11-09', amount: 0, signature: '', verified: false },
-    { day: 10, date: '2024-11-10', amount: 1000, signature: 'CA', verified: true },
-  ],
+interface PassbookContribution {
+  day: number
+  date: string
+  amount: number
+  signature?: string
+  verified: boolean
+}
+
+interface PassbookData {
+  account_holder: string
+  phone: string
+  account_number: string
+  member_since: string
+  plan?: {
+    name: string
+    type: string
+  }
+  current_month: string
+  contributions: PassbookContribution[]
 }
 
 export default function PassbookPage() {
   const router = useRouter()
-  const [data] = useState(mockPassbookData)
+  const [data, setData] = useState<PassbookData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'cover' | 'monthly'>('cover')
+  const [selectedMonth, setSelectedMonth] = useState<string>('')
+  const [selectedYear, setSelectedYear] = useState<string>('')
+
+  useEffect(() => {
+    const fetchPassbook = async () => {
+      try {
+        // Initialize with current month/year if not selected
+        const now = new Date()
+        const month = selectedMonth || String(now.getMonth() + 1)
+        const year = selectedYear || String(now.getFullYear())
+
+        const passbookData = await passbookAPI.get(month, year)
+        setData(passbookData)
+      } catch (error) {
+        console.error('Failed to fetch passbook:', error)
+        setError('Failed to load passbook. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPassbook()
+  }, [selectedMonth, selectedYear])
+
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">📖</div>
+          <p className="text-lg text-gray-600 mb-4">{error || 'No passbook data available'}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl font-semibold"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const monthTotal = data.contributions.reduce((sum, c) => sum + c.amount, 0)
   const daysContributed = data.contributions.filter(c => c.amount > 0).length
@@ -55,11 +100,21 @@ export default function PassbookPage() {
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50 pb-safe">
       <AppHeader
         title="Digital Passbook"
-        subtitle={data.accountHolder}
+        subtitle={data.account_holder}
         showBack
       />
 
       <div className="px-4 pt-4 pb-24 max-w-4xl mx-auto">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <p className="text-red-600 text-sm flex-1">{error}</p>
+            </div>
+          </div>
+        )}
+
         {viewMode === 'cover' ? (
           <div className="animate-fade-in-up">
             <div className="bg-gradient-to-br from-amber-600 via-amber-700 to-orange-700 rounded-3xl p-8 text-white shadow-2xl mb-6 relative overflow-hidden">
@@ -80,7 +135,7 @@ export default function PassbookPage() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <div className="text-amber-200 mb-1">Account Holder</div>
-                      <div className="font-bold text-lg">{data.accountHolder}</div>
+                      <div className="font-bold text-lg">{data.account_holder}</div>
                     </div>
                     <div>
                       <div className="text-amber-200 mb-1">Phone Number</div>
@@ -88,25 +143,27 @@ export default function PassbookPage() {
                     </div>
                     <div>
                       <div className="text-amber-200 mb-1">Account Number</div>
-                      <div className="font-bold text-lg font-mono">{data.accountNumber}</div>
+                      <div className="font-bold text-lg font-mono">{data.account_number}</div>
                     </div>
                     <div>
                       <div className="text-amber-200 mb-1">Member Since</div>
-                      <div className="font-bold text-lg">{new Date(data.memberSince).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}</div>
+                      <div className="font-bold text-lg">{new Date(data.member_since).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                  <div className="text-amber-200 mb-2">Current Plan</div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-4xl">💰</span>
-                    <div>
-                      <div className="font-bold text-xl">{data.plan.name}</div>
-                      <div className="text-sm text-amber-200">{data.plan.type}</div>
+                {data.plan && (
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                    <div className="text-amber-200 mb-2">Current Plan</div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl">💰</span>
+                      <div>
+                        <div className="font-bold text-xl">{data.plan.name}</div>
+                        <div className="text-sm text-amber-200">{data.plan.type}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -168,7 +225,7 @@ export default function PassbookPage() {
           <div className="animate-fade-in-up">
             <div className="bg-white rounded-2xl p-6 shadow-lg mb-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">{data.currentMonth}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{data.current_month}</h2>
                 <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm">
                   Export PDF
                 </button>
