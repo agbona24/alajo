@@ -1,20 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { savingsAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
+import LoadingScreen from '@/components/LoadingScreen'
 
-const mockPlan = {
-  id: 1,
-  name: 'iPhone 15 Fund',
-  emoji: '📱',
-  target_amount: 500000,
-  current_amount: 245000,
+interface SavingsPlan {
+  id: number
+  name: string
+  emoji?: string
+  target_amount: number
+  current_amount: number
 }
 
 const paymentMethods = [
   { id: 'card', name: 'Debit Card', icon: '💳', color: 'from-blue-500 to-blue-600', description: 'Instant payment' },
-  { id: 'transfer', name: 'Bank Transfer', icon: '🏦', color: 'from-green-500 to-green-600', description: 'Direct from account' },
+  { id: 'bank_transfer', name: 'Bank Transfer', icon: '🏦', color: 'from-green-500 to-green-600', description: 'Direct from account' },
   { id: 'wallet', name: 'Wallet', icon: '👛', color: 'from-purple-500 to-purple-600', description: 'Hajo wallet' },
 ]
 
@@ -23,12 +25,42 @@ const quickAmounts = [1000, 2000, 5000, 10000, 20000, 50000]
 export default function ContributePage() {
   const router = useRouter()
   const params = useParams()
-  const [plan] = useState(mockPlan)
+  const [plan, setPlan] = useState<SavingsPlan | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState<'input' | 'confirm' | 'success'>('input')
   const [amount, setAmount] = useState('')
   const [selectedMethod, setSelectedMethod] = useState('card')
   const [note, setNote] = useState('')
   const [showConfetti, setShowConfetti] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        const planId = Number(params.id)
+        const planData = await savingsAPI.getPlan(planId)
+        setPlan(planData)
+      } catch (error) {
+        console.error('Failed to fetch plan:', error)
+        router.push('/savings')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchPlan()
+    }
+  }, [params.id, router])
+
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  if (!plan) {
+    return null
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -40,14 +72,38 @@ export default function ContributePage() {
 
   const handleContinue = () => {
     if (amount && parseFloat(amount) >= 300) {
+      setError(null)
       setStep('confirm')
     }
   }
 
-  const handleConfirm = () => {
-    setStep('success')
-    setShowConfetti(true)
-    setTimeout(() => setShowConfetti(false), 3000)
+  const handleConfirm = async () => {
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      await savingsAPI.contribute(plan.id, {
+        amount: parseFloat(amount),
+        payment_method: selectedMethod,
+        reference: `TXN${Date.now()}`,
+      })
+
+      // Update local plan data
+      setPlan({
+        ...plan,
+        current_amount: plan.current_amount + parseFloat(amount)
+      })
+
+      setStep('success')
+      setShowConfetti(true)
+      setTimeout(() => setShowConfetti(false), 3000)
+    } catch (error: any) {
+      console.error('Contribution failed:', error)
+      setError(error.response?.data?.message || 'Failed to process contribution. Please try again.')
+      setStep('input')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const newTotal = plan.current_amount + (parseFloat(amount) || 0)
@@ -62,13 +118,23 @@ export default function ContributePage() {
       />
 
       <div className="px-4 pt-4 pb-8 max-w-2xl mx-auto">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <p className="text-red-600 text-sm flex-1">{error}</p>
+            </div>
+          </div>
+        )}
+
         {/* Input Step */}
         {step === 'input' && (
           <div className="space-y-6 animate-fade-in-up">
             {/* Plan Summary */}
             <div className="bg-gradient-to-br from-primary to-secondary rounded-2xl p-5 text-white shadow-lg">
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-4xl">{plan.emoji}</span>
+                <span className="text-4xl">{plan.emoji || '💰'}</span>
                 <div>
                   <h2 className="font-bold text-lg">{plan.name}</h2>
                   <p className="text-sm text-white/80">Current: {formatCurrency(plan.current_amount)}</p>
@@ -222,7 +288,7 @@ export default function ContributePage() {
                 <div className="flex justify-between items-center py-3 border-b border-gray-100">
                   <span className="text-gray-600">Plan</span>
                   <span className="font-bold text-gray-900 flex items-center gap-2">
-                    <span>{plan.emoji}</span>
+                    <span>{plan.emoji || '💰'}</span>
                     {plan.name}
                   </span>
                 </div>
@@ -264,15 +330,24 @@ export default function ContributePage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep('input')}
-                  className="flex-1 py-4 border-2 border-gray-300 text-gray-700 rounded-full font-bold transition hover:bg-gray-50 active:scale-95"
+                  disabled={submitting}
+                  className="flex-1 py-4 border-2 border-gray-300 text-gray-700 rounded-full font-bold transition hover:bg-gray-50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleConfirm}
-                  className="flex-1 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full font-bold shadow-lg hover:shadow-xl transition active:scale-95"
+                  disabled={submitting}
+                  className="flex-1 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full font-bold shadow-lg hover:shadow-xl transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Confirm Payment
+                  {submitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    'Confirm Payment'
+                  )}
                 </button>
               </div>
             </div>
@@ -338,7 +413,7 @@ export default function ContributePage() {
                 </div>
                 <div className="flex justify-between py-2 border-b border-gray-100">
                   <span className="text-gray-600">Plan</span>
-                  <span className="font-bold">{plan.emoji} {plan.name}</span>
+                  <span className="font-bold">{plan.emoji || '💰'} {plan.name}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-gray-100">
                   <span className="text-gray-600">New Balance</span>

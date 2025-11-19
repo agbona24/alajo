@@ -1,31 +1,50 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { transactionsAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
 import MobileNav from '@/components/MobileNav'
+import LoadingScreen from '@/components/LoadingScreen'
 
-// Mock transaction data
-const mockTransactions = [
-  { id: 1, type: 'contribution', amount: 25000, plan: 'iPhone 15 Fund', planEmoji: '📱', date: '2024-11-14', time: '14:30', status: 'completed', method: 'Bank Transfer', reference: 'TRX-2024111401' },
-  { id: 2, type: 'contribution', amount: 50000, plan: 'Wedding Dreams', planEmoji: '💍', date: '2024-11-13', time: '09:15', status: 'completed', method: 'Card', reference: 'TRX-2024111302' },
-  { id: 3, type: 'withdrawal', amount: -30000, plan: 'Emergency Fund', planEmoji: '🏥', date: '2024-11-12', time: '16:45', status: 'completed', method: 'Bank Transfer', reference: 'TRX-2024111203' },
-  { id: 4, type: 'contribution', amount: 20000, plan: 'New Laptop', planEmoji: '💻', date: '2024-11-10', time: '11:20', status: 'completed', method: 'Card', reference: 'TRX-2024111004' },
-  { id: 5, type: 'contribution', amount: 15000, plan: 'Vacation Fund', planEmoji: '✈️', date: '2024-11-08', time: '13:10', status: 'pending', method: 'Bank Transfer', reference: 'TRX-2024110805' },
-  { id: 6, type: 'contribution', amount: 25000, plan: 'iPhone 15 Fund', planEmoji: '📱', date: '2024-11-07', time: '10:30', status: 'completed', method: 'Bank Transfer', reference: 'TRX-2024110706' },
-  { id: 7, type: 'contribution', amount: 40000, plan: 'Wedding Dreams', planEmoji: '💍', date: '2024-11-05', time: '15:20', status: 'completed', method: 'Card', reference: 'TRX-2024110507' },
-  { id: 8, type: 'contribution', amount: 25000, plan: 'iPhone 15 Fund', planEmoji: '📱', date: '2024-10-31', time: '09:45', status: 'completed', method: 'Bank Transfer', reference: 'TRX-2024103108' },
-  { id: 9, type: 'withdrawal', amount: -20000, plan: 'Emergency Fund', planEmoji: '🏥', date: '2024-10-28', time: '14:15', status: 'completed', method: 'Bank Transfer', reference: 'TRX-2024102809' },
-  { id: 10, type: 'contribution', amount: 30000, plan: 'New Laptop', planEmoji: '💻', date: '2024-10-25', time: '11:50', status: 'completed', method: 'Card', reference: 'TRX-2024102510' },
-]
+interface Transaction {
+  id: number
+  type: string
+  amount: number
+  plan_name?: string
+  created_at: string
+  status: string
+  payment_method: string
+  reference: string
+}
 
 export default function TransactionsPage() {
   const router = useRouter()
-  const [transactions] = useState(mockTransactions)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'contribution' | 'withdrawal'>('all')
   const [filterStatus, setFilterStatus] = useState<'all' | 'completed' | 'pending'>('all')
   const [showFilters, setShowFilters] = useState(false)
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const data = await transactionsAPI.getAll()
+        setTransactions(data)
+      } catch (error) {
+        console.error('Failed to fetch transactions:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTransactions()
+  }, [])
+
+  if (loading) {
+    return <LoadingScreen />
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -50,7 +69,7 @@ export default function TransactionsPage() {
 
   // Filter transactions
   const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.plan.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = (transaction.plan_name?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
                          transaction.reference.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesType = filterType === 'all' || transaction.type === filterType
     const matchesStatus = filterStatus === 'all' || transaction.status === filterStatus
@@ -59,7 +78,7 @@ export default function TransactionsPage() {
 
   // Group by month
   const groupedTransactions = filteredTransactions.reduce((groups: any, transaction) => {
-    const month = new Date(transaction.date).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' })
+    const month = new Date(transaction.created_at).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' })
     if (!groups[month]) {
       groups[month] = []
     }
@@ -216,7 +235,19 @@ export default function TransactionsPage() {
         )}
 
         {/* Transactions List (Grouped by Month) */}
-        {filteredTransactions.length === 0 ? (
+        {transactions.length === 0 ? (
+          <div className="text-center py-16 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <div className="text-6xl mb-4 opacity-50">📝</div>
+            <p className="text-lg font-semibold text-gray-900 mb-2">No transactions yet</p>
+            <p className="text-gray-600 mb-6">Start saving to see your transaction history</p>
+            <button
+              onClick={() => router.push('/savings')}
+              className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold"
+            >
+              View Savings Plans
+            </button>
+          </div>
+        ) : filteredTransactions.length === 0 ? (
           <div className="text-center py-16 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             <div className="text-6xl mb-4 opacity-50">🔍</div>
             <p className="text-lg font-semibold text-gray-900 mb-2">No transactions found</p>
@@ -236,12 +267,11 @@ export default function TransactionsPage() {
 
                 {/* Month Transactions */}
                 <div className="space-y-3">
-                  {monthTransactions.map((transaction: any) => (
+                  {monthTransactions.map((transaction: Transaction) => (
                     <TransactionCard
                       key={transaction.id}
                       transaction={transaction}
                       formatCurrency={formatCurrency}
-                      formatDateFull={formatDateFull}
                       onClick={() => {
                         // Future: Open receipt modal
                         console.log('View receipt:', transaction.reference)
@@ -298,14 +328,31 @@ function FilterButton({ active, onClick, label, icon }: {
   )
 }
 
-function TransactionCard({ transaction, formatCurrency, formatDateFull, onClick }: {
-  transaction: any
+function TransactionCard({ transaction, formatCurrency, onClick }: {
+  transaction: Transaction
   formatCurrency: (amount: number) => string
-  formatDateFull: (date: string, time: string) => string
   onClick: () => void
 }) {
   const isContribution = transaction.type === 'contribution'
   const isPending = transaction.status === 'pending'
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat('en-NG', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date)
+  }
+
+  // Get emoji based on transaction type
+  const getEmoji = () => {
+    if (isPending) return '⏳'
+    if (isContribution) return '💰'
+    return '💸'
+  }
 
   return (
     <button
@@ -321,17 +368,17 @@ function TransactionCard({ transaction, formatCurrency, formatDateFull, onClick 
             ? 'bg-gradient-to-br from-green-500 to-green-600 text-white'
             : 'bg-gradient-to-br from-orange-500 to-orange-600 text-white'
         }`}>
-          {isPending ? '⏳' : transaction.planEmoji}
+          {getEmoji()}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Plan Name */}
-          <div className="font-bold text-gray-900 mb-1 truncate">{transaction.plan}</div>
+          <div className="font-bold text-gray-900 mb-1 truncate">{transaction.plan_name || 'Savings Plan'}</div>
 
           {/* Date & Time */}
           <div className="text-xs text-gray-500 mb-2">
-            {formatDateFull(transaction.date, transaction.time)}
+            {formatDateTime(transaction.created_at)}
           </div>
 
           {/* Details Row */}
@@ -346,7 +393,7 @@ function TransactionCard({ transaction, formatCurrency, formatDateFull, onClick 
             </span>
 
             {/* Method */}
-            <span className="text-xs text-gray-500">{transaction.method}</span>
+            <span className="text-xs text-gray-500">{transaction.payment_method}</span>
 
             {/* Reference */}
             <span className="text-xs text-gray-400 font-mono">{transaction.reference}</span>
@@ -358,7 +405,7 @@ function TransactionCard({ transaction, formatCurrency, formatDateFull, onClick 
           <div className={`text-lg font-bold ${
             isContribution ? 'text-green-600' : 'text-orange-600'
           }`}>
-            {isContribution ? '+' : '-'}{formatCurrency(transaction.amount)}
+            {isContribution ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount))}
           </div>
           <div className="text-xs text-gray-500 mt-1">
             {isContribution ? 'Added' : 'Withdrawn'}

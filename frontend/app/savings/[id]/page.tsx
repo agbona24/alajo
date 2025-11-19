@@ -1,47 +1,86 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { savingsAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
 import MobileNav from '@/components/MobileNav'
+import LoadingScreen from '@/components/LoadingScreen'
 
-// Mock data - will be replaced with API call
-const mockPlan = {
-  id: 1,
-  name: 'iPhone 15 Fund',
-  emoji: '📱',
-  target_amount: 500000,
-  current_amount: 245000,
-  frequency: 'weekly',
-  duration: 12,
-  plan_type: 'personal',
-  description: 'Saving for my new iPhone 15 Pro Max. No more old phone wahala!',
-  created_at: '2024-01-15',
-  contributions: [
-    { id: 1, amount: 25000, date: '2024-11-14', status: 'completed', method: 'Bank Transfer' },
-    { id: 2, amount: 20000, date: '2024-11-07', status: 'completed', method: 'Card' },
-    { id: 3, amount: 25000, date: '2024-10-31', status: 'completed', method: 'Bank Transfer' },
-    { id: 4, amount: 30000, date: '2024-10-24', status: 'completed', method: 'Bank Transfer' },
-    { id: 5, amount: 25000, date: '2024-10-17', status: 'completed', method: 'Card' },
-    { id: 6, amount: 20000, date: '2024-10-10', status: 'completed', method: 'Bank Transfer' },
-    { id: 7, amount: 25000, date: '2024-10-03', status: 'completed', method: 'Bank Transfer' },
-    { id: 8, amount: 25000, date: '2024-09-26', status: 'completed', method: 'Card' },
-    { id: 9, amount: 25000, date: '2024-09-19', status: 'completed', method: 'Bank Transfer' },
-    { id: 10, amount: 25000, date: '2024-09-12', status: 'completed', method: 'Bank Transfer' },
-  ],
-  milestones: [
-    { percentage: 25, reached: true, date: '2024-09-20' },
-    { percentage: 50, reached: false, date: null },
-    { percentage: 75, reached: false, date: null },
-    { percentage: 100, reached: false, date: null },
-  ]
+interface SavingsPlan {
+  id: number
+  name: string
+  emoji?: string
+  target_amount: number
+  current_amount: number
+  frequency: string
+  duration: number
+  plan_type: string
+  description?: string
+  created_at: string
+}
+
+interface Contribution {
+  id: number
+  amount: number
+  created_at: string
+  status: string
+  payment_method: string
+  reference?: string
 }
 
 export default function SavingsPlanDetails() {
   const router = useRouter()
   const params = useParams()
-  const [plan] = useState(mockPlan)
+  const [plan, setPlan] = useState<SavingsPlan | null>(null)
+  const [contributions, setContributions] = useState<Contribution[]>([])
+  const [loading, setLoading] = useState(true)
   const [showActions, setShowActions] = useState(false)
+
+  useEffect(() => {
+    const fetchPlanData = async () => {
+      try {
+        const planId = Number(params.id)
+        const [planData, contributionsData] = await Promise.all([
+          savingsAPI.getPlan(planId),
+          savingsAPI.getContributions(planId)
+        ])
+        setPlan(planData)
+        setContributions(contributionsData || [])
+      } catch (error) {
+        console.error('Failed to fetch plan data:', error)
+        // If error, redirect to savings list
+        router.push('/savings')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchPlanData()
+    }
+  }, [params.id, router])
+
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  if (!plan) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😕</div>
+          <p className="text-lg text-gray-600 mb-4">Plan not found</p>
+          <button
+            onClick={() => router.push('/savings')}
+            className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold"
+          >
+            Back to Savings
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const progress = Math.min(Math.round((plan.current_amount / plan.target_amount) * 100), 100)
   const remaining = plan.target_amount - plan.current_amount
@@ -73,13 +112,21 @@ export default function SavingsPlanDetails() {
   }
 
   const calculateProjectedDate = () => {
-    const avgContribution = plan.current_amount / plan.contributions.length
+    if (contributions.length === 0) return 'N/A'
+    const avgContribution = plan.current_amount / contributions.length
     const contributionsNeeded = Math.ceil(remaining / avgContribution)
     const weeksNeeded = contributionsNeeded
     const projectedDate = new Date()
     projectedDate.setDate(projectedDate.getDate() + (weeksNeeded * 7))
     return projectedDate.toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })
   }
+
+  // Calculate milestones based on current progress
+  const milestones = [25, 50, 75, 100].map((percentage) => ({
+    percentage,
+    reached: progress >= percentage,
+    date: null, // We'd need milestone tracking in backend to show dates
+  }))
 
   const quickActions = [
     { id: 'contribute', icon: '💰', label: 'Add Money', color: 'from-green-500 to-green-600', route: `/savings/${plan.id}/contribute` },
@@ -124,7 +171,7 @@ export default function SavingsPlanDetails() {
             {/* Emoji & Title */}
             <div className="flex items-start justify-between mb-6">
               <div>
-                <div className="text-6xl mb-3 drop-shadow-lg">{plan.emoji}</div>
+                <div className="text-6xl mb-3 drop-shadow-lg">{plan.emoji || '💰'}</div>
                 <h1 className="text-2xl font-bold mb-1">{plan.name}</h1>
                 <p className="text-white/80 text-sm capitalize">
                   {plan.plan_type} • {plan.frequency} savings
@@ -185,7 +232,7 @@ export default function SavingsPlanDetails() {
           <StatCard
             icon="📊"
             label="Total Paid"
-            value={plan.contributions.length.toString()}
+            value={contributions.length.toString()}
             suffix="times"
           />
           <StatCard
@@ -196,9 +243,9 @@ export default function SavingsPlanDetails() {
           />
           <StatCard
             icon="⚡"
-            label="Streak"
-            value="8"
-            suffix="weeks"
+            label="Contributions"
+            value={contributions.length.toString()}
+            suffix="total"
           />
         </div>
 
@@ -222,7 +269,7 @@ export default function SavingsPlanDetails() {
             <span>Milestones</span>
           </h2>
           <div className="space-y-3">
-            {plan.milestones.map((milestone) => (
+            {milestones.map((milestone) => (
               <div key={milestone.percentage} className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   milestone.reached
@@ -235,8 +282,8 @@ export default function SavingsPlanDetails() {
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900">{milestone.percentage}% Complete</div>
-                  {milestone.reached && milestone.date && (
-                    <div className="text-xs text-gray-500">Reached on {formatDate(milestone.date)}</div>
+                  {milestone.reached && (
+                    <div className="text-xs text-gray-500">Achieved!</div>
                   )}
                 </div>
                 {milestone.reached && <span className="text-2xl">🎉</span>}
@@ -256,43 +303,61 @@ export default function SavingsPlanDetails() {
           </div>
 
           {/* Timeline */}
-          <div className="space-y-4">
-            {plan.contributions.slice(0, 5).map((contribution, index) => (
-              <div key={contribution.id} className="flex items-start gap-4 relative">
-                {/* Timeline Line */}
-                {index < plan.contributions.slice(0, 5).length - 1 && (
-                  <div className="absolute left-5 top-10 bottom-0 w-0.5 bg-gray-200"></div>
-                )}
+          {contributions.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-2">📝</div>
+              <p className="text-gray-600">No contributions yet</p>
+              <button
+                onClick={() => router.push(`/savings/${plan.id}/contribute`)}
+                className="mt-4 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold"
+              >
+                Make First Contribution
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {contributions.slice(0, 5).map((contribution, index) => (
+                  <div key={contribution.id} className="flex items-start gap-4 relative">
+                    {/* Timeline Line */}
+                    {index < contributions.slice(0, 5).length - 1 && (
+                      <div className="absolute left-5 top-10 bottom-0 w-0.5 bg-gray-200"></div>
+                    )}
 
-                {/* Icon */}
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 relative z-10 shadow-md">
-                  ✓
-                </div>
+                    {/* Icon */}
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 relative z-10 shadow-md">
+                      ✓
+                    </div>
 
-                {/* Content */}
-                <div className="flex-1 pt-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-gray-900">{formatCurrency(contribution.amount)}</span>
-                    <span className="text-xs text-gray-500">{formatDate(contribution.date)}</span>
+                    {/* Content */}
+                    <div className="flex-1 pt-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-gray-900">{formatCurrency(contribution.amount)}</span>
+                        <span className="text-xs text-gray-500">{formatDate(contribution.created_at)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold">
+                          {contribution.status}
+                        </span>
+                        <span className="text-xs text-gray-500">{contribution.payment_method}</span>
+                        {contribution.reference && (
+                          <span className="text-xs text-gray-400 font-mono">{contribution.reference}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold">
-                      {contribution.status}
-                    </span>
-                    <span className="text-xs text-gray-500">{contribution.method}</span>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {plan.contributions.length > 5 && (
-            <button
-              onClick={() => router.push(`/savings/${plan.id}/history`)}
-              className="w-full mt-4 py-3 border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:border-primary hover:bg-primary/5 transition active:scale-95"
-            >
-              View All {plan.contributions.length} Contributions
-            </button>
+              {contributions.length > 5 && (
+                <button
+                  onClick={() => router.push('/transactions')}
+                  className="w-full mt-4 py-3 border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:border-primary hover:bg-primary/5 transition active:scale-95"
+                >
+                  View All {contributions.length} Contributions
+                </button>
+              )}
+            </>
           )}
         </div>
 
