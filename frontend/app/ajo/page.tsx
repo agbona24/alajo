@@ -1,67 +1,55 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { ajoGroupsAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
 import MobileNav from '@/components/MobileNav'
+import LoadingScreen from '@/components/LoadingScreen'
 
-const mockGroups = [
-  {
-    id: 1,
-    code: 'AJO-ABC123',
-    name: 'Office Squad Savings',
-    contributionAmount: 20000,
-    groupSize: 10,
-    currentMembers: 8,
-    rotationType: 'monthly',
-    myPosition: 3,
-    nextPayout: '2024-12-15',
-    totalContributed: 60000,
-    status: 'active',
-    role: 'member',
-  },
-  {
-    id: 2,
-    code: 'AJO-XYZ789',
-    name: 'Family Ajo Circle',
-    contributionAmount: 50000,
-    groupSize: 6,
-    currentMembers: 6,
-    rotationType: 'weekly',
-    myPosition: 1,
-    nextPayout: '2024-11-20',
-    totalContributed: 200000,
-    status: 'active',
-    role: 'collector',
-  },
-  {
-    id: 3,
-    code: 'AJO-LMN456',
-    name: 'Friends Investment',
-    contributionAmount: 15000,
-    groupSize: 8,
-    currentMembers: 5,
-    rotationType: 'biweekly',
-    myPosition: 2,
-    nextPayout: '2025-01-05',
-    totalContributed: 30000,
-    status: 'pending',
-    role: 'member',
-  },
-]
+interface AjoGroup {
+  id: number
+  code: string
+  name: string
+  contribution_amount: number
+  group_size: number
+  current_members?: number
+  rotation_type: string
+  status: string
+  total_contributed?: number
+}
 
 export default function AjoGroupsPage() {
   const router = useRouter()
-  const [groups] = useState(mockGroups)
+  const [groups, setGroups] = useState<AjoGroup[]>([])
+  const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'pending'>('all')
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const data = await ajoGroupsAPI.getAll()
+        setGroups(data)
+      } catch (error) {
+        console.error('Failed to fetch ajo groups:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGroups()
+  }, [])
+
+  if (loading) {
+    return <LoadingScreen />
+  }
 
   const filteredGroups = groups.filter(g =>
     filterStatus === 'all' ? true : g.status === filterStatus
   )
 
   const activeGroups = groups.filter(g => g.status === 'active').length
-  const totalContributed = groups.reduce((sum, g) => sum + g.totalContributed, 0)
-  const collectingGroups = groups.filter(g => g.role === 'collector').length
+  const totalContributed = groups.reduce((sum, g) => sum + (g.total_contributed || 0), 0)
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -98,9 +86,9 @@ export default function AjoGroupsPage() {
             bgColor="bg-green-50"
           />
           <StatCard
-            icon="⭐"
-            label="Collecting"
-            value={collectingGroups.toString()}
+            icon="📊"
+            label="Total Groups"
+            value={groups.length.toString()}
             color="text-purple-600"
             bgColor="bg-purple-50"
           />
@@ -149,7 +137,6 @@ export default function AjoGroupsPage() {
                 group={group}
                 onClick={() => router.push(`/ajo/${group.id}`)}
                 formatCurrency={formatCurrency}
-                formatDate={formatDate}
                 index={index}
               />
             ))}
@@ -218,15 +205,14 @@ function FilterTab({ active, onClick, label, count }: {
   )
 }
 
-function GroupCard({ group, onClick, formatCurrency, formatDate, index }: {
-  group: typeof mockGroups[0]
+function GroupCard({ group, onClick, formatCurrency, index }: {
+  group: AjoGroup
   onClick: () => void
   formatCurrency: (amount: number) => string
-  formatDate: (date: string) => string
   index: number
 }) {
-  const progress = (group.currentMembers / group.groupSize) * 100
-  const isCollector = group.role === 'collector'
+  const currentMembers = group.current_members || 0
+  const progress = (currentMembers / group.group_size) * 100
 
   return (
     <button
@@ -239,11 +225,6 @@ function GroupCard({ group, onClick, formatCurrency, formatDate, index }: {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-bold text-gray-900">{group.name}</h3>
-            {isCollector && (
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">
-                Collector
-              </span>
-            )}
           </div>
           <div className="text-xs text-gray-500 font-mono">{group.code}</div>
         </div>
@@ -257,18 +238,14 @@ function GroupCard({ group, onClick, formatCurrency, formatDate, index }: {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-3 mb-3">
+      <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="bg-blue-50 rounded-lg p-2">
           <div className="text-xs text-gray-600 mb-0.5">Contribution</div>
-          <div className="font-bold text-blue-700 text-sm">{formatCurrency(group.contributionAmount)}</div>
+          <div className="font-bold text-blue-700 text-sm">{formatCurrency(group.contribution_amount)}</div>
         </div>
         <div className="bg-purple-50 rounded-lg p-2">
           <div className="text-xs text-gray-600 mb-0.5">Members</div>
-          <div className="font-bold text-purple-700 text-sm">{group.currentMembers}/{group.groupSize}</div>
-        </div>
-        <div className="bg-green-50 rounded-lg p-2">
-          <div className="text-xs text-gray-600 mb-0.5">My Position</div>
-          <div className="font-bold text-green-700 text-sm">#{group.myPosition}</div>
+          <div className="font-bold text-purple-700 text-sm">{currentMembers}/{group.group_size}</div>
         </div>
       </div>
 
@@ -289,7 +266,7 @@ function GroupCard({ group, onClick, formatCurrency, formatDate, index }: {
       {/* Footer */}
       <div className="flex items-center justify-between pt-3 border-t border-gray-100">
         <div className="text-xs text-gray-600">
-          Next payout: <span className="font-semibold text-gray-900">{formatDate(group.nextPayout)}</span>
+          Rotation: <span className="font-semibold text-gray-900 capitalize">{group.rotation_type}</span>
         </div>
         <div className="text-xs font-semibold text-blue-600">
           View Details →
