@@ -1,93 +1,81 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { collectorAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
+import LoadingScreen from '@/components/LoadingScreen'
 
 interface Group {
   id: number
   name: string
   code: string
   members: number
-  dailyAmount: number
-  monthlyTarget: number
+  daily_amount: number
+  monthly_target: number
   collected: number
   pending: number
   status: 'active' | 'completed' | 'paused'
-  lastCollection: string
-  todayPaid: number
-  todayTotal: number
+  last_collection: string
+  today_paid: number
+  today_total: number
 }
 
-// Mock data
-const mockCollectorData = {
-  collectorName: 'Chioma Adeyemi',
-  totalGroups: 3,
-  groups: [
-    {
-      id: 1,
-      name: 'Office Squad Savings',
-      code: 'AJO-ABC123',
-      members: 8,
-      dailyAmount: 1000,
-      monthlyTarget: 240000, // 8 members × ₦1000 × 30 days
-      collected: 180000,
-      pending: 60000,
-      status: 'active' as const,
-      lastCollection: '2024-11-15T10:30:00',
-      todayPaid: 6,
-      todayTotal: 8,
-    },
-    {
-      id: 2,
-      name: 'Market Women Ajo',
-      code: 'AJO-MKT456',
-      members: 12,
-      dailyAmount: 500,
-      monthlyTarget: 180000,
-      collected: 120000,
-      pending: 60000,
-      status: 'active' as const,
-      lastCollection: '2024-11-15T08:00:00',
-      todayPaid: 10,
-      todayTotal: 12,
-    },
-    {
-      id: 3,
-      name: 'Family Circle',
-      code: 'AJO-FAM789',
-      members: 5,
-      dailyAmount: 2000,
-      monthlyTarget: 300000,
-      collected: 250000,
-      pending: 50000,
-      status: 'active' as const,
-      lastCollection: '2024-11-14T18:00:00',
-      todayPaid: 4,
-      todayTotal: 5,
-    },
-  ],
-  todayStats: {
-    totalCollected: 45000,
-    totalExpected: 52000,
-    totalMembers: 25,
-    paidMembers: 20,
-  },
-  weekStats: {
-    monday: 48000,
-    tuesday: 50000,
-    wednesday: 47000,
-    thursday: 49000,
-    friday: 45000,
-    saturday: 0,
-    sunday: 0,
-  },
+interface CollectorData {
+  collector_name: string
+  total_groups: number
+  groups: Group[]
+  today_stats: {
+    total_collected: number
+    total_expected: number
+    total_members: number
+    paid_members: number
+  }
 }
 
 export default function CollectorDashboard() {
   const router = useRouter()
-  const [data] = useState(mockCollectorData)
+  const [data, setData] = useState<CollectorData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today')
+
+  useEffect(() => {
+    const fetchCollectorData = async () => {
+      try {
+        const statsData = await collectorAPI.getStats()
+        setData(statsData)
+      } catch (error: any) {
+        console.error('Failed to fetch collector data:', error)
+        setError(error.response?.data?.message || 'Failed to load collector dashboard. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCollectorData()
+  }, [])
+
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">📊</div>
+          <p className="text-lg text-gray-600 mb-4">{error || 'No collector data available'}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -113,18 +101,19 @@ export default function CollectorDashboard() {
   }
 
   const getCollectionRate = (group: Group) => {
-    return (group.collected / group.monthlyTarget) * 100
+    return (group.collected / group.monthly_target) * 100
   }
 
   const getTodayProgress = () => {
-    return (data.todayStats.totalCollected / data.todayStats.totalExpected) * 100
+    if (!data) return 0
+    return (data.today_stats.total_collected / data.today_stats.total_expected) * 100
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pb-safe">
       <AppHeader
         title="Collector Dashboard"
-        subtitle={`Hello, ${data.collectorName}`}
+        subtitle={`Hello, ${data.collector_name}`}
         action={{
           icon: '🔔',
           onClick: () => alert('Notifications coming soon!'),
@@ -132,20 +121,38 @@ export default function CollectorDashboard() {
       />
 
       <div className="px-4 pt-4 pb-24 max-w-6xl mx-auto">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div className="flex-1">
+                <p className="text-red-600 text-sm">{error}</p>
+                <button
+                  onClick={() => setError(null)}
+                  className="mt-2 text-xs font-semibold text-red-700 underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Today's Summary Card */}
         <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-3xl p-6 text-white shadow-xl mb-6 animate-fade-in-up">
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="text-sm text-white/80 mb-1">Today's Collections</div>
               <div className="text-4xl font-bold mb-2">
-                {formatCurrency(data.todayStats.totalCollected)}
+                {formatCurrency(data.today_stats.total_collected)}
               </div>
               <div className="text-sm text-white/90">
-                of {formatCurrency(data.todayStats.totalExpected)} expected
+                of {formatCurrency(data.today_stats.total_expected)} expected
               </div>
             </div>
             <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold">
-              {data.todayStats.paidMembers}/{data.todayStats.totalMembers}
+              {data.today_stats.paid_members}/{data.today_stats.total_members}
             </div>
           </div>
 
@@ -166,15 +173,15 @@ export default function CollectorDashboard() {
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-3 mt-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold">{data.totalGroups}</div>
+              <div className="text-2xl font-bold">{data.total_groups}</div>
               <div className="text-xs text-white/80">Active Groups</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold">{data.todayStats.totalMembers}</div>
+              <div className="text-2xl font-bold">{data.today_stats.total_members}</div>
               <div className="text-xs text-white/80">Total Members</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold">{data.todayStats.paidMembers}</div>
+              <div className="text-2xl font-bold">{data.today_stats.paid_members}</div>
               <div className="text-xs text-white/80">Paid Today</div>
             </div>
           </div>
@@ -203,7 +210,7 @@ export default function CollectorDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">My Groups</h2>
           <div className="space-y-3">
             {data.groups.map((group, index) => {
-              const todayProgress = (group.todayPaid / group.todayTotal) * 100
+              const todayProgress = (group.today_paid / group.today_total) * 100
 
               return (
                 <div
@@ -239,7 +246,7 @@ export default function CollectorDashboard() {
                       </div>
                       <div className="text-center p-2 bg-gray-50 rounded-lg">
                         <div className="text-lg font-bold text-gray-900">
-                          {formatCurrency(group.dailyAmount)}
+                          {formatCurrency(group.daily_amount)}
                         </div>
                         <div className="text-xs text-gray-600">Daily</div>
                       </div>
@@ -262,7 +269,7 @@ export default function CollectorDashboard() {
                       <div className="flex items-center justify-between text-sm mb-1">
                         <span className="text-gray-600">Today's Collection</span>
                         <span className="font-semibold text-gray-900">
-                          {group.todayPaid}/{group.todayTotal} paid
+                          {group.today_paid}/{group.today_total} paid
                         </span>
                       </div>
                       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -291,7 +298,7 @@ export default function CollectorDashboard() {
 
                     {/* Last Collection */}
                     <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>Last collection: {formatTime(group.lastCollection)}</span>
+                      <span>Last collection: {formatTime(group.last_collection)}</span>
                       <button
                         onClick={() => router.push(`/ajo/${group.id}`)}
                         className="text-blue-600 font-semibold hover:text-blue-700"

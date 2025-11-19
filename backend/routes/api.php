@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\DailyPaymentController;
 use App\Http\Controllers\Api\PassbookController;
+use App\Http\Controllers\Api\CollectorDashboardController;
+use App\Http\Controllers\Api\AdminDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -116,4 +118,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/passbook', [PassbookController::class, 'index']);
     Route::get('/passbook/plan/{planId}', [PassbookController::class, 'byPlan']);
     Route::get('/passbook/summary', [PassbookController::class, 'summary']);
+
+    // Collector Dashboard
+    Route::get('/collector/stats', [CollectorDashboardController::class, 'stats']);
+
+    // Admin Dashboard
+    Route::prefix('admin')->group(function () {
+        Route::get('/stats', [AdminDashboardController::class, 'stats']);
+        Route::get('/recent-users', [AdminDashboardController::class, 'recentUsers']);
+        Route::get('/recent-groups', [AdminDashboardController::class, 'recentGroups']);
+        Route::get('/top-collectors', [AdminDashboardController::class, 'topCollectors']);
+        Route::get('/monthly-growth', [AdminDashboardController::class, 'monthlyGrowth']);
+        Route::get('/users', [AdminDashboardController::class, 'users']);
+        Route::get('/groups', [AdminDashboardController::class, 'groups']);
+        Route::get('/collectors', [AdminDashboardController::class, 'collectors']);
+        Route::get('/transactions', [AdminDashboardController::class, 'transactions']);
+    });
 });

@@ -346,6 +346,70 @@ export const dashboardAPI = {
   },
 }
 
+export const collectorAPI = {
+  // Get collector dashboard stats
+  getStats: async () => {
+    const response = await api.get('/collector/stats')
+    return response.data
+  },
+}
+
+export const adminAPI = {
+  // Get admin dashboard stats
+  getStats: async () => {
+    const response = await api.get('/admin/stats')
+    return response.data
+  },
+
+  // Get recent users
+  getRecentUsers: async () => {
+    const response = await api.get('/admin/recent-users')
+    return response.data
+  },
+
+  // Get recent groups
+  getRecentGroups: async () => {
+    const response = await api.get('/admin/recent-groups')
+    return response.data
+  },
+
+  // Get top collectors
+  getTopCollectors: async () => {
+    const response = await api.get('/admin/top-collectors')
+    return response.data
+  },
+
+  // Get monthly growth
+  getMonthlyGrowth: async () => {
+    const response = await api.get('/admin/monthly-growth')
+    return response.data
+  },
+
+  // Get all users
+  getUsers: async (params?: { search?: string; per_page?: number; page?: number }) => {
+    const response = await api.get('/admin/users', { params })
+    return response.data
+  },
+
+  // Get all groups
+  getGroups: async (params?: { status?: string; search?: string; per_page?: number; page?: number }) => {
+    const response = await api.get('/admin/groups', { params })
+    return response.data
+  },
+
+  // Get collectors list
+  getCollectors: async (params?: { per_page?: number; page?: number }) => {
+    const response = await api.get('/admin/collectors', { params })
+    return response.data
+  },
+
+  // Get transactions
+  getTransactions: async (params?: { status?: string; type?: string; per_page?: number; page?: number }) => {
+    const response = await api.get('/admin/transactions', { params })
+    return response.data
+  },
+}
+
 export const dailyPaymentAPI = {
   // Get payment calendar for a month
   getCalendar: async (groupId: number, month?: string) => {
