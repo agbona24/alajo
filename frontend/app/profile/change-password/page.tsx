@@ -2,11 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { profileAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
 
 export default function ChangePasswordPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -17,7 +20,7 @@ export default function ChangePasswordPage() {
     newPassword: '',
     confirmPassword: '',
   })
-  const [errors, setErrors] = useState<string[]>([])
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
 
   const validatePassword = (password: string) => {
     const errors: string[] = []
@@ -30,34 +33,49 @@ export default function ChangePasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+    setValidationErrors([])
 
     // Validate new password
     const passwordErrors = validatePassword(formData.newPassword)
     if (passwordErrors.length > 0) {
-      setErrors(passwordErrors)
+      setValidationErrors(passwordErrors)
       return
     }
 
     // Check if passwords match
     if (formData.newPassword !== formData.confirmPassword) {
-      setErrors(['Passwords do not match'])
+      setValidationErrors(['Passwords do not match'])
       return
     }
 
-    setErrors([])
-    setLoading(true)
+    setSubmitting(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false)
-      router.push('/profile')
-    }, 1000)
+    try {
+      await profileAPI.changePassword({
+        current_password: formData.currentPassword,
+        new_password: formData.newPassword,
+        new_password_confirmation: formData.confirmPassword,
+      })
+      setSuccess(true)
+      setTimeout(() => {
+        router.push('/profile')
+      }, 1500)
+    } catch (error: any) {
+      console.error('Failed to change password:', error)
+      setError(error.response?.data?.message || 'Failed to change password. Please check your current password and try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    if (errors.length > 0) {
-      setErrors([])
+    if (validationErrors.length > 0) {
+      setValidationErrors([])
+    }
+    if (error) {
+      setError(null)
     }
   }
 
@@ -84,6 +102,43 @@ export default function ChangePasswordPage() {
       />
 
       <div className="px-4 pt-4 pb-24 max-w-2xl mx-auto">
+        {/* Success Message */}
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">✅</span>
+              <p className="text-green-600 text-sm flex-1 font-semibold">Password changed successfully! Redirecting...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <p className="text-red-600 text-sm flex-1">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Validation Errors */}
+        {validationErrors.length > 0 && (
+          <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div className="flex-1">
+                <p className="text-yellow-700 text-sm font-semibold mb-2">Please fix the following:</p>
+                <ul className="list-disc list-inside text-yellow-600 text-sm space-y-1">
+                  {validationErrors.map((err, i) => (
+                    <li key={i}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Current Password */}
           <div className="animate-fade-in-up">
@@ -199,34 +254,22 @@ export default function ChangePasswordPage() {
             )}
           </div>
 
-          {/* Error Messages */}
-          {errors.length > 0 && (
-            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 animate-fade-in-up">
-              <div className="flex items-start gap-3">
-                <span className="text-xl">⚠️</span>
-                <div className="flex-1">
-                  <div className="font-bold text-red-900 mb-1">Password requirements not met:</div>
-                  <ul className="text-sm text-red-700 list-disc list-inside">
-                    {errors.map((error, i) => (
-                      <li key={i}>{error}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Save Button */}
           <div className="pt-4 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             <button
               type="submit"
-              disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-full font-bold shadow-lg hover:shadow-xl transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              disabled={submitting || success}
+              className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-full font-bold shadow-lg hover:shadow-xl transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? (
+              {submitting ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>Updating...</span>
+                </>
+              ) : success ? (
+                <>
+                  <span>✅</span>
+                  <span>Updated!</span>
                 </>
               ) : (
                 <>

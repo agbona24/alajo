@@ -1,34 +1,83 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { authAPI, profileAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
+import LoadingScreen from '@/components/LoadingScreen'
 
-const mockUser = {
-  name: 'Chioma Adeyemi',
-  email: 'chioma.adeyemi@example.com',
-  phone: '+234 803 456 7890',
-  avatar: '👩🏾',
+interface FormData {
+  name: string
+  email: string
+  phone: string
+  avatar: string
 }
 
 export default function EditProfilePage() {
   const router = useRouter()
-  const [formData, setFormData] = useState(mockUser)
-  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    email: '',
+    phone: '',
+    avatar: '👤',
+  })
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await authAPI.getUser()
+        setFormData({
+          name: userData.name || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+          avatar: userData.avatar || '👤',
+        })
+      } catch (error) {
+        console.error('Failed to fetch user:', error)
+        router.push('/profile')
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+
+    fetchUser()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setSubmitting(true)
+    setError(null)
+    setSuccess(false)
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false)
-      router.push('/profile')
-    }, 1000)
+    try {
+      await profileAPI.update({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        avatar: formData.avatar,
+      })
+      setSuccess(true)
+      setTimeout(() => {
+        router.push('/profile')
+      }, 1500)
+    } catch (error: any) {
+      console.error('Failed to update profile:', error)
+      setError(error.response?.data?.message || 'Failed to update profile. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  if (initialLoading) {
+    return <LoadingScreen />
   }
 
   return (
@@ -40,6 +89,26 @@ export default function EditProfilePage() {
       />
 
       <div className="px-4 pt-4 pb-24 max-w-2xl mx-auto">
+        {/* Success Message */}
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">✅</span>
+              <p className="text-green-600 text-sm flex-1 font-semibold">Profile updated successfully! Redirecting...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <p className="text-red-600 text-sm flex-1">{error}</p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Selection */}
           <div className="animate-fade-in-up">
@@ -119,13 +188,18 @@ export default function EditProfilePage() {
           <div className="pt-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <button
               type="submit"
-              disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-full font-bold shadow-lg hover:shadow-xl transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              disabled={submitting || success}
+              className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-full font-bold shadow-lg hover:shadow-xl transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? (
+              {submitting ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>Saving...</span>
+                </>
+              ) : success ? (
+                <>
+                  <span>✅</span>
+                  <span>Saved!</span>
                 </>
               ) : (
                 <>
