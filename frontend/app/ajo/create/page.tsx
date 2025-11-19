@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ajoGroupsAPI } from '@/lib/api'
 import AppHeader from '@/components/AppHeader'
 
 const rotationTypes = [
@@ -19,6 +20,8 @@ const selectionMethods = [
 export default function CreateAjoGroupPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -33,13 +36,35 @@ export default function CreateAjoGroupPage() {
 
   const updateFormData = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    if (error) setError(null)
   }
 
-  const handleSubmit = () => {
-    console.log('Creating Ajo Group:', formData)
-    // Generate group code and show success
-    const groupCode = 'AJO-' + Math.random().toString(36).substring(2, 8).toUpperCase()
-    router.push(`/ajo/invite?code=${groupCode}`)
+  const handleSubmit = async () => {
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      const createdGroup = await ajoGroupsAPI.create({
+        name: formData.name,
+        description: formData.description || undefined,
+        contribution_amount: parseInt(formData.contributionAmount),
+        group_size: parseInt(formData.groupSize),
+        rotation_type: formData.rotationType,
+        selection_method: formData.selectionMethod,
+        start_date: formData.startDate,
+        auto_reminders: formData.autoReminders,
+        require_approval: formData.requireApproval,
+      })
+
+      // Redirect to the newly created group's details page
+      router.push(`/ajo/${createdGroup.id}`)
+    } catch (error: any) {
+      console.error('Failed to create Ajo group:', error)
+      setError(error.response?.data?.message || 'Failed to create Ajo group. Please try again.')
+      setStep(1) // Go back to first step to see error
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const canProceedStep1 = () => {
@@ -55,6 +80,16 @@ export default function CreateAjoGroupPage() {
       <AppHeader title="Create Ajo Group" showBack />
 
       <div className="px-4 pt-4 pb-24 max-w-2xl mx-auto">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-scale-in">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <p className="text-red-600 text-sm flex-1">{error}</p>
+            </div>
+          </div>
+        )}
+
         {/* Progress Steps */}
         <div className="mb-8 animate-fade-in-up">
           <div className="flex items-center justify-between mb-2">
@@ -343,15 +378,24 @@ export default function CreateAjoGroupPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setStep(2)}
-                className="flex-1 py-4 border-2 border-gray-300 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 active:scale-95 transition"
+                disabled={submitting}
+                className="flex-1 py-4 border-2 border-gray-300 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 ← Back
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all"
+                disabled={submitting}
+                className="flex-1 py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Create Group ✓
+                {submitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <>Create Group ✓</>
+                )}
               </button>
             </div>
           </div>
