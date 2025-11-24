@@ -102,13 +102,13 @@ export const enrollBiometric = async (user: { id: number; phone: string; name: s
 
     // Create credential options
     const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
-      challenge,
+      challenge: challenge as BufferSource,
       rp: {
         name: 'Alajo - Digital Savings',
         id: window.location.hostname,
       },
       user: {
-        id: userId,
+        id: userId as BufferSource,
         name: user.phone,
         displayName: user.name,
       },
@@ -186,9 +186,9 @@ export const authenticateWithBiometric = async (): Promise<BiometricAuthResult> 
     const credentialId = base64ToArrayBuffer(credentialIdBase64)
 
     const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
-      challenge,
+      challenge: challenge as BufferSource,
       allowCredentials: [{
-        id: credentialId,
+        id: credentialId as BufferSource,
         type: 'public-key',
         transports: ['internal'],
       }],

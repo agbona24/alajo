@@ -12,6 +12,7 @@ interface Contribution {
   amount: number
   payment_method: string
   status: string
+  reference: string
   completed_at: string
   created_at: string
 }
@@ -27,6 +28,7 @@ interface Withdrawal {
   bank_account?: {
     bank_name: string
     account_number: string
+    account_name: string
   }
 }
 

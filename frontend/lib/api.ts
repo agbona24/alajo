@@ -300,6 +300,7 @@ export const ajoGroupsAPI = {
   },
 }
 
+
 export const profileAPI = {
   // Get user profile
   get: async () => {
@@ -307,12 +308,16 @@ export const profileAPI = {
     return response.data
   },
 
-  // Update profile
+  // Update profile (now accepts address fields too)
   update: async (data: {
     name?: string
     email?: string
     phone?: string
     avatar?: string
+    address?: string
+    city?: string
+    state?: string
+    postal_code?: string
   }) => {
     const response = await api.put('/profile', data)
     return response.data
@@ -366,6 +371,7 @@ export const profileAPI = {
     return response.data
   },
 }
+
 
 export const twoFactorAPI = {
   // Get 2FA status

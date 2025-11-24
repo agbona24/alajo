@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import { ajoGroupsAPI } from '@/lib/api'
@@ -22,7 +22,7 @@ interface AjoGroup {
   require_approval: boolean
 }
 
-export default function JoinAjoGroupPage() {
+function JoinAjoGroupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const codeFromUrl = searchParams?.get('code') || ''
@@ -287,5 +287,25 @@ function InfoCard({ icon, label, value }: { icon: string; label: string; value: 
       <div className="text-xs text-gray-600 mb-1">{label}</div>
       <div className="font-bold text-gray-900">{value}</div>
     </div>
+  )
+}
+
+export default function JoinAjoGroupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pb-safe">
+        <AppHeader title="Join Ajo Group" showBack />
+        <div className="px-4 pt-4 pb-24 max-w-2xl mx-auto">
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="animate-spin text-4xl mb-4">⏳</div>
+              <div className="text-gray-600">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <JoinAjoGroupContent />
+    </Suspense>
   )
 }
