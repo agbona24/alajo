@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -42,10 +43,20 @@ class WithdrawalController extends Controller
         $validated['status'] = 'pending';
 
         $withdrawal = Withdrawal::create($validated);
+        $withdrawal->load('savingsPlan', 'bankAccount', 'user');
+
+        // Send email notifications
+        try {
+            $notificationService = app(NotificationService::class);
+            $notificationService->sendWithdrawalRequest($withdrawal);
+            $notificationService->notifyAdminNewWithdrawal($withdrawal);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send withdrawal notification: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Withdrawal request submitted successfully',
-            'withdrawal' => $withdrawal->load('savingsPlan', 'bankAccount'),
+            'withdrawal' => $withdrawal,
         ], 201);
     }
 
@@ -111,6 +122,15 @@ class WithdrawalController extends Controller
             ]);
 
             DB::commit();
+
+            // Send withdrawal completed email
+            try {
+                $withdrawal->load('savingsPlan', 'bankAccount', 'user');
+                $notificationService = app(NotificationService::class);
+                $notificationService->sendWithdrawalCompleted($withdrawal);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send withdrawal completed notification: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'message' => 'Withdrawal completed successfully',

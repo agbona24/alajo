@@ -16,6 +16,7 @@ class Contribution extends Model
         'amount',
         'payment_method',
         'reference',
+        'receipt_path',
         'status',
         'notes',
         'completed_at',
@@ -25,6 +26,19 @@ class Contribution extends Model
         'amount' => 'decimal:2',
         'completed_at' => 'datetime',
     ];
+
+    protected $appends = ['receipt_url'];
+
+    /**
+     * Get the full URL for the receipt
+     */
+    public function getReceiptUrlAttribute()
+    {
+        if (!$this->receipt_path) {
+            return null;
+        }
+        return url('storage/' . $this->receipt_path);
+    }
 
     // Relationships
     public function user()

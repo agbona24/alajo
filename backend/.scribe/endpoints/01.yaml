@@ -1,0 +1,488 @@
+name: 'Two-Factor Authentication'
+description: |-
+
+  APIs for managing two-factor authentication. 2FA adds an extra layer of security by requiring a verification code sent to your email.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/2fa/send-login-code
+    metadata:
+      custom: []
+      groupName: 'Two-Factor Authentication'
+      groupDescription: |-
+
+        APIs for managing two-factor authentication. 2FA adds an extra layer of security by requiring a verification code sent to your email.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Send login code'
+      description: 'Request a 2FA verification code to be sent during the login process.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      phone:
+        custom: []
+        name: phone
+        description: "The user's phone number."
+        required: true
+        example: '08012345678'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      phone: '08012345678'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "message": "Verification code sent to your email.",
+            "email_masked": "jo***@example.com",
+            "expires_in": 600
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 400
+        content: |-
+          {
+            "message": "2FA is not enabled for this account."
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: |-
+          {
+            "message": "User not found."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/2fa/verify-login
+    metadata:
+      custom: []
+      groupName: 'Two-Factor Authentication'
+      groupDescription: |-
+
+        APIs for managing two-factor authentication. 2FA adds an extra layer of security by requiring a verification code sent to your email.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Verify login code'
+      description: 'Verify the 2FA code to complete the login process and receive an authentication token.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      phone:
+        custom: []
+        name: phone
+        description: "The user's phone number."
+        required: true
+        example: '08012345678'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      code:
+        custom: []
+        name: code
+        description: 'The 6-digit verification code.'
+        required: true
+        example: '123456'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      phone: '08012345678'
+      code: '123456'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "message": "Login successful",
+            "user": {
+              "id": 1,
+              "name": "John Doe",
+              "phone": "08012345678"
+            },
+            "token": "1|abc123..."
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 400
+        content: |-
+          {
+            "message": "Verification code has expired. Please request a new one."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/2fa/status
+    metadata:
+      custom: []
+      groupName: 'Two-Factor Authentication'
+      groupDescription: |-
+
+        APIs for managing two-factor authentication. 2FA adds an extra layer of security by requiring a verification code sent to your email.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get 2FA status'
+      description: 'Check if two-factor authentication is enabled for the authenticated user.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_BEARER_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "enabled": false,
+            "verified_at": null
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "enabled": true,
+            "verified_at": "2024-01-15T10:30:00.000000Z"
+          }
+        headers: []
+        description: Enabled
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/2fa/enable
+    metadata:
+      custom: []
+      groupName: 'Two-Factor Authentication'
+      groupDescription: |-
+
+        APIs for managing two-factor authentication. 2FA adds an extra layer of security by requiring a verification code sent to your email.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Enable 2FA'
+      description: "Start the process to enable 2FA. A verification code will be sent to the user's email."
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_BEARER_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      password:
+        custom: []
+        name: password
+        description: 'Current password to confirm identity.'
+        required: true
+        example: password123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      password: password123
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "message": "Verification code sent to your email. Please verify to enable 2FA.",
+            "email_masked": "jo***@example.com"
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 400
+        content: |-
+          {
+            "message": "Please add an email address to your profile before enabling 2FA."
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "message": "The given data was invalid.",
+            "errors": {"password": ["Password is incorrect."]}
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/2fa/verify-enable
+    metadata:
+      custom: []
+      groupName: 'Two-Factor Authentication'
+      groupDescription: |-
+
+        APIs for managing two-factor authentication. 2FA adds an extra layer of security by requiring a verification code sent to your email.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Verify enable code'
+      description: 'Verify the code sent to email to complete 2FA enablement.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_BEARER_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      code:
+        custom: []
+        name: code
+        description: 'The 6-digit verification code.'
+        required: true
+        example: '123456'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      code: '123456'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "message": "Two-factor authentication has been enabled successfully.",
+            "enabled": true
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 400
+        content: |-
+          {
+            "message": "Verification code has expired. Please request a new one."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/2fa/disable
+    metadata:
+      custom: []
+      groupName: 'Two-Factor Authentication'
+      groupDescription: |-
+
+        APIs for managing two-factor authentication. 2FA adds an extra layer of security by requiring a verification code sent to your email.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Disable 2FA'
+      description: 'Disable two-factor authentication for the account.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_BEARER_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      password:
+        custom: []
+        name: password
+        description: 'Current password to confirm identity.'
+        required: true
+        example: password123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      password: password123
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "message": "Two-factor authentication has been disabled.",
+            "enabled": false
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "message": "The given data was invalid.",
+            "errors": {"password": ["Password is incorrect."]}
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/2fa/resend-code
+    metadata:
+      custom: []
+      groupName: 'Two-Factor Authentication'
+      groupDescription: |-
+
+        APIs for managing two-factor authentication. 2FA adds an extra layer of security by requiring a verification code sent to your email.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Resend verification code'
+      description: "Request a new verification code to be sent to the user's email."
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_BEARER_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "message": "New verification code sent.",
+            "email_masked": "jo***@example.com"
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 429
+        content: |-
+          {
+            "message": "Please wait before requesting a new code."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

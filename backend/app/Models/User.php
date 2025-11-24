@@ -13,6 +13,16 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
 
+    // Role constants
+    public const ROLE_USER = 'user';
+    public const ROLE_COLLECTOR = 'collector';
+    public const ROLE_ADMIN = 'admin';
+
+    // Status constants
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INACTIVE = 'inactive';
+    public const STATUS_SUSPENDED = 'suspended';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -22,6 +32,19 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'status',
+        'phone',
+        'address',
+        'city',
+        'state',
+        'postal_code',
+        'last_login_at',
+        'collector_id',
+        'two_factor_enabled',
+        'two_factor_code',
+        'two_factor_code_expires_at',
+        'two_factor_verified_at',
     ];
 
     /**
@@ -32,6 +55,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_code',
+        'two_factor_code_expires_at',
     ];
 
     /**
@@ -44,7 +69,65 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
+            'two_factor_enabled' => 'boolean',
+            'two_factor_code_expires_at' => 'datetime',
+            'two_factor_verified_at' => 'datetime',
         ];
+    }
+
+    // Role check methods
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isCollector(): bool
+    {
+        return $this->role === self::ROLE_COLLECTOR;
+    }
+
+    public function isUser(): bool
+    {
+        return $this->role === self::ROLE_USER;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->status === self::STATUS_SUSPENDED;
+    }
+
+    // Check if user has any of the given roles
+    public function hasRole(string|array $roles): bool
+    {
+        $roles = is_array($roles) ? $roles : [$roles];
+        return in_array($this->role, $roles);
+    }
+
+    // Scope for filtering by role
+    public function scopeRole($query, string $role)
+    {
+        return $query->where('role', $role);
+    }
+
+    public function scopeAdmins($query)
+    {
+        return $query->where('role', self::ROLE_ADMIN);
+    }
+
+    public function scopeCollectors($query)
+    {
+        return $query->where('role', self::ROLE_COLLECTOR);
+    }
+
+    public function scopeActiveUsers($query)
+    {
+        return $query->where('status', self::STATUS_ACTIVE);
     }
 
     // Relationships
@@ -113,5 +196,31 @@ class User extends Authenticatable
     public function ajoActivities()
     {
         return $this->hasMany(AjoActivity::class);
+    }
+
+    public function earnings()
+    {
+        return $this->hasMany(Earning::class);
+    }
+
+    public function collectorEarnings()
+    {
+        return $this->hasMany(Earning::class, 'collector_id');
+    }
+
+    /**
+     * Get the collector that manages this user
+     */
+    public function collector()
+    {
+        return $this->belongsTo(User::class, 'collector_id');
+    }
+
+    /**
+     * Get all members managed by this collector
+     */
+    public function members()
+    {
+        return $this->hasMany(User::class, 'collector_id');
     }
 }

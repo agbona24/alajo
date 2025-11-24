@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\DailyPaymentController;
+use App\Http\Controllers\Api\TwoFactorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,12 @@ use App\Http\Controllers\Api\DailyPaymentController;
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/biometric-login', [AuthController::class, 'biometricLogin']);
+Route::get('/collectors', [AuthController::class, 'getCollectors']);
+
+// 2FA routes (public - for login flow)
+Route::post('/2fa/send-login-code', [TwoFactorController::class, 'sendLoginCode']);
+Route::post('/2fa/verify-login', [TwoFactorController::class, 'verifyLoginCode']);
 
 // Protected routes - require authentication
 Route::middleware('auth:sanctum')->group(function () {
@@ -45,12 +52,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/profile/password', [ProfileController::class, 'updatePassword']);
+    Route::post('/profile/change-password', [ProfileController::class, 'updatePassword']);
     Route::post('/profile/settings', [ProfileController::class, 'updateSettings']);
-    Route::get('/profile/bank-accounts', [ProfileController::class, 'getBankAccounts']);
+    Route::put('/profile/settings', [ProfileController::class, 'updateSettings']);
+    Route::get('/profile/bank-accounts', [BankAccountController::class, 'index']);
+    Route::post('/profile/bank-accounts', [BankAccountController::class, 'store']);
+    Route::post('/profile/bank-accounts/{id}/set-primary', [BankAccountController::class, 'setPrimary']);
+    Route::delete('/profile/bank-accounts/{id}', [BankAccountController::class, 'destroy']);
+
+    // Two-Factor Authentication
+    Route::get('/2fa/status', [TwoFactorController::class, 'status']);
+    Route::post('/2fa/enable', [TwoFactorController::class, 'enable']);
+    Route::post('/2fa/verify-enable', [TwoFactorController::class, 'verifyEnable']);
+    Route::post('/2fa/disable', [TwoFactorController::class, 'disable']);
+    Route::post('/2fa/resend-code', [TwoFactorController::class, 'resendCode']);
 
     // Savings Plans
     Route::apiResource('savings-plans', SavingsPlanController::class);
     Route::post('/savings-plans/{id}/contribute', [SavingsPlanController::class, 'contribute']);
+    Route::get('/savings-plans/{id}/passbook', [SavingsPlanController::class, 'passbook']);
 
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index']);

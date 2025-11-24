@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Hajo Savings')</title>
+    <title>@yield('title', 'Alajo Savings')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         [x-cloak] { display: none !important; }
@@ -19,7 +19,7 @@
                 <div class="flex justify-between h-16">
                     <div class="flex items-center">
                         <a href="{{ route('home') }}" class="flex items-center">
-                            <span class="text-2xl font-bold text-purple-600">Hajo</span>
+                            <span class="text-2xl font-bold text-purple-600">Alajo</span>
                             <span class="ml-2 text-sm text-gray-600">@yield('nav-title', 'Dashboard')</span>
                         </a>
                     </div>
@@ -59,6 +59,9 @@
             @yield('content')
         </main>
     </div>
+
+    <!-- WhatsApp Floating Button -->
+    <x-whatsapp-button message="Hello, I need help with my Alajo savings account." />
 
     @stack('scripts')
 </body>
