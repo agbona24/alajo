@@ -1,23 +1,49 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authAPI } from '@/lib/api'
 
+interface Collector {
+  id: number
+  name: string
+}
+
 export default function RegisterPage() {
   const router = useRouter()
+  const [collectors, setCollectors] = useState<Collector[]>([])
+  const [loadingCollectors, setLoadingCollectors] = useState(true)
   const [formData, setFormData] = useState({
     name: '',
+    phone: '',
     email: '',
     password: '',
     password_confirmation: '',
+    collector_id: '',
   })
   const [errors, setErrors] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    const fetchCollectors = async () => {
+      try {
+        console.log('Fetching collectors from API...')
+        const data = await authAPI.getCollectors()
+        console.log('Collectors received:', data)
+        setCollectors(data || [])
+      } catch (error: any) {
+        console.error('Error fetching collectors:', error)
+        console.error('Error details:', error.response?.data || error.message)
+      } finally {
+        setLoadingCollectors(false)
+      }
+    }
+    fetchCollectors()
+  }, [])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -30,7 +56,15 @@ export default function RegisterPage() {
     setErrors([])
 
     try {
-      const response = await authAPI.register(formData)
+      const submitData = {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email || undefined,
+        password: formData.password,
+        password_confirmation: formData.password_confirmation,
+        collector_id: formData.collector_id ? parseInt(formData.collector_id) : undefined,
+      }
+      const response = await authAPI.register(submitData)
 
       if (response.token) {
         localStorage.setItem('auth_token', response.token)
@@ -39,11 +73,14 @@ export default function RegisterPage() {
 
       router.push('/dashboard')
     } catch (error: any) {
+      console.error('Registration error:', error)
       if (error.response?.data?.errors) {
         const errorMessages = Object.values(error.response.data.errors).flat() as string[]
         setErrors(errorMessages)
       } else if (error.response?.data?.message) {
         setErrors([error.response.data.message])
+      } else if (error.message) {
+        setErrors([`Error: ${error.message}`])
       } else {
         setErrors(['Registration failed. Please try again.'])
       }
@@ -98,7 +135,7 @@ export default function RegisterPage() {
               </div>
 
               <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                Join Hajo Today!
+                Join Alajo Today!
               </h1>
               <p className="text-gray-600 text-lg">
                 Start your savings journey in seconds ✨
@@ -138,10 +175,28 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Email Field */}
+              {/* Phone Number Field */}
               <div className="relative">
                 <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">
-                  📧 Email Address
+                  📱 Phone Number
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none transition text-base"
+                  placeholder="08012345678"
+                />
+                <p className="text-xs text-gray-500 mt-1 ml-1">This will be used for login</p>
+              </div>
+
+              {/* Email Field (Optional) */}
+              <div className="relative">
+                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">
+                  📧 Email Address (Optional)
                 </label>
                 <input
                   type="email"
@@ -149,7 +204,6 @@ export default function RegisterPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  required
                   className="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none transition text-base"
                   placeholder="you@example.com"
                 />
@@ -208,6 +262,34 @@ export default function RegisterPage() {
                     {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
                   </button>
                 </div>
+              </div>
+
+              {/* Collector Selection Field */}
+              <div className="relative">
+                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">
+                  👨‍💼 Select Your Collector (Optional)
+                </label>
+                <select
+                  id="collector_id"
+                  name="collector_id"
+                  value={formData.collector_id}
+                  onChange={handleChange}
+                  className="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none transition text-base appearance-none"
+                  disabled={loadingCollectors}
+                >
+                  <option value="">-- No Collector (Save Independently) --</option>
+                  {collectors.map((collector) => (
+                    <option key={collector.id} value={collector.id}>
+                      {collector.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-4 top-1/2 translate-y-1 pointer-events-none text-gray-400">
+                  ▼
+                </div>
+                <p className="text-xs text-gray-500 mt-1 ml-1">
+                  Choose a collector to manage your savings contributions
+                </p>
               </div>
 
               {/* Submit Button */}

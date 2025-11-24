@@ -1,61 +1,124 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
+import { ajoGroupsAPI } from '@/lib/api'
 
-const mockGroupDetails = {
-  id: 1,
-  code: 'AJO-ABC123',
-  name: 'Office Squad Savings',
-  description: 'Monthly savings for office colleagues',
-  contributionAmount: 20000,
-  groupSize: 10,
-  currentMembers: 8,
-  rotationType: 'monthly',
-  startDate: '2024-11-01',
-  status: 'active',
-  totalPool: 200000,
-  nextPayoutDate: '2024-12-15',
-  members: [
-    { id: 1, name: 'Chioma Adeyemi', avatar: '👩🏾', position: 1, hasPaid: true, collectedAt: '2024-11-01', role: 'collector' },
-    { id: 2, name: 'Ade Bakare', avatar: '👨🏾', position: 2, hasPaid: true, collectedAt: null, role: 'member' },
-    { id: 3, name: 'Ngozi Okafor', avatar: '👩🏾', position: 3, hasPaid: true, collectedAt: null, role: 'member' },
-    { id: 4, name: 'Emeka Eze', avatar: '👨🏾', position: 4, hasPaid: false, collectedAt: null, role: 'member' },
-    { id: 5, name: 'Funmi Adebayo', avatar: '👩🏾', position: 5, hasPaid: true, collectedAt: null, role: 'member' },
-    { id: 6, name: 'Chidi Nwosu', avatar: '👨🏾', position: 6, hasPaid: true, collectedAt: null, role: 'member' },
-    { id: 7, name: 'Blessing Okeke', avatar: '👩🏾', position: 7, hasPaid: true, collectedAt: null, role: 'member' },
-    { id: 8, name: 'Tunde Ibrahim', avatar: '👨🏾', position: 8, hasPaid: false, collectedAt: null, role: 'member' },
-  ],
-  payoutSchedule: [
-    { position: 1, name: 'Chioma Adeyemi', date: '2024-11-01', status: 'completed', amount: 200000 },
-    { position: 2, name: 'Ade Bakare', date: '2024-12-01', status: 'upcoming', amount: 200000 },
-    { position: 3, name: 'Ngozi Okafor', date: '2025-01-01', status: 'scheduled', amount: 200000 },
-    { position: 4, name: 'Emeka Eze', date: '2025-02-01', status: 'scheduled', amount: 200000 },
-  ],
+interface Member {
+  id: number
+  name: string
+  avatar: string
+  position: number
+  has_paid: boolean
+  collected_at: string | null
+  role: string
+}
+
+interface PayoutSchedule {
+  position: number
+  name: string
+  date: string
+  status: string
+  amount: number
+}
+
+interface AjoGroup {
+  id: number
+  code: string
+  name: string
+  description: string
+  contribution_amount: number
+  group_size: number
+  current_members: number
+  rotation_type: string
+  start_date: string
+  status: string
+  total_pool: number
+  next_payout_date: string
+  members: Member[]
+  payout_schedule: PayoutSchedule[]
 }
 
 export default function AjoGroupDetailsPage() {
   const router = useRouter()
   const params = useParams()
-  const [group] = useState(mockGroupDetails)
+  const [group, setGroup] = useState<AjoGroup | null>(null)
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'members' | 'schedule'>('members')
 
+  useEffect(() => {
+    const fetchGroup = async () => {
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          router.push('/login')
+          return
+        }
+        const data = await ajoGroupsAPI.getById(Number(params.id))
+        setGroup(data)
+      } catch (error: any) {
+        console.error('Error fetching group:', error)
+        if (error.response?.status === 401) {
+          router.push('/login')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchGroup()
+    }
+  }, [params.id, router])
+
   const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(amount)
+    }).format(numAmount)
   }
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return '-'
     const date = new Date(dateString)
     return date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
-  const paidMembers = group.members.filter(m => m.hasPaid).length
-  const paymentProgress = (paidMembers / group.currentMembers) * 100
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading group...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!group) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😞</div>
+          <p className="text-gray-600 mb-4">Group not found</p>
+          <button
+            onClick={() => router.push('/ajo')}
+            className="px-6 py-3 bg-primary text-white rounded-xl font-semibold"
+          >
+            Back to Groups
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const members = group.members || []
+  const payoutSchedule = group.payout_schedule || []
+  const paidMembers = members.filter(m => m.has_paid).length
+  const paymentProgress = group.current_members > 0 ? (paidMembers / group.current_members) * 100 : 0
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pb-safe">
@@ -75,8 +138,8 @@ export default function AjoGroupDetailsPage() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="text-sm text-white/80 mb-1">Total Pool</div>
-              <div className="text-4xl font-bold mb-2">{formatCurrency(group.totalPool)}</div>
-              <div className="text-sm text-white/90">Per member: {formatCurrency(group.contributionAmount)}</div>
+              <div className="text-4xl font-bold mb-2">{formatCurrency(group.total_pool || 0)}</div>
+              <div className="text-sm text-white/90">Per member: {formatCurrency(group.contribution_amount || 0)}</div>
             </div>
             <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold">
               {group.status}
@@ -87,7 +150,7 @@ export default function AjoGroupDetailsPage() {
           <div className="mt-4">
             <div className="flex items-center justify-between text-sm text-white/80 mb-2">
               <span>This Month Payment</span>
-              <span>{paidMembers}/{group.currentMembers} paid</span>
+              <span>{paidMembers}/{group.current_members || 0} paid</span>
             </div>
             <div className="h-2 bg-white/20 rounded-full overflow-hidden">
               <div
@@ -100,9 +163,9 @@ export default function AjoGroupDetailsPage() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <StatCard icon="👥" label="Members" value={`${group.currentMembers}/${group.groupSize}`} />
-          <StatCard icon="🔄" label="Rotation" value={group.rotationType} />
-          <StatCard icon="📅" label="Next Payout" value={formatDate(group.nextPayoutDate)} />
+          <StatCard icon="👥" label="Members" value={`${group.current_members || 0}/${group.group_size || 0}`} />
+          <StatCard icon="🔄" label="Rotation" value={group.rotation_type || '-'} />
+          <StatCard icon="📅" label="Next Payout" value={formatDate(group.next_payout_date)} />
         </div>
 
         {/* Description */}
@@ -132,7 +195,7 @@ export default function AjoGroupDetailsPage() {
         {/* Members Tab */}
         {activeTab === 'members' && (
           <div className="space-y-3 animate-fade-in-up">
-            {group.members.map((member, index) => (
+            {members.map((member, index) => (
               <div
                 key={member.id}
                 className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
@@ -141,7 +204,7 @@ export default function AjoGroupDetailsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3 flex-1">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-2xl">
-                      {member.avatar}
+                      {member.avatar || '👤'}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -153,15 +216,15 @@ export default function AjoGroupDetailsPage() {
                         )}
                       </div>
                       <div className="text-sm text-gray-600">Position #{member.position}</div>
-                      {member.collectedAt && (
+                      {member.collected_at && (
                         <div className="text-xs text-green-600 mt-1">
-                          Collected on {formatDate(member.collectedAt)}
+                          Collected on {formatDate(member.collected_at)}
                         </div>
                       )}
                     </div>
                   </div>
                   <div>
-                    {member.hasPaid ? (
+                    {member.has_paid ? (
                       <div className="flex items-center gap-1 text-green-600">
                         <span className="text-xl">✓</span>
                         <span className="text-sm font-semibold">Paid</span>
@@ -177,12 +240,12 @@ export default function AjoGroupDetailsPage() {
               </div>
             ))}
 
-            {group.currentMembers < group.groupSize && (
+            {(group.current_members || 0) < (group.group_size || 0) && (
               <button
                 onClick={() => alert('Invite members feature coming soon!')}
                 className="w-full p-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-600 font-semibold hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition active:scale-95"
               >
-                + Invite More Members ({group.groupSize - group.currentMembers} slots left)
+                + Invite More Members ({(group.group_size || 0) - (group.current_members || 0)} slots left)
               </button>
             )}
           </div>
@@ -191,7 +254,7 @@ export default function AjoGroupDetailsPage() {
         {/* Schedule Tab */}
         {activeTab === 'schedule' && (
           <div className="space-y-3 animate-fade-in-up">
-            {group.payoutSchedule.map((payout, index) => (
+            {payoutSchedule.map((payout, index) => (
               <div
                 key={payout.position}
                 className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"

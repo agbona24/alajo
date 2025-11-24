@@ -1,103 +1,110 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
+import { ajoGroupsAPI, authAPI } from '@/lib/api'
 
 interface Group {
   id: number
   name: string
   code: string
   members: number
-  dailyAmount: number
-  monthlyTarget: number
+  daily_amount: number
+  monthly_target: number
   collected: number
   pending: number
-  status: 'active' | 'completed' | 'paused'
-  lastCollection: string
-  todayPaid: number
-  todayTotal: number
+  status: string
+  last_collection: string
+  today_paid: number
+  today_total: number
 }
 
-// Mock data
-const mockCollectorData = {
-  collectorName: 'Chioma Adeyemi',
-  totalGroups: 3,
-  groups: [
-    {
-      id: 1,
-      name: 'Office Squad Savings',
-      code: 'AJO-ABC123',
-      members: 8,
-      dailyAmount: 1000,
-      monthlyTarget: 240000, // 8 members × ₦1000 × 30 days
-      collected: 180000,
-      pending: 60000,
-      status: 'active' as const,
-      lastCollection: '2024-11-15T10:30:00',
-      todayPaid: 6,
-      todayTotal: 8,
-    },
-    {
-      id: 2,
-      name: 'Market Women Ajo',
-      code: 'AJO-MKT456',
-      members: 12,
-      dailyAmount: 500,
-      monthlyTarget: 180000,
-      collected: 120000,
-      pending: 60000,
-      status: 'active' as const,
-      lastCollection: '2024-11-15T08:00:00',
-      todayPaid: 10,
-      todayTotal: 12,
-    },
-    {
-      id: 3,
-      name: 'Family Circle',
-      code: 'AJO-FAM789',
-      members: 5,
-      dailyAmount: 2000,
-      monthlyTarget: 300000,
-      collected: 250000,
-      pending: 50000,
-      status: 'active' as const,
-      lastCollection: '2024-11-14T18:00:00',
-      todayPaid: 4,
-      todayTotal: 5,
-    },
-  ],
-  todayStats: {
-    totalCollected: 45000,
-    totalExpected: 52000,
-    totalMembers: 25,
-    paidMembers: 20,
-  },
-  weekStats: {
-    monday: 48000,
-    tuesday: 50000,
-    wednesday: 47000,
-    thursday: 49000,
-    friday: 45000,
-    saturday: 0,
-    sunday: 0,
-  },
+interface CollectorData {
+  collector_name: string
+  total_groups: number
+  groups: Group[]
+  today_stats: {
+    total_collected: number
+    total_expected: number
+    total_members: number
+    paid_members: number
+  }
 }
 
 export default function CollectorDashboard() {
   const router = useRouter()
-  const [data] = useState(mockCollectorData)
+  const [data, setData] = useState<CollectorData | null>(null)
+  const [loading, setLoading] = useState(true)
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today')
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          router.push('/login')
+          return
+        }
+
+        const [userData, groupsData] = await Promise.all([
+          authAPI.getUser(),
+          ajoGroupsAPI.getAll()
+        ])
+
+        // Transform the data for collector view
+        const groups = (groupsData || []).filter((g: any) => g.role === 'collector')
+        const totalMembers = groups.reduce((sum: number, g: any) => sum + (g.current_members || 0), 0)
+        const totalCollected = groups.reduce((sum: number, g: any) => sum + (g.total_contributed || 0), 0)
+
+        setData({
+          collector_name: userData?.name || 'Collector',
+          total_groups: groups.length,
+          groups: groups.map((g: any) => ({
+            id: g.id,
+            name: g.name,
+            code: g.code,
+            members: g.current_members || 0,
+            daily_amount: g.contribution_amount || 0,
+            monthly_target: (g.contribution_amount || 0) * (g.current_members || 0) * 30,
+            collected: g.total_contributed || 0,
+            pending: 0,
+            status: g.status,
+            last_collection: g.last_contribution_at || '',
+            today_paid: 0,
+            today_total: g.current_members || 0,
+          })),
+          today_stats: {
+            total_collected: totalCollected,
+            total_expected: 0,
+            total_members: totalMembers,
+            paid_members: 0,
+          }
+        })
+      } catch (error: any) {
+        console.error('Error fetching data:', error)
+        if (error.response?.status === 401) {
+          router.push('/login')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [router])
+
   const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(amount)
+    }).format(numAmount)
   }
 
   const formatTime = (dateString: string) => {
+    if (!dateString) return '-'
     return new Date(dateString).toLocaleTimeString('en-NG', {
       hour: '2-digit',
       minute: '2-digit',
@@ -105,26 +112,55 @@ export default function CollectorDashboard() {
   }
 
   const getTotalCollected = () => {
-    return data.groups.reduce((sum, group) => sum + group.collected, 0)
+    return data?.groups.reduce((sum, group) => sum + group.collected, 0) || 0
   }
 
   const getTotalPending = () => {
-    return data.groups.reduce((sum, group) => sum + group.pending, 0)
+    return data?.groups.reduce((sum, group) => sum + group.pending, 0) || 0
   }
 
   const getCollectionRate = (group: Group) => {
-    return (group.collected / group.monthlyTarget) * 100
+    return group.monthly_target > 0 ? (group.collected / group.monthly_target) * 100 : 0
   }
 
   const getTodayProgress = () => {
-    return (data.todayStats.totalCollected / data.todayStats.totalExpected) * 100
+    if (!data || data.today_stats.total_expected === 0) return 0
+    return (data.today_stats.total_collected / data.today_stats.total_expected) * 100
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading collector data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😞</div>
+          <p className="text-gray-600 mb-4">Failed to load data</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-6 py-3 bg-primary text-white rounded-xl font-semibold"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pb-safe">
       <AppHeader
         title="Collector Dashboard"
-        subtitle={`Hello, ${data.collectorName}`}
+        subtitle={`Hello, ${data.collector_name}`}
         action={{
           icon: '🔔',
           onClick: () => alert('Notifications coming soon!'),
@@ -138,14 +174,14 @@ export default function CollectorDashboard() {
             <div>
               <div className="text-sm text-white/80 mb-1">Today's Collections</div>
               <div className="text-4xl font-bold mb-2">
-                {formatCurrency(data.todayStats.totalCollected)}
+                {formatCurrency(data.today_stats.total_collected)}
               </div>
               <div className="text-sm text-white/90">
-                of {formatCurrency(data.todayStats.totalExpected)} expected
+                of {formatCurrency(data.today_stats.total_expected)} expected
               </div>
             </div>
             <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold">
-              {data.todayStats.paidMembers}/{data.todayStats.totalMembers}
+              {data.today_stats.paid_members}/{data.today_stats.total_members}
             </div>
           </div>
 
@@ -166,15 +202,15 @@ export default function CollectorDashboard() {
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-3 mt-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold">{data.totalGroups}</div>
+              <div className="text-2xl font-bold">{data.total_groups}</div>
               <div className="text-xs text-white/80">Active Groups</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold">{data.todayStats.totalMembers}</div>
+              <div className="text-2xl font-bold">{data.today_stats.total_members}</div>
               <div className="text-xs text-white/80">Total Members</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold">{data.todayStats.paidMembers}</div>
+              <div className="text-2xl font-bold">{data.today_stats.paid_members}</div>
               <div className="text-xs text-white/80">Paid Today</div>
             </div>
           </div>
@@ -203,7 +239,7 @@ export default function CollectorDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">My Groups</h2>
           <div className="space-y-3">
             {data.groups.map((group, index) => {
-              const todayProgress = (group.todayPaid / group.todayTotal) * 100
+              const todayProgress = group.today_total > 0 ? (group.today_paid / group.today_total) * 100 : 0
 
               return (
                 <div
@@ -239,7 +275,7 @@ export default function CollectorDashboard() {
                       </div>
                       <div className="text-center p-2 bg-gray-50 rounded-lg">
                         <div className="text-lg font-bold text-gray-900">
-                          {formatCurrency(group.dailyAmount)}
+                          {formatCurrency(group.daily_amount)}
                         </div>
                         <div className="text-xs text-gray-600">Daily</div>
                       </div>
@@ -262,7 +298,7 @@ export default function CollectorDashboard() {
                       <div className="flex items-center justify-between text-sm mb-1">
                         <span className="text-gray-600">Today's Collection</span>
                         <span className="font-semibold text-gray-900">
-                          {group.todayPaid}/{group.todayTotal} paid
+                          {group.today_paid}/{group.today_total} paid
                         </span>
                       </div>
                       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -291,7 +327,7 @@ export default function CollectorDashboard() {
 
                     {/* Last Collection */}
                     <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>Last collection: {formatTime(group.lastCollection)}</span>
+                      <span>Last collection: {formatTime(group.last_collection)}</span>
                       <button
                         onClick={() => router.push(`/ajo/${group.id}`)}
                         className="text-blue-600 font-semibold hover:text-blue-700"

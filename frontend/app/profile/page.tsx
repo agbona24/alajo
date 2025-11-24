@@ -1,21 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import MobileNav from '@/components/MobileNav'
-
-const mockUser = {
-  name: 'Chioma Adeyemi',
-  email: 'chioma.adeyemi@example.com',
-  phone: '+234 803 456 7890',
-  avatar: '👩🏾',
-  memberSince: '2024-01-15',
-}
+import { authAPI, savingsAPI } from '@/lib/api'
+import {
+  isBiometricAvailable,
+  isBiometricEnabled,
+  enrollBiometric,
+  disableBiometric,
+} from '@/lib/biometricAuth'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [user] = useState(mockUser)
+  const [user, setUser] = useState<any>(null)
+  const [stats, setStats] = useState({ totalPlans: 0, totalSaved: 0, contributions: 0 })
+  const [loading, setLoading] = useState(true)
+  const [biometricAvailable, setBiometricAvailable] = useState(false)
+  const [biometricEnabled, setBiometricEnabled] = useState(false)
+  const [biometricLoading, setBiometricLoading] = useState(false)
   const [notifications, setNotifications] = useState({
     contributions: true,
     withdrawals: true,
@@ -24,8 +28,108 @@ export default function ProfilePage() {
     marketing: false,
   })
 
-  const handleLogout = () => {
-    router.push('/login')
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          router.push('/login')
+          return
+        }
+
+        const [userData, plansData] = await Promise.all([
+          authAPI.getUser(),
+          savingsAPI.getPlans()
+        ])
+
+        setUser(userData)
+
+        // Calculate stats
+        const plans = plansData || []
+        const totalSaved = plans.reduce((sum: number, p: any) => sum + Number(p.current_amount || 0), 0)
+        const totalContributions = plans.reduce((sum: number, p: any) => sum + (p.contributions?.length || 0), 0)
+
+        setStats({
+          totalPlans: plans.length,
+          totalSaved,
+          contributions: totalContributions,
+        })
+
+        // Check biometric availability
+        const bioAvailable = await isBiometricAvailable()
+        setBiometricAvailable(bioAvailable)
+        setBiometricEnabled(isBiometricEnabled())
+      } catch (error: any) {
+        console.error('Profile error:', error)
+        if (error.response?.status === 401) {
+          router.push('/login')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [router])
+
+  const handleBiometricToggle = async () => {
+    if (!user) return
+
+    setBiometricLoading(true)
+    try {
+      if (biometricEnabled) {
+        // Disable biometric
+        disableBiometric()
+        setBiometricEnabled(false)
+        alert('Biometric login disabled')
+      } else {
+        // Enroll biometric
+        await enrollBiometric({
+          id: user.id,
+          phone: user.phone,
+          name: user.name,
+        })
+        setBiometricEnabled(true)
+        alert('Biometric login enabled successfully! You can now use fingerprint or Face ID to login.')
+      }
+    } catch (error: any) {
+      console.error('Biometric toggle error:', error)
+      alert(error.message || 'Failed to update biometric settings')
+    } finally {
+      setBiometricLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await authAPI.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user')
+      router.push('/login')
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 0,
+    }).format(numAmount)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -49,37 +153,30 @@ export default function ProfilePage() {
             <div className="flex items-start gap-4 mb-4">
               {/* Avatar */}
               <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-4xl border-2 border-white/30">
-                {user.avatar}
+                👤
               </div>
 
               <div className="flex-1">
-                <h2 className="text-2xl font-bold mb-1">{user.name}</h2>
-                <p className="text-white/80 text-sm mb-1">{user.email}</p>
+                <h2 className="text-2xl font-bold mb-1">{user?.name || 'User'}</h2>
+                <p className="text-white/80 text-sm mb-1">{user?.email}</p>
                 <p className="text-white/70 text-xs">
-                  Member since {new Date(user.memberSince).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' })}
+                  {user?.phone || '-'}
                 </p>
               </div>
-
-              <button
-                onClick={() => router.push('/profile/edit')}
-                className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center hover:bg-white/30 transition active:scale-95"
-              >
-                <span className="text-lg">✏️</span>
-              </button>
             </div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-3 mt-6">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold mb-1">5</div>
+                <div className="text-2xl font-bold mb-1">{stats.totalPlans}</div>
                 <div className="text-xs text-white/80">Active Plans</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold mb-1">₦2.4M</div>
+                <div className="text-2xl font-bold mb-1">{formatCurrency(stats.totalSaved)}</div>
                 <div className="text-xs text-white/80">Total Saved</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold mb-1">48</div>
+                <div className="text-2xl font-bold mb-1">{stats.contributions}</div>
                 <div className="text-xs text-white/80">Contributions</div>
               </div>
             </div>
@@ -94,13 +191,13 @@ export default function ProfilePage() {
               icon="👤"
               label="Personal Information"
               description="Name, email, phone number"
-              onClick={() => router.push('/profile/edit')}
+              onClick={() => router.push('/profile/personal-info')}
             />
             <SettingItem
               icon="💳"
               label="Payment Methods"
               description="Cards and bank accounts"
-              onClick={() => router.push('/profile/payment-methods')}
+              onClick={() => router.push('/profile/bank-accounts')}
             />
             <SettingItem
               icon="📍"
@@ -126,18 +223,31 @@ export default function ProfilePage() {
               icon="🛡️"
               label="Two-Factor Authentication"
               description="Add extra security"
-              onClick={() => router.push('/profile/2fa')}
+              onClick={() => {}}
               badge="Recommended"
             />
-            <SettingItem
-              icon="👆"
-              label="Biometric Login"
-              description="Use fingerprint or Face ID"
-              onClick={() => {}}
-              showBorder={false}
-              hasToggle
-              toggleValue={false}
-            />
+            {biometricAvailable ? (
+              <SettingItem
+                icon="👆"
+                label="Biometric Login"
+                description={biometricLoading ? 'Setting up...' : (biometricEnabled ? 'Enabled - Tap to disable' : 'Use fingerprint or Face ID')}
+                onClick={() => {}}
+                showBorder={false}
+                hasToggle
+                toggleValue={biometricEnabled}
+                onToggle={handleBiometricToggle}
+              />
+            ) : (
+              <SettingItem
+                icon="👆"
+                label="Biometric Login"
+                description="Not available on this device"
+                onClick={() => {}}
+                showBorder={false}
+                hasToggle
+                toggleValue={false}
+              />
+            )}
           </div>
         </div>
 
@@ -168,103 +278,65 @@ export default function ProfilePage() {
               hasToggle
               toggleValue={notifications.milestones}
               onToggle={() => setNotifications({...notifications, milestones: !notifications.milestones})}
-            />
-            <SettingItem
-              icon="👥"
-              label="Group Activity"
-              description="Updates from your ajo groups"
-              hasToggle
-              toggleValue={notifications.groupActivity}
-              onToggle={() => setNotifications({...notifications, groupActivity: !notifications.groupActivity})}
-            />
-            <SettingItem
-              icon="📢"
-              label="Marketing & Promotions"
-              description="Special offers and updates"
-              hasToggle
-              toggleValue={notifications.marketing}
-              onToggle={() => setNotifications({...notifications, marketing: !notifications.marketing})}
-              showBorder={false}
-            />
-          </div>
-        </div>
-
-        {/* Preferences Section */}
-        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-          <h3 className="text-sm font-bold text-gray-500 uppercase mb-3 px-2">Preferences</h3>
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <SettingItem
-              icon="🌍"
-              label="Language"
-              description="English (Nigeria)"
-              onClick={() => {}}
-              value="English"
-            />
-            <SettingItem
-              icon="💱"
-              label="Currency"
-              description="Nigerian Naira (₦)"
-              onClick={() => {}}
-              value="NGN"
               showBorder={false}
             />
           </div>
         </div>
 
         {/* Help & Support Section */}
-        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
           <h3 className="text-sm font-bold text-gray-500 uppercase mb-3 px-2">Help & Support</h3>
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <SettingItem
               icon="❓"
               label="Help Center"
               description="FAQs and guides"
-              onClick={() => {}}
+              onClick={() => router.push('/profile/help-center')}
             />
             <SettingItem
               icon="💬"
               label="Contact Support"
               description="Chat with our team"
-              onClick={() => {}}
+              onClick={() => window.open('https://wa.me/2349071142022?text=Hello, I need help with my Alajo account', '_blank')}
             />
             <SettingItem
               icon="⭐"
-              label="Rate Hajo"
+              label="Rate Alajo"
               description="Share your feedback"
-              onClick={() => {}}
+              onClick={() => router.push('/profile/rate-app')}
               showBorder={false}
             />
           </div>
         </div>
 
         {/* Legal Section */}
-        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+        <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
           <h3 className="text-sm font-bold text-gray-500 uppercase mb-3 px-2">Legal</h3>
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <SettingItem
               icon="📄"
               label="Terms of Service"
               description="Read our terms"
-              onClick={() => {}}
+              onClick={() => router.push('/profile/terms')}
             />
             <SettingItem
               icon="🔒"
               label="Privacy Policy"
               description="How we protect your data"
-              onClick={() => {}}
+              onClick={() => router.push('/profile/privacy')}
             />
             <SettingItem
               icon="ℹ️"
-              label="About Hajo"
+              label="About Alajo"
               description="Version 1.0.0"
-              onClick={() => {}}
+              onClick={() => router.push('/profile/about')}
               showBorder={false}
             />
           </div>
         </div>
 
         {/* Logout Button */}
-        <div className="animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
           <button
             onClick={handleLogout}
             className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full font-bold shadow-lg hover:shadow-xl transition active:scale-95 flex items-center justify-center gap-2"
@@ -276,7 +348,7 @@ export default function ProfilePage() {
 
         {/* App Version */}
         <div className="text-center mt-6 text-sm text-gray-500">
-          Hajo v1.0.0 • Savings Saves Life 💚
+          Alajo v1.0.0 - Savings Saves Life
         </div>
       </div>
 

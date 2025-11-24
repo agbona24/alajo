@@ -74,11 +74,12 @@ export default function DailyCashbookPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(amount)
+    }).format(numAmount)
   }
 
   const togglePayment = (memberId: number, day: number) => {

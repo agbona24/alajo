@@ -1,79 +1,87 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import MobileNav from '@/components/MobileNav'
+import { ajoGroupsAPI } from '@/lib/api'
 
-const mockGroups = [
-  {
-    id: 1,
-    code: 'AJO-ABC123',
-    name: 'Office Squad Savings',
-    contributionAmount: 20000,
-    groupSize: 10,
-    currentMembers: 8,
-    rotationType: 'monthly',
-    myPosition: 3,
-    nextPayout: '2024-12-15',
-    totalContributed: 60000,
-    status: 'active',
-    role: 'member',
-  },
-  {
-    id: 2,
-    code: 'AJO-XYZ789',
-    name: 'Family Ajo Circle',
-    contributionAmount: 50000,
-    groupSize: 6,
-    currentMembers: 6,
-    rotationType: 'weekly',
-    myPosition: 1,
-    nextPayout: '2024-11-20',
-    totalContributed: 200000,
-    status: 'active',
-    role: 'collector',
-  },
-  {
-    id: 3,
-    code: 'AJO-LMN456',
-    name: 'Friends Investment',
-    contributionAmount: 15000,
-    groupSize: 8,
-    currentMembers: 5,
-    rotationType: 'biweekly',
-    myPosition: 2,
-    nextPayout: '2025-01-05',
-    totalContributed: 30000,
-    status: 'pending',
-    role: 'member',
-  },
-]
+interface AjoGroup {
+  id: number
+  code: string
+  name: string
+  contribution_amount: number
+  group_size: number
+  current_members: number
+  rotation_type: string
+  my_position: number
+  next_payout: string
+  total_contributed: number
+  status: string
+  role: string
+}
 
 export default function AjoGroupsPage() {
   const router = useRouter()
-  const [groups] = useState(mockGroups)
+  const [groups, setGroups] = useState<AjoGroup[]>([])
+  const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'pending'>('all')
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          router.push('/login')
+          return
+        }
+        const data = await ajoGroupsAPI.getAll()
+        setGroups(data || [])
+      } catch (error: any) {
+        console.error('Error fetching groups:', error)
+        if (error.response?.status === 401) {
+          router.push('/login')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGroups()
+  }, [router])
 
   const filteredGroups = groups.filter(g =>
     filterStatus === 'all' ? true : g.status === filterStatus
   )
 
   const activeGroups = groups.filter(g => g.status === 'active').length
-  const totalContributed = groups.reduce((sum, g) => sum + g.totalContributed, 0)
+  const totalContributed = groups.reduce((sum, g) => sum + (g.total_contributed || 0), 0)
   const collectingGroups = groups.filter(g => g.role === 'collector').length
 
   const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(amount)
+    }).format(numAmount)
   }
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return '-'
     const date = new Date(dateString)
     return date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading groups...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -219,13 +227,13 @@ function FilterTab({ active, onClick, label, count }: {
 }
 
 function GroupCard({ group, onClick, formatCurrency, formatDate, index }: {
-  group: typeof mockGroups[0]
+  group: AjoGroup
   onClick: () => void
   formatCurrency: (amount: number) => string
   formatDate: (date: string) => string
   index: number
 }) {
-  const progress = (group.currentMembers / group.groupSize) * 100
+  const progress = ((group.current_members || 0) / (group.group_size || 1)) * 100
   const isCollector = group.role === 'collector'
 
   return (
@@ -260,15 +268,15 @@ function GroupCard({ group, onClick, formatCurrency, formatDate, index }: {
       <div className="grid grid-cols-3 gap-3 mb-3">
         <div className="bg-blue-50 rounded-lg p-2">
           <div className="text-xs text-gray-600 mb-0.5">Contribution</div>
-          <div className="font-bold text-blue-700 text-sm">{formatCurrency(group.contributionAmount)}</div>
+          <div className="font-bold text-blue-700 text-sm">{formatCurrency(group.contribution_amount || 0)}</div>
         </div>
         <div className="bg-purple-50 rounded-lg p-2">
           <div className="text-xs text-gray-600 mb-0.5">Members</div>
-          <div className="font-bold text-purple-700 text-sm">{group.currentMembers}/{group.groupSize}</div>
+          <div className="font-bold text-purple-700 text-sm">{group.current_members || 0}/{group.group_size || 0}</div>
         </div>
         <div className="bg-green-50 rounded-lg p-2">
           <div className="text-xs text-gray-600 mb-0.5">My Position</div>
-          <div className="font-bold text-green-700 text-sm">#{group.myPosition}</div>
+          <div className="font-bold text-green-700 text-sm">#{group.my_position || '-'}</div>
         </div>
       </div>
 
@@ -289,7 +297,7 @@ function GroupCard({ group, onClick, formatCurrency, formatDate, index }: {
       {/* Footer */}
       <div className="flex items-center justify-between pt-3 border-t border-gray-100">
         <div className="text-xs text-gray-600">
-          Next payout: <span className="font-semibold text-gray-900">{formatDate(group.nextPayout)}</span>
+          Next payout: <span className="font-semibold text-gray-900">{formatDate(group.next_payout)}</span>
         </div>
         <div className="text-xs font-semibold text-blue-600">
           View Details →

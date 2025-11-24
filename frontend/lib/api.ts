@@ -8,7 +8,8 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true, // Important for Laravel Sanctum
+  // Note: withCredentials is not needed for Bearer token auth
+  // Only needed for cookie-based Sanctum SPA authentication
 })
 
 // Add token to requests if it exists
@@ -21,14 +22,20 @@ api.interceptors.request.use((config) => {
 })
 
 export const authAPI = {
+  // Get list of collectors for registration
+  getCollectors: async () => {
+    const response = await api.get('/collectors')
+    return response.data
+  },
+
   // Register new user
-  register: async (data: { name: string; email: string; password: string; password_confirmation: string }) => {
+  register: async (data: { name: string; phone: string; email?: string; password: string; password_confirmation: string; collector_id?: number }) => {
     const response = await api.post('/register', data)
     return response.data
   },
 
   // Login user
-  login: async (data: { email: string; password: string }) => {
+  login: async (data: { phone: string; password: string }) => {
     const response = await api.post('/login', data)
     return response.data
   },
@@ -42,6 +49,12 @@ export const authAPI = {
   // Get authenticated user
   getUser: async () => {
     const response = await api.get('/user')
+    return response.data
+  },
+
+  // Biometric login
+  biometricLogin: async (data: { phone: string; biometric_token: string }) => {
+    const response = await api.post('/biometric-login', data)
     return response.data
   },
 }
@@ -63,6 +76,7 @@ export const savingsAPI = {
   createPlan: async (data: {
     name: string
     emoji: string
+    daily_amount: number
     target_amount: number
     frequency: string
     duration: number
@@ -85,13 +99,37 @@ export const savingsAPI = {
     return response.data
   },
 
-  // Make contribution
+  // Make contribution (supports file upload)
   contribute: async (planId: number, data: {
     amount: number
     payment_method: string
     reference?: string
+    receipt?: File | null
   }) => {
-    const response = await api.post(`/savings-plans/${planId}/contribute`, data)
+    // Use FormData if there's a receipt file
+    if (data.receipt) {
+      const formData = new FormData()
+      formData.append('amount', data.amount.toString())
+      formData.append('payment_method', data.payment_method)
+      if (data.reference) {
+        formData.append('reference', data.reference)
+      }
+      formData.append('receipt', data.receipt)
+
+      const response = await api.post(`/savings-plans/${planId}/contribute`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      return response.data
+    }
+
+    // Regular JSON request if no receipt
+    const response = await api.post(`/savings-plans/${planId}/contribute`, {
+      amount: data.amount,
+      payment_method: data.payment_method,
+      reference: data.reference,
+    })
     return response.data
   },
 
@@ -129,7 +167,14 @@ export const withdrawalsAPI = {
     reason?: string
     type: string
   }) => {
-    const response = await api.post('/withdrawals', data)
+    // Backend expects savings_plan_id
+    const payload = {
+      savings_plan_id: data.plan_id,
+      bank_account_id: data.bank_account_id,
+      amount: data.amount,
+      reason: data.reason,
+    }
+    const response = await api.post('/withdrawals', payload)
     return response.data
   },
 
@@ -153,17 +198,9 @@ export const withdrawalsAPI = {
 }
 
 export const passbookAPI = {
-  // Get passbook for user
-  get: async (month?: string, year?: string) => {
-    const response = await api.get('/passbook', {
-      params: { month, year }
-    })
-    return response.data
-  },
-
   // Get passbook for specific plan
-  getPlanPassbook: async (planId: number, month?: string, year?: string) => {
-    const response = await api.get(`/passbook/plan/${planId}`, {
+  getPlanPassbook: async (planId: number, month?: number, year?: number) => {
+    const response = await api.get(`/savings-plans/${planId}/passbook`, {
       params: { month, year }
     })
     return response.data
@@ -303,6 +340,12 @@ export const profileAPI = {
     return response.data
   },
 
+  // Set bank account as primary
+  setBankAccountPrimary: async (accountId: number) => {
+    const response = await api.post(`/profile/bank-accounts/${accountId}/set-primary`)
+    return response.data
+  },
+
   // Update settings
   updateSettings: async (data: {
     notifications?: any
@@ -320,6 +363,50 @@ export const profileAPI = {
     new_password_confirmation: string
   }) => {
     const response = await api.post('/profile/change-password', data)
+    return response.data
+  },
+}
+
+export const twoFactorAPI = {
+  // Get 2FA status
+  getStatus: async () => {
+    const response = await api.get('/2fa/status')
+    return response.data
+  },
+
+  // Enable 2FA (step 1 - sends verification code)
+  enable: async (password: string) => {
+    const response = await api.post('/2fa/enable', { password })
+    return response.data
+  },
+
+  // Verify code to complete 2FA enablement
+  verifyEnable: async (code: string) => {
+    const response = await api.post('/2fa/verify-enable', { code })
+    return response.data
+  },
+
+  // Disable 2FA
+  disable: async (password: string) => {
+    const response = await api.post('/2fa/disable', { password })
+    return response.data
+  },
+
+  // Resend verification code
+  resendCode: async () => {
+    const response = await api.post('/2fa/resend-code')
+    return response.data
+  },
+
+  // Verify 2FA code during login
+  verifyLogin: async (phone: string, code: string) => {
+    const response = await api.post('/2fa/verify-login', { phone, code })
+    return response.data
+  },
+
+  // Resend login code
+  resendLoginCode: async (phone: string) => {
+    const response = await api.post('/2fa/send-login-code', { phone })
     return response.data
   },
 }

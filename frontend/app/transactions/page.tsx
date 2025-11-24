@@ -1,41 +1,120 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import MobileNav from '@/components/MobileNav'
+import { transactionsAPI, withdrawalsAPI, authAPI } from '@/lib/api'
+import { generateTransactionHistory } from '@/lib/pdfGenerator'
 
-// Mock transaction data
-const mockTransactions = [
-  { id: 1, type: 'contribution', amount: 25000, plan: 'iPhone 15 Fund', planEmoji: '📱', date: '2024-11-14', time: '14:30', status: 'completed', method: 'Bank Transfer', reference: 'TRX-2024111401' },
-  { id: 2, type: 'contribution', amount: 50000, plan: 'Wedding Dreams', planEmoji: '💍', date: '2024-11-13', time: '09:15', status: 'completed', method: 'Card', reference: 'TRX-2024111302' },
-  { id: 3, type: 'withdrawal', amount: -30000, plan: 'Emergency Fund', planEmoji: '🏥', date: '2024-11-12', time: '16:45', status: 'completed', method: 'Bank Transfer', reference: 'TRX-2024111203' },
-  { id: 4, type: 'contribution', amount: 20000, plan: 'New Laptop', planEmoji: '💻', date: '2024-11-10', time: '11:20', status: 'completed', method: 'Card', reference: 'TRX-2024111004' },
-  { id: 5, type: 'contribution', amount: 15000, plan: 'Vacation Fund', planEmoji: '✈️', date: '2024-11-08', time: '13:10', status: 'pending', method: 'Bank Transfer', reference: 'TRX-2024110805' },
-  { id: 6, type: 'contribution', amount: 25000, plan: 'iPhone 15 Fund', planEmoji: '📱', date: '2024-11-07', time: '10:30', status: 'completed', method: 'Bank Transfer', reference: 'TRX-2024110706' },
-  { id: 7, type: 'contribution', amount: 40000, plan: 'Wedding Dreams', planEmoji: '💍', date: '2024-11-05', time: '15:20', status: 'completed', method: 'Card', reference: 'TRX-2024110507' },
-  { id: 8, type: 'contribution', amount: 25000, plan: 'iPhone 15 Fund', planEmoji: '📱', date: '2024-10-31', time: '09:45', status: 'completed', method: 'Bank Transfer', reference: 'TRX-2024103108' },
-  { id: 9, type: 'withdrawal', amount: -20000, plan: 'Emergency Fund', planEmoji: '🏥', date: '2024-10-28', time: '14:15', status: 'completed', method: 'Bank Transfer', reference: 'TRX-2024102809' },
-  { id: 10, type: 'contribution', amount: 30000, plan: 'New Laptop', planEmoji: '💻', date: '2024-10-25', time: '11:50', status: 'completed', method: 'Card', reference: 'TRX-2024102510' },
-]
+interface Transaction {
+  id: number
+  type: string
+  amount: number
+  reference: string
+  status: string
+  payment_method: string
+  description: string
+  completed_at: string
+  created_at: string
+  savings_plan?: {
+    id: number
+    name: string
+    emoji: string
+  }
+  // For withdrawal-specific info
+  bank_account?: {
+    bank_name: string
+    account_number: string
+  }
+  reason?: string
+  isWithdrawalRequest?: boolean
+}
+
+interface UserInfo {
+  name: string
+  phone: string
+  email?: string
+}
 
 export default function TransactionsPage() {
   const router = useRouter()
-  const [transactions] = useState(mockTransactions)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [user, setUser] = useState<UserInfo | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [exportingPdf, setExportingPdf] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'contribution' | 'withdrawal'>('all')
   const [filterStatus, setFilterStatus] = useState<'all' | 'completed' | 'pending'>('all')
   const [showFilters, setShowFilters] = useState(false)
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch transactions, withdrawal requests, and user data
+        const [transactionsData, withdrawalsData, userData] = await Promise.all([
+          transactionsAPI.getAll(),
+          withdrawalsAPI.getAll(),
+          authAPI.getUser()
+        ])
+        setUser(userData)
+
+        // Handle paginated response (Laravel returns { data: [...] })
+        const txns = transactionsData?.data || transactionsData || []
+        const withdrawals = withdrawalsData || []
+
+        // Convert pending/approved withdrawals to transaction-like format
+        // (completed withdrawals already appear as transactions)
+        const pendingWithdrawals = withdrawals
+          .filter((w: any) => w.status === 'pending' || w.status === 'approved')
+          .map((w: any) => ({
+            id: `wd-${w.id}`,
+            type: 'withdrawal',
+            amount: w.amount,
+            reference: w.reference,
+            status: w.status,
+            payment_method: 'bank_transfer',
+            description: w.reason || `Withdrawal from ${w.savings_plan?.name || 'Savings'}`,
+            completed_at: w.completed_at,
+            created_at: w.created_at,
+            savings_plan: w.savings_plan,
+            bank_account: w.bank_account,
+            reason: w.reason,
+            isWithdrawalRequest: true
+          }))
+
+        // Merge and sort by date (newest first)
+        const allTransactions = [...txns, ...pendingWithdrawals].sort((a, b) => {
+          const dateA = new Date(a.completed_at || a.created_at).getTime()
+          const dateB = new Date(b.completed_at || b.created_at).getTime()
+          return dateB - dateA
+        })
+
+        setTransactions(allTransactions)
+      } catch (error: any) {
+        console.error('Error fetching transactions:', error)
+        if (error.response?.status === 401) {
+          router.push('/login')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [router])
+
   const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(Math.abs(amount))
+    }).format(Math.abs(numAmount))
   }
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return '-'
     const date = new Date(dateString)
     return new Intl.DateTimeFormat('en-NG', {
       day: 'numeric',
@@ -44,14 +123,17 @@ export default function TransactionsPage() {
     }).format(date)
   }
 
-  const formatDateFull = (dateString: string, timeString: string) => {
-    return `${formatDate(dateString)} • ${timeString}`
+  const formatTime = (dateString: string) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    return date.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })
   }
 
   // Filter transactions
   const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.plan.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         transaction.reference.toLowerCase().includes(searchQuery.toLowerCase())
+    const planName = transaction.savings_plan?.name || transaction.description || ''
+    const matchesSearch = planName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         transaction.reference?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesType = filterType === 'all' || transaction.type === filterType
     const matchesStatus = filterStatus === 'all' || transaction.status === filterStatus
     return matchesSearch && matchesType && matchesStatus
@@ -59,7 +141,9 @@ export default function TransactionsPage() {
 
   // Group by month
   const groupedTransactions = filteredTransactions.reduce((groups: any, transaction) => {
-    const month = new Date(transaction.date).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' })
+    const dateStr = transaction.completed_at || transaction.created_at
+    if (!dateStr) return groups
+    const month = new Date(dateStr).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' })
     if (!groups[month]) {
       groups[month] = []
     }
@@ -70,13 +154,53 @@ export default function TransactionsPage() {
   // Calculate stats
   const totalContributions = transactions
     .filter(t => t.type === 'contribution' && t.status === 'completed')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + Number(t.amount), 0)
 
-  const totalWithdrawals = Math.abs(transactions
+  const completedWithdrawals = Math.abs(transactions
     .filter(t => t.type === 'withdrawal' && t.status === 'completed')
-    .reduce((sum, t) => sum + t.amount, 0))
+    .reduce((sum, t) => sum + Number(t.amount), 0))
 
-  const netSavings = totalContributions - totalWithdrawals
+  const pendingWithdrawals = Math.abs(transactions
+    .filter(t => t.type === 'withdrawal' && (t.status === 'pending' || t.status === 'approved'))
+    .reduce((sum, t) => sum + Number(t.amount), 0))
+
+  const totalWithdrawals = completedWithdrawals + pendingWithdrawals
+  const netSavings = totalContributions - completedWithdrawals
+
+  const handleExportPDF = () => {
+    if (!user) return
+    setExportingPdf(true)
+    try {
+      generateTransactionHistory(
+        transactions.map(t => ({
+          id: typeof t.id === 'number' ? t.id : parseInt(String(t.id).replace('wd-', '')),
+          type: t.type,
+          amount: Number(t.amount),
+          status: t.status,
+          reference: t.reference,
+          description: t.description,
+          created_at: t.created_at
+        })),
+        user
+      )
+    } catch (error) {
+      console.error('PDF export error:', error)
+      alert('Failed to generate PDF')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading transactions...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pb-safe">
@@ -96,13 +220,18 @@ export default function TransactionsPage() {
             color="text-green-600"
             bgColor="bg-green-50"
           />
-          <StatCard
-            icon="💸"
-            label="Withdrawals"
-            value={formatCurrency(totalWithdrawals)}
-            color="text-orange-600"
-            bgColor="bg-orange-50"
-          />
+          <div className="bg-orange-50 rounded-xl p-3 border border-gray-200">
+            <div className="text-2xl mb-1">💸</div>
+            <div className="text-base font-bold text-orange-600 mb-0.5 truncate">
+              {formatCurrency(totalWithdrawals)}
+            </div>
+            <div className="text-xs text-gray-600">Withdrawals</div>
+            {pendingWithdrawals > 0 && (
+              <div className="text-xs text-orange-500 mt-1">
+                ({formatCurrency(pendingWithdrawals)} pending)
+              </div>
+            )}
+          </div>
           <StatCard
             icon="📊"
             label="Net Savings"
@@ -111,6 +240,17 @@ export default function TransactionsPage() {
             bgColor="bg-purple-50"
           />
         </div>
+
+        {/* Export Button */}
+        <button
+          onClick={handleExportPDF}
+          disabled={exportingPdf || transactions.length === 0}
+          className="w-full mb-4 py-3 px-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 animate-fade-in-up"
+          style={{ animationDelay: '0.05s' }}
+        >
+          <span className="text-lg">📄</span>
+          <span>{exportingPdf ? 'Generating PDF...' : 'Export Transaction History (PDF)'}</span>
+        </button>
 
         {/* Search & Filter Bar */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
@@ -148,23 +288,9 @@ export default function TransactionsPage() {
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Transaction Type</label>
                 <div className="flex gap-2">
-                  <FilterButton
-                    active={filterType === 'all'}
-                    onClick={() => setFilterType('all')}
-                    label="All"
-                  />
-                  <FilterButton
-                    active={filterType === 'contribution'}
-                    onClick={() => setFilterType('contribution')}
-                    label="Contributions"
-                    icon="💰"
-                  />
-                  <FilterButton
-                    active={filterType === 'withdrawal'}
-                    onClick={() => setFilterType('withdrawal')}
-                    label="Withdrawals"
-                    icon="💸"
-                  />
+                  <FilterButton active={filterType === 'all'} onClick={() => setFilterType('all')} label="All" />
+                  <FilterButton active={filterType === 'contribution'} onClick={() => setFilterType('contribution')} label="Contributions" icon="💰" />
+                  <FilterButton active={filterType === 'withdrawal'} onClick={() => setFilterType('withdrawal')} label="Withdrawals" icon="💸" />
                 </div>
               </div>
 
@@ -172,33 +298,16 @@ export default function TransactionsPage() {
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Status</label>
                 <div className="flex gap-2">
-                  <FilterButton
-                    active={filterStatus === 'all'}
-                    onClick={() => setFilterStatus('all')}
-                    label="All"
-                  />
-                  <FilterButton
-                    active={filterStatus === 'completed'}
-                    onClick={() => setFilterStatus('completed')}
-                    label="Completed"
-                    icon="✓"
-                  />
-                  <FilterButton
-                    active={filterStatus === 'pending'}
-                    onClick={() => setFilterStatus('pending')}
-                    label="Pending"
-                    icon="⏳"
-                  />
+                  <FilterButton active={filterStatus === 'all'} onClick={() => setFilterStatus('all')} label="All" />
+                  <FilterButton active={filterStatus === 'completed'} onClick={() => setFilterStatus('completed')} label="Completed" icon="✓" />
+                  <FilterButton active={filterStatus === 'pending'} onClick={() => setFilterStatus('pending')} label="Pending" icon="⏳" />
                 </div>
               </div>
 
               {/* Reset Filters */}
               {(filterType !== 'all' || filterStatus !== 'all') && (
                 <button
-                  onClick={() => {
-                    setFilterType('all')
-                    setFilterStatus('all')
-                  }}
+                  onClick={() => { setFilterType('all'); setFilterStatus('all') }}
                   className="w-full py-2 text-sm font-semibold text-purple-600 hover:bg-purple-50 rounded-lg transition"
                 >
                   Reset Filters
@@ -215,12 +324,16 @@ export default function TransactionsPage() {
           </div>
         )}
 
-        {/* Transactions List (Grouped by Month) */}
+        {/* Transactions List */}
         {filteredTransactions.length === 0 ? (
           <div className="text-center py-16 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <div className="text-6xl mb-4 opacity-50">🔍</div>
-            <p className="text-lg font-semibold text-gray-900 mb-2">No transactions found</p>
-            <p className="text-gray-600">Try adjusting your filters or search query</p>
+            <div className="text-6xl mb-4 opacity-50">{transactions.length === 0 ? '📭' : '🔍'}</div>
+            <p className="text-lg font-semibold text-gray-900 mb-2">
+              {transactions.length === 0 ? 'No transactions yet' : 'No transactions found'}
+            </p>
+            <p className="text-gray-600">
+              {transactions.length === 0 ? 'Start saving to see your transactions' : 'Try adjusting your filters or search query'}
+            </p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -236,16 +349,13 @@ export default function TransactionsPage() {
 
                 {/* Month Transactions */}
                 <div className="space-y-3">
-                  {monthTransactions.map((transaction: any) => (
+                  {monthTransactions.map((transaction: Transaction) => (
                     <TransactionCard
                       key={transaction.id}
                       transaction={transaction}
                       formatCurrency={formatCurrency}
-                      formatDateFull={formatDateFull}
-                      onClick={() => {
-                        // Future: Open receipt modal
-                        console.log('View receipt:', transaction.reference)
-                      }}
+                      formatDate={formatDate}
+                      formatTime={formatTime}
                     />
                   ))}
                 </div>
@@ -298,73 +408,92 @@ function FilterButton({ active, onClick, label, icon }: {
   )
 }
 
-function TransactionCard({ transaction, formatCurrency, formatDateFull, onClick }: {
-  transaction: any
+function TransactionCard({ transaction, formatCurrency, formatDate, formatTime }: {
+  transaction: Transaction
   formatCurrency: (amount: number) => string
-  formatDateFull: (date: string, time: string) => string
-  onClick: () => void
+  formatDate: (date: string) => string
+  formatTime: (date: string) => string
 }) {
   const isContribution = transaction.type === 'contribution'
   const isPending = transaction.status === 'pending'
+  const isApproved = transaction.status === 'approved'
+  const planEmoji = transaction.savings_plan?.emoji || '💰'
+  const planName = transaction.savings_plan?.name || transaction.description || 'Savings Plan'
+  const dateStr = transaction.completed_at || transaction.created_at
+
+  const getStatusStyle = () => {
+    switch (transaction.status) {
+      case 'completed':
+        return 'bg-green-100 text-green-700'
+      case 'approved':
+        return 'bg-blue-100 text-blue-700'
+      case 'pending':
+        return 'bg-orange-100 text-orange-700'
+      case 'rejected':
+        return 'bg-red-100 text-red-700'
+      default:
+        return 'bg-gray-100 text-gray-700'
+    }
+  }
 
   return (
-    <button
-      onClick={onClick}
-      className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition active:scale-98 text-left border border-gray-100"
-    >
+    <div className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
       <div className="flex items-start gap-4">
         {/* Icon */}
         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${
           isPending
             ? 'bg-orange-100'
+            : isApproved
+            ? 'bg-blue-100'
             : isContribution
             ? 'bg-gradient-to-br from-green-500 to-green-600 text-white'
             : 'bg-gradient-to-br from-orange-500 to-orange-600 text-white'
         }`}>
-          {isPending ? '⏳' : transaction.planEmoji}
+          {isPending ? '⏳' : isApproved ? '✓' : planEmoji}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          {/* Plan Name */}
-          <div className="font-bold text-gray-900 mb-1 truncate">{transaction.plan}</div>
-
-          {/* Date & Time */}
+          <div className="font-bold text-gray-900 mb-1 truncate">{planName}</div>
           <div className="text-xs text-gray-500 mb-2">
-            {formatDateFull(transaction.date, transaction.time)}
+            {formatDate(dateStr)} {formatTime(dateStr) && `• ${formatTime(dateStr)}`}
           </div>
 
-          {/* Details Row */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Status Badge */}
-            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-              transaction.status === 'completed'
-                ? 'bg-green-100 text-green-700'
-                : 'bg-orange-100 text-orange-700'
-            }`}>
+            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusStyle()}`}>
               {transaction.status}
             </span>
-
-            {/* Method */}
-            <span className="text-xs text-gray-500">{transaction.method}</span>
-
-            {/* Reference */}
-            <span className="text-xs text-gray-400 font-mono">{transaction.reference}</span>
+            {transaction.isWithdrawalRequest && (
+              <span className="px-2 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
+                Request
+              </span>
+            )}
+            <span className="text-xs text-gray-500 capitalize">{transaction.payment_method?.replace('_', ' ')}</span>
           </div>
+
+          {/* Bank account info for withdrawals */}
+          {transaction.bank_account && (
+            <div className="text-xs text-gray-500 mt-2">
+              To: {transaction.bank_account.bank_name} •••{transaction.bank_account.account_number.slice(-4)}
+            </div>
+          )}
+
+          {/* Reason for withdrawals */}
+          {transaction.reason && (
+            <div className="text-xs text-gray-500 mt-1 italic">"{transaction.reason}"</div>
+          )}
         </div>
 
         {/* Amount */}
         <div className="text-right flex-shrink-0">
-          <div className={`text-lg font-bold ${
-            isContribution ? 'text-green-600' : 'text-orange-600'
-          }`}>
+          <div className={`text-lg font-bold ${isContribution ? 'text-green-600' : 'text-orange-600'}`}>
             {isContribution ? '+' : '-'}{formatCurrency(transaction.amount)}
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            {isContribution ? 'Added' : 'Withdrawn'}
+            {isContribution ? 'Added' : transaction.isWithdrawalRequest ? 'Requested' : 'Withdrawn'}
           </div>
         </div>
       </div>
-    </button>
+    </div>
   )
 }

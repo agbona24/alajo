@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import MobileNav from '@/components/MobileNav'
 import AppHeader from '@/components/AppHeader'
+import { savingsAPI } from '@/lib/api'
 
 interface SavingsPlan {
   id: number
   name: string
+  emoji: string
   target_amount: number
   current_amount: number
   frequency: 'daily' | 'weekly' | 'monthly'
@@ -17,42 +19,61 @@ interface SavingsPlan {
 
 export default function SavingsPage() {
   const router = useRouter()
-  const [plans, setPlans] = useState<SavingsPlan[]>([
-    {
-      id: 1,
-      name: 'Emergency Fund',
-      target_amount: 500000,
-      current_amount: 125000,
-      frequency: 'monthly',
-      status: 'active',
-      created_at: '2024-10-01',
-    },
-    {
-      id: 2,
-      name: 'New Laptop',
-      target_amount: 300000,
-      current_amount: 280000,
-      frequency: 'weekly',
-      status: 'active',
-      created_at: '2024-09-15',
-    },
-  ])
-  // Removed modal state - now using dedicated create page
+  const [plans, setPlans] = useState<SavingsPlan[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          router.push('/login')
+          return
+        }
+        const data = await savingsAPI.getPlans()
+        setPlans(data || [])
+      } catch (error: any) {
+        console.error('Error fetching plans:', error)
+        if (error.response?.status === 401) {
+          router.push('/login')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPlans()
+  }, [router])
 
   const calculateProgress = (current: number, target: number) => {
-    return Math.min(Math.round((current / target) * 100), 100)
+    const currentVal = Number(current) || 0
+    const targetVal = Number(target) || 0
+    if (targetVal === 0) return 0
+    return Math.min(Math.round((currentVal / targetVal) * 100), 100)
   }
 
   const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(amount)
+    }).format(numAmount)
   }
 
-  const totalSaved = plans.reduce((sum, plan) => sum + plan.current_amount, 0)
-  const totalTarget = plans.reduce((sum, plan) => sum + plan.target_amount, 0)
+  const totalSaved = plans.reduce((sum, plan) => sum + (Number(plan.current_amount) || 0), 0)
+  const totalTarget = plans.reduce((sum, plan) => sum + (Number(plan.target_amount) || 0), 0)
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading savings plans...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

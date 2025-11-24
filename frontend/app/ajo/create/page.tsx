@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
+import { ajoGroupsAPI } from '@/lib/api'
 
 const rotationTypes = [
   { value: 'weekly', label: 'Weekly', description: 'Collect every week', icon: '📆' },
@@ -19,6 +20,7 @@ const selectionMethods = [
 export default function CreateAjoGroupPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -35,11 +37,28 @@ export default function CreateAjoGroupPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = () => {
-    console.log('Creating Ajo Group:', formData)
-    // Generate group code and show success
-    const groupCode = 'AJO-' + Math.random().toString(36).substring(2, 8).toUpperCase()
-    router.push(`/ajo/invite?code=${groupCode}`)
+  const handleSubmit = async () => {
+    setLoading(true)
+    try {
+      const response = await ajoGroupsAPI.create({
+        name: formData.name,
+        description: formData.description || undefined,
+        contribution_amount: parseInt(formData.contributionAmount),
+        group_size: parseInt(formData.groupSize),
+        rotation_type: formData.rotationType,
+        selection_method: formData.selectionMethod,
+        start_date: formData.startDate,
+        auto_reminders: formData.autoReminders,
+        require_approval: formData.requireApproval,
+      })
+
+      router.push(`/ajo/${response.id}`)
+    } catch (error: any) {
+      console.error('Error creating group:', error)
+      alert(error.response?.data?.message || 'Failed to create group. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const canProceedStep1 = () => {
@@ -349,9 +368,10 @@ export default function CreateAjoGroupPage() {
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all"
+                disabled={loading}
+                className="flex-1 py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Create Group ✓
+                {loading ? 'Creating...' : 'Create Group ✓'}
               </button>
             </div>
           </div>

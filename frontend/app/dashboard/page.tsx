@@ -2,35 +2,55 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { authAPI } from '@/lib/api'
+import { authAPI, savingsAPI } from '@/lib/api'
 import MobileNav from '@/components/MobileNav'
+
+interface SavingsPlan {
+  id: number
+  name: string
+  emoji: string
+  target_amount: number
+  current_amount: number
+  progress_percentage: number
+  frequency: string
+  status: string
+}
 
 export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
+  const [plans, setPlans] = useState<SavingsPlan[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // DEV MODE: Skip authentication for UI testing
-    // const token = localStorage.getItem('auth_token')
-    // const storedUser = localStorage.getItem('user')
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          router.push('/login')
+          return
+        }
 
-    // if (!token || !storedUser) {
-    //   router.push('/login')
-    //   return
-    // }
+        const [userData, plansData] = await Promise.all([
+          authAPI.getUser(),
+          savingsAPI.getPlans()
+        ])
 
-    // Mock user for UI testing
-    const mockUser = {
-      id: 1,
-      name: 'Chioma Adeyemi',
-      email: 'chioma.adeyemi@example.com',
-      phone: '+234 803 456 7890',
-      avatar: '👩🏾',
+        setUser(userData)
+        setPlans(plansData || [])
+      } catch (error: any) {
+        console.error('Dashboard error:', error)
+        if (error.response?.status === 401) {
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('user')
+          router.push('/login')
+        }
+      } finally {
+        setLoading(false)
+      }
     }
 
-    setUser(mockUser)
-    setLoading(false)
+    fetchData()
   }, [router])
 
   const handleLogout = async () => {
@@ -44,6 +64,19 @@ export default function DashboardPage() {
       router.push('/login')
     }
   }
+
+  const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 0,
+    }).format(numAmount)
+  }
+
+  // Calculate stats from real data
+  const totalSavings = plans.reduce((sum, plan) => sum + Number(plan.current_amount || 0), 0)
+  const activePlans = plans.filter(plan => plan.status === 'active').length
 
   if (loading) {
     return (
@@ -64,8 +97,8 @@ export default function DashboardPage() {
         <div className="bg-gradient-to-r from-primary to-secondary px-4 pt-4 pb-6">
           <div className="flex justify-between items-start mb-6">
             <div className="animate-slide-in-left">
-              <p className="text-white/80 text-sm mb-1">Welcome back 👋</p>
-              <h1 className="text-white text-2xl font-bold">{user?.name}</h1>
+              <p className="text-white/80 text-sm mb-1">Welcome back</p>
+              <h1 className="text-white text-2xl font-bold">{user?.name || 'User'}</h1>
             </div>
             <button
               onClick={() => router.push('/profile')}
@@ -80,21 +113,21 @@ export default function DashboardPage() {
             <MobileStatCard
               icon="💰"
               label="Total Savings"
-              value="₦0"
+              value={formatCurrency(totalSavings)}
               gradient="from-blue-500 to-blue-600"
               delay={0}
             />
             <MobileStatCard
               icon="🎯"
               label="Active Plans"
-              value="0"
+              value={activePlans.toString()}
               gradient="from-purple-500 to-purple-600"
               delay={100}
             />
             <MobileStatCard
               icon="📈"
-              label="This Month"
-              value="₦0"
+              label="Plans"
+              value={plans.length.toString()}
               gradient="from-green-500 to-green-600"
               delay={200}
             />
@@ -109,7 +142,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <span className="text-2xl">💰</span>
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Hajo
+                Alajo
               </span>
             </div>
             <div className="flex items-center gap-4">
@@ -129,15 +162,15 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 pb-24 md:pb-8">
         {/* Desktop Welcome Section */}
         <div className="hidden md:block bg-gradient-to-r from-primary to-secondary rounded-2xl p-8 text-white mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}! 👋</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>
           <p className="text-lg opacity-90">Let's continue your savings journey</p>
         </div>
 
         {/* Desktop Stats Grid */}
         <div className="hidden md:grid grid-cols-3 gap-6 mb-8">
-          <StatCard icon="💰" title="Total Savings" value="₦0.00" subtitle="Across all plans" />
-          <StatCard icon="🎯" title="Active Plans" value="0" subtitle="Savings plans" />
-          <StatCard icon="📈" title="This Month" value="₦0.00" subtitle="Contributions" />
+          <StatCard icon="💰" title="Total Savings" value={formatCurrency(totalSavings)} subtitle="Across all plans" />
+          <StatCard icon="🎯" title="Active Plans" value={activePlans.toString()} subtitle="Savings plans" />
+          <StatCard icon="📊" title="Total Plans" value={plans.length.toString()} subtitle="Created" />
         </div>
 
         {/* Quick Actions - Mobile Grid */}
@@ -149,7 +182,7 @@ export default function DashboardPage() {
               label="New Plan"
               subtitle="Create savings"
               gradient="from-purple-500 to-purple-600"
-              onClick={() => router.push('/savings')}
+              onClick={() => router.push('/savings/create')}
             />
             <MobileActionCard
               icon="💵"
@@ -166,11 +199,11 @@ export default function DashboardPage() {
               onClick={() => router.push('/transactions')}
             />
             <MobileActionCard
-              icon="💰"
-              label="My Savings"
-              subtitle="All plans"
-              gradient="from-pink-500 to-pink-600"
-              onClick={() => router.push('/savings')}
+              icon="📖"
+              label="Passbook"
+              subtitle="View records"
+              gradient="from-amber-500 to-amber-600"
+              onClick={() => router.push('/passbook')}
             />
           </div>
         </div>
@@ -179,7 +212,7 @@ export default function DashboardPage() {
         <div className="hidden md:block bg-white rounded-2xl shadow-sm p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-4 gap-4">
-            <ActionButton icon="➕" label="New Savings Plan" onClick={() => router.push('/savings')} />
+            <ActionButton icon="➕" label="New Savings Plan" onClick={() => router.push('/savings/create')} />
             <ActionButton icon="💰" label="My Savings" onClick={() => router.push('/savings')} />
             <ActionButton icon="📊" label="Transactions" onClick={() => router.push('/transactions')} />
             <ActionButton icon="👤" label="Profile" onClick={() => router.push('/profile')} />
@@ -200,16 +233,47 @@ export default function DashboardPage() {
               </svg>
             </button>
           </div>
-          <div className="text-center py-12 animate-fade-in-up">
-            <div className="text-6xl mb-4">📝</div>
-            <p className="text-gray-600 mb-4">Start your savings journey today!</p>
-            <button
-              onClick={() => router.push('/savings')}
-              className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold hover:shadow-lg transition active:scale-95"
-            >
-              Create Your First Plan
-            </button>
-          </div>
+
+          {plans.length === 0 ? (
+            <div className="text-center py-12 animate-fade-in-up">
+              <div className="text-6xl mb-4">📝</div>
+              <p className="text-gray-600 mb-4">Start your savings journey today!</p>
+              <button
+                onClick={() => router.push('/savings/create')}
+                className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-semibold hover:shadow-lg transition active:scale-95"
+              >
+                Create Your First Plan
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {plans.slice(0, 3).map((plan) => (
+                <button
+                  key={plan.id}
+                  onClick={() => router.push(`/savings/${plan.id}`)}
+                  className="w-full p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition flex items-center gap-4 text-left"
+                >
+                  <span className="text-3xl">{plan.emoji || '💰'}</span>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 truncate">{plan.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-primary to-secondary"
+                          style={{ width: `${plan.progress_percentage || 0}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-500">{Math.round(plan.progress_percentage || 0)}%</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900">{formatCurrency(plan.current_amount || 0)}</p>
+                    <p className="text-xs text-gray-500">of {formatCurrency(plan.target_amount)}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Recent Activity */}
@@ -227,7 +291,7 @@ export default function DashboardPage() {
 
       {/* Floating Action Button - Mobile */}
       <button
-        onClick={() => router.push('/savings')}
+        onClick={() => router.push('/savings/create')}
         className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-gradient-to-br from-primary to-secondary rounded-full shadow-lg flex items-center justify-center text-2xl active:scale-90 transition-transform z-40 animate-bounce-in"
         style={{ boxShadow: '0 10px 25px rgba(102, 126, 234, 0.4)' }}
       >

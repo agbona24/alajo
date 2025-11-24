@@ -3,21 +3,23 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
+import { ajoGroupsAPI } from '@/lib/api'
 
-const mockGroup = {
-  code: 'AJO-XYZ123',
-  name: 'Office Squad Savings',
-  description: 'Monthly savings for office colleagues',
-  contributionAmount: 20000,
-  groupSize: 10,
-  currentMembers: 7,
-  rotationType: 'Monthly',
-  startDate: '2024-12-01',
+interface AjoGroup {
+  id: number
+  code: string
+  name: string
+  description: string
+  contribution_amount: number
+  group_size: number
+  current_members: number
+  rotation_type: string
+  start_date: string
   collector: {
-    name: 'Chioma Adeyemi',
-    avatar: '👩🏾',
-  },
-  requiresApproval: true,
+    name: string
+    avatar: string
+  }
+  require_approval: boolean
 }
 
 export default function JoinAjoGroupPage() {
@@ -27,35 +29,51 @@ export default function JoinAjoGroupPage() {
 
   const [groupCode, setGroupCode] = useState(codeFromUrl)
   const [loading, setLoading] = useState(false)
-  const [group, setGroup] = useState<typeof mockGroup | null>(null)
+  const [joining, setJoining] = useState(false)
+  const [group, setGroup] = useState<AjoGroup | null>(null)
   const [error, setError] = useState('')
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
+    if (!groupCode) return
     setLoading(true)
     setError('')
 
-    // Simulate API call
-    setTimeout(() => {
-      if (groupCode.toUpperCase() === mockGroup.code) {
-        setGroup(mockGroup)
-      } else {
+    try {
+      const data = await ajoGroupsAPI.searchByCode(groupCode)
+      setGroup(data)
+    } catch (err: any) {
+      console.error('Error searching group:', err)
+      if (err.response?.status === 404) {
         setError('Group code not found. Check and try again.')
+      } else {
+        setError(err.response?.data?.message || 'Failed to search group. Please try again.')
       }
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
-  const handleJoinRequest = () => {
-    console.log('Joining group:', group?.code)
-    router.push(`/ajo/${group?.code}?joined=true`)
+  const handleJoinRequest = async () => {
+    if (!group) return
+    setJoining(true)
+    try {
+      await ajoGroupsAPI.join(group.id)
+      router.push(`/ajo/${group.id}?joined=true`)
+    } catch (err: any) {
+      console.error('Error joining group:', err)
+      alert(err.response?.data?.message || 'Failed to join group. Please try again.')
+    } finally {
+      setJoining(false)
+    }
   }
 
   const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(amount)
+    }).format(numAmount)
   }
 
   return (
@@ -183,22 +201,22 @@ export default function JoinAjoGroupPage() {
                   <InfoCard
                     icon="💰"
                     label="Contribution"
-                    value={formatCurrency(group.contributionAmount)}
+                    value={formatCurrency(group.contribution_amount)}
                   />
                   <InfoCard
                     icon="👥"
                     label="Members"
-                    value={`${group.currentMembers}/${group.groupSize}`}
+                    value={`${group.current_members}/${group.group_size}`}
                   />
                   <InfoCard
                     icon="🔄"
                     label="Rotation"
-                    value={group.rotationType}
+                    value={group.rotation_type}
                   />
                   <InfoCard
                     icon="📅"
                     label="Start Date"
-                    value={new Date(group.startDate).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}
+                    value={new Date(group.start_date).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}
                   />
                 </div>
 
@@ -216,7 +234,7 @@ export default function JoinAjoGroupPage() {
                   <div className="bg-purple-50 rounded-xl p-4">
                     <div className="font-bold text-gray-900 mb-2">Total Payout Per Member</div>
                     <div className="text-3xl font-bold text-purple-700">
-                      {formatCurrency(group.contributionAmount * group.groupSize)}
+                      {formatCurrency(group.contribution_amount * group.group_size)}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">
                       You go collect this amount when na your turn
@@ -227,7 +245,7 @@ export default function JoinAjoGroupPage() {
             </div>
 
             {/* Requirements Notice */}
-            {group.requiresApproval && (
+            {group.require_approval && (
               <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4">
                 <div className="flex items-start gap-3">
                   <span className="text-2xl">⏳</span>
@@ -243,9 +261,10 @@ export default function JoinAjoGroupPage() {
             <div className="space-y-3">
               <button
                 onClick={handleJoinRequest}
-                className="w-full py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all"
+                disabled={joining}
+                className="w-full py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {group.requiresApproval ? 'Request to Join' : 'Join Group'} ✓
+                {joining ? 'Joining...' : (group.require_approval ? 'Request to Join' : 'Join Group')} {!joining && '✓'}
               </button>
               <button
                 onClick={() => setGroup(null)}

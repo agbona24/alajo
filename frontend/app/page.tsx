@@ -20,7 +20,7 @@ export default function Home() {
                 <span className="text-xl">💰</span>
               </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Hajo
+                Alajo
               </span>
             </div>
             <div className="flex items-center gap-3 md:gap-4">
@@ -75,7 +75,7 @@ export default function Home() {
               </p>
 
               <p className="text-base md:text-lg text-gray-500 mb-8 leading-relaxed">
-                Whether na new phone, school fees, rent, or owambe money - Hajo get you covered.
+                Whether na new phone, school fees, rent, or owambe money - Alajo get you covered.
                 Traditional ajo meet modern tech. No wahala, just results! 💪
               </p>
 
@@ -198,7 +198,7 @@ export default function Home() {
           <div className="text-center mb-12 md:mb-16 animate-fade-in-up">
             <div className="inline-block px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full mb-4">
               <span className="text-sm font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                WHY CHOOSE HAJO
+                WHY CHOOSE Alajo
               </span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Everything Wey You Need</h2>
@@ -295,7 +295,7 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-3 gap-6 md:gap-8">
             <TestimonialCard
-              quote="I buy iPhone 15 Pro Max after 6 months of saving! Hajo na the real deal! 🔥"
+              quote="I buy iPhone 15 Pro Max after 6 months of saving! Alajo na the real deal! 🔥"
               name="Chioma A."
               role="Lagos, Nigeria"
               avatar="👩🏾"
@@ -329,7 +329,7 @@ export default function Home() {
           <div className="text-6xl mb-6 animate-bounce-in">💰</div>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Your Journey?</h2>
           <p className="text-lg md:text-xl mb-8 opacity-90">
-            Join 10,000+ Nigerians wey don achieve their financial goals with Hajo.
+            Join 10,000+ Nigerians wey don achieve their financial goals with Alajo.
             <br className="hidden md:block" />
             E go reach your turn! 🚀
           </p>
@@ -375,7 +375,7 @@ export default function Home() {
                 <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
                   <span className="text-xl">💰</span>
                 </div>
-                <span className="text-xl font-bold">Hajo</span>
+                <span className="text-xl font-bold">Alajo</span>
               </div>
               <p className="text-gray-400 text-sm">
                 Your trusted digital ajo platform. Save together, prosper together.
@@ -407,7 +407,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
-            <p>&copy; 2024 Hajo. Savings Saves Life. All rights reserved. 💚</p>
+            <p>&copy; 2024 Alajo. Savings Saves Life. All rights reserved. 💚</p>
           </div>
         </div>
       </footer>
