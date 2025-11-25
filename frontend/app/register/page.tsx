@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authAPI } from '@/lib/api'
+import { useAppSettings } from '@/contexts/AppSettingsContext'
+import Image from 'next/image'
 
 interface Collector {
   id: number
@@ -11,6 +13,7 @@ interface Collector {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { settings } = useAppSettings()
   const [collectors, setCollectors] = useState<Collector[]>([])
   const [loadingCollectors, setLoadingCollectors] = useState(true)
   const [formData, setFormData] = useState({
@@ -127,7 +130,18 @@ export default function RegisterPage() {
               {/* Animated Circle Badge */}
               <div className="relative inline-block mb-6">
                 <div className="w-24 h-24 bg-gradient-to-br from-green-600 to-teal-600 rounded-3xl rotate-12 shadow-2xl flex items-center justify-center animate-bounce-in">
-                  <span className="text-5xl -rotate-12">🚀</span>
+                  {settings?.app_logo ? (
+                    <div className="-rotate-12 w-16 h-16 relative">
+                      <Image
+                        src={settings.app_logo}
+                        alt={settings.app_name || 'Alajo'}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-5xl -rotate-12">🚀</span>
+                  )}
                 </div>
                 {/* Floating particles around badge */}
                 <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-400 rounded-full animate-ping-slow"></div>
@@ -135,7 +149,7 @@ export default function RegisterPage() {
               </div>
 
               <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                Join Alajo Today!
+                Join {settings?.app_name || 'Alajo'} Today!
               </h1>
               <p className="text-gray-600 text-lg">
                 Start your savings journey in seconds ✨

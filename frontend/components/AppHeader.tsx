@@ -1,6 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useAppSettings } from '@/contexts/AppSettingsContext'
+import Image from 'next/image'
 
 interface AppHeaderProps {
   title?: string
@@ -25,6 +27,7 @@ export default function AppHeader({
   children
 }: AppHeaderProps) {
   const router = useRouter()
+  const { settings } = useAppSettings()
 
   return (
     <header
@@ -57,9 +60,19 @@ export default function AppHeader({
             </button>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-2xl">💰</span>
+              {settings?.app_logo ? (
+                <Image
+                  src={settings.app_logo}
+                  alt={settings.app_name || 'Alajo'}
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
+              ) : (
+                <span className="text-2xl">💰</span>
+              )}
               <span className={`text-lg font-bold ${gradient ? 'text-white' : 'bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent'}`}>
-                Alajo
+                {settings?.app_name || 'Alajo'}
               </span>
             </div>
           )}

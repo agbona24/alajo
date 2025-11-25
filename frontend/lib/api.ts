@@ -433,6 +433,26 @@ export const dashboardAPI = {
   },
 }
 
+export const appSettingsAPI = {
+  // Get all app settings (logo, favicon, app name, etc.)
+  getSettings: async () => {
+    const response = await api.get('/app-settings')
+    return response.data
+  },
+
+  // Get app logo
+  getLogo: async () => {
+    const response = await api.get('/app-settings/logo')
+    return response.data
+  },
+
+  // Get app favicon
+  getFavicon: async () => {
+    const response = await api.get('/app-settings/favicon')
+    return response.data
+  },
+}
+
 // Error handler
 api.interceptors.response.use(
   (response) => response,

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { AppSettingsProvider } from '@/contexts/AppSettingsContext'
+import DynamicFavicon from '@/components/DynamicFavicon'
 
 export const metadata: Metadata = {
   title: 'Alajo - Digital Savings Platform',
@@ -21,7 +23,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AppSettingsProvider>
+          <DynamicFavicon />
+          {children}
+        </AppSettingsProvider>
+      </body>
     </html>
   )
 }

@@ -1,6 +1,24 @@
 'use client'
 
+import { useLandingPageContent } from '@/hooks/useLandingPageContent'
+
 export default function Home() {
+  const { content, loading } = useLandingPageContent()
+
+  // Show loading state
+  if (loading || !content) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <span className="text-3xl">💰</span>
+          </div>
+          <p className="text-gray-600 font-medium">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 overflow-hidden">
       {/* Floating Background Elements */}
@@ -57,26 +75,25 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full mb-6 border border-primary/20 backdrop-blur-sm">
                 <span className="text-lg">🎉</span>
                 <span className="text-sm font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Join 10,000+ Happy Savers
+                  {content.hero.badge_text}
                 </span>
               </div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-                Your Money,{' '}
+                {content.hero.title_line1}{' '}
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Your Future
+                  {content.hero.title_line1.split(' ').slice(-2).join(' ')}
                 </span>
                 <br />
-                <span className="text-3xl md:text-4xl lg:text-5xl">Na Digital Ajo!</span>
+                <span className="text-3xl md:text-4xl lg:text-5xl">{content.hero.title_line2}</span>
               </h1>
 
               <p className="text-lg md:text-xl text-gray-600 mb-4 leading-relaxed">
-                <strong>Small small, e go plenty!</strong> Save with your people, track every kobo, and achieve your dreams.
+                {content.hero.subtitle1}
               </p>
 
               <p className="text-base md:text-lg text-gray-500 mb-8 leading-relaxed">
-                Whether na new phone, school fees, rent, or owambe money - Alajo get you covered.
-                Traditional ajo meet modern tech. No wahala, just results! 💪
+                {content.hero.subtitle2}
               </p>
 
               {/* CTA Buttons */}
@@ -85,14 +102,14 @@ export default function Home() {
                   href="/onboarding"
                   className="px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-full hover:shadow-xl transition font-semibold text-lg active:scale-95 flex items-center justify-center gap-2"
                 >
-                  <span>Start Saving Now</span>
+                  <span>{content.hero.cta_primary}</span>
                   <span>🚀</span>
                 </a>
                 <a
                   href="#how-it-works"
                   className="px-8 py-4 border-2 border-primary text-primary rounded-full hover:bg-primary hover:text-white transition font-semibold text-lg active:scale-95"
                 >
-                  See How It Works
+                  {content.hero.cta_secondary}
                 </a>
               </div>
 
@@ -100,15 +117,15 @@ export default function Home() {
               <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <span className="text-green-500 text-xl">✓</span>
-                  <span className="font-medium">100% Secure</span>
+                  <span className="font-medium">{content.hero.trust_1}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-green-500 text-xl">✓</span>
-                  <span className="font-medium">₦500 to Start</span>
+                  <span className="font-medium">{content.hero.trust_2}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-green-500 text-xl">✓</span>
-                  <span className="font-medium">No Hidden Charges</span>
+                  <span className="font-medium">{content.hero.trust_3}</span>
                 </div>
               </div>
             </div>
@@ -173,20 +190,20 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             <div className="text-center animate-fade-in-up">
-              <div className="text-3xl md:text-5xl font-bold mb-2">10,000+</div>
-              <div className="text-sm md:text-base opacity-90">Active Savers</div>
+              <div className="text-3xl md:text-5xl font-bold mb-2">{content.stats.stat1_number}</div>
+              <div className="text-sm md:text-base opacity-90">{content.stats.stat1_label}</div>
             </div>
             <div className="text-center animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-              <div className="text-3xl md:text-5xl font-bold mb-2">₦2.5B+</div>
-              <div className="text-sm md:text-base opacity-90">Total Saved</div>
+              <div className="text-3xl md:text-5xl font-bold mb-2">{content.stats.stat2_number}</div>
+              <div className="text-sm md:text-base opacity-90">{content.stats.stat2_label}</div>
             </div>
             <div className="text-center animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-              <div className="text-3xl md:text-5xl font-bold mb-2">500+</div>
-              <div className="text-sm md:text-base opacity-90">Active Groups</div>
+              <div className="text-3xl md:text-5xl font-bold mb-2">{content.stats.stat3_number}</div>
+              <div className="text-sm md:text-base opacity-90">{content.stats.stat3_label}</div>
             </div>
             <div className="text-center animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-              <div className="text-3xl md:text-5xl font-bold mb-2">99.9%</div>
-              <div className="text-sm md:text-base opacity-90">Success Rate</div>
+              <div className="text-3xl md:text-5xl font-bold mb-2">{content.stats.stat4_number}</div>
+              <div className="text-sm md:text-base opacity-90">{content.stats.stat4_label}</div>
             </div>
           </div>
         </div>
@@ -201,44 +218,44 @@ export default function Home() {
                 WHY CHOOSE Alajo
               </span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Everything Wey You Need</h2>
-            <p className="text-lg md:text-xl text-gray-600">Save smart, save together, achieve your dreams</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{content.features.section_title}</h2>
+            <p className="text-lg md:text-xl text-gray-600">{content.features.section_subtitle}</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             <FeatureCard
-              icon="🎯"
-              title="Goal-Based Savings"
-              description="Set your target - whether na iPhone 15, school fees, or owanbe money. We go help you reach am!"
+              icon={content.features.feature1_icon}
+              title={content.features.feature1_title}
+              description={content.features.feature1_desc}
               gradient="from-purple-500 to-purple-600"
             />
             <FeatureCard
-              icon="📊"
-              title="Track Progress Real-Time"
-              description="See your money grow every day with beautiful charts. No hiding, everything transparent!"
+              icon={content.features.feature2_icon}
+              title={content.features.feature2_title}
+              description={content.features.feature2_desc}
               gradient="from-blue-500 to-blue-600"
             />
             <FeatureCard
-              icon="🔒"
-              title="100% Secure & Safe"
-              description="Bank-level security wey go make your money dey safer than safe. E get 2FA, encryption, everything!"
+              icon={content.features.feature3_icon}
+              title={content.features.feature3_title}
+              description={content.features.feature3_desc}
               gradient="from-green-500 to-green-600"
             />
             <FeatureCard
-              icon="⚡"
-              title="Instant Withdrawals"
-              description="Your money no dey lock forever. Whenever you need am, just request and collect. Simple!"
+              icon={content.features.feature4_icon}
+              title={content.features.feature4_title}
+              description={content.features.feature4_desc}
               gradient="from-yellow-500 to-orange-600"
             />
             <FeatureCard
-              icon="📱"
-              title="Mobile-First Experience"
-              description="Use am for phone like native app. Smooth animations, easy navigation, no stress at all!"
+              icon={content.features.feature5_icon}
+              title={content.features.feature5_title}
+              description={content.features.feature5_desc}
               gradient="from-pink-500 to-rose-600"
             />
             <FeatureCard
-              icon="👥"
-              title="Community Ajo Groups"
-              description="Join traditional ajo with your people. Save together, grow together, chop together! 🎉"
+              icon={content.features.feature6_icon}
+              title={content.features.feature6_title}
+              description={content.features.feature6_desc}
               gradient="from-indigo-500 to-purple-600"
             />
           </div>
@@ -251,36 +268,30 @@ export default function Home() {
           <div className="text-center mb-12 md:mb-16">
             <div className="inline-block px-4 py-2 bg-white rounded-full mb-4 shadow-sm">
               <span className="text-sm font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                EASY AS 1-2-3-4
+                EASY AS 1-2-3
               </span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">How E Dey Work</h2>
-            <p className="text-lg md:text-xl text-gray-600">Start your savings journey in 4 simple steps</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{content.how_it_works.section_title}</h2>
+            <p className="text-lg md:text-xl text-gray-600">{content.how_it_works.section_subtitle}</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             <Step
-              number={1}
-              title="Create Account"
-              description="Just your email and password. No long story, no wahala. 2 minutes max!"
+              number={parseInt(content.how_it_works.step1_number)}
+              title={content.how_it_works.step1_title}
+              description={content.how_it_works.step1_desc}
               gradient="from-purple-500 to-purple-600"
             />
             <Step
-              number={2}
-              title="Set Your Goal"
-              description="Wetin you wan buy? How much? When you wan get am? We go help you plan!"
+              number={parseInt(content.how_it_works.step2_number)}
+              title={content.how_it_works.step2_title}
+              description={content.how_it_works.step2_desc}
               gradient="from-blue-500 to-blue-600"
             />
             <Step
-              number={3}
-              title="Start Saving"
-              description="Daily, weekly, monthly - na you sabi! Small small, the money go plenty!"
+              number={parseInt(content.how_it_works.step3_number)}
+              title={content.how_it_works.step3_title}
+              description={content.how_it_works.step3_desc}
               gradient="from-green-500 to-green-600"
-            />
-            <Step
-              number={4}
-              title="Reach Your Goal"
-              description="Collect your money or let am dey grow. The choice na yours! 💪"
-              gradient="from-orange-500 to-orange-600"
             />
           </div>
         </div>
@@ -290,27 +301,27 @@ export default function Home() {
       <section className="py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Wetin People Dey Talk</h2>
-            <p className="text-lg md:text-xl text-gray-600">Real stories from real savers</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{content.testimonials.section_title}</h2>
+            <p className="text-lg md:text-xl text-gray-600">{content.testimonials.section_subtitle}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 md:gap-8">
             <TestimonialCard
-              quote="I buy iPhone 15 Pro Max after 6 months of saving! Alajo na the real deal! 🔥"
-              name="Chioma A."
-              role="Lagos, Nigeria"
-              avatar="👩🏾"
+              quote={content.testimonials.testimonial1_text}
+              name={content.testimonials.testimonial1_name}
+              role={content.testimonials.testimonial1_role}
+              avatar={content.testimonials.testimonial1_avatar}
             />
             <TestimonialCard
-              quote="Our ajo group don save ₦5M together! E never sweet like this before 💯"
-              name="Emeka O."
-              role="Abuja, Nigeria"
-              avatar="👨🏿"
+              quote={content.testimonials.testimonial2_text}
+              name={content.testimonials.testimonial2_name}
+              role={content.testimonials.testimonial2_role}
+              avatar={content.testimonials.testimonial2_avatar}
             />
             <TestimonialCard
-              quote="I pay my school fees without stress. Small small contributions add up! 🎓"
-              name="Aisha M."
-              role="Kano, Nigeria"
-              avatar="👩🏾"
+              quote={content.testimonials.testimonial3_text}
+              name={content.testimonials.testimonial3_name}
+              role={content.testimonials.testimonial3_role}
+              avatar={content.testimonials.testimonial3_avatar}
             />
           </div>
         </div>
@@ -327,18 +338,16 @@ export default function Home() {
 
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <div className="text-6xl mb-6 animate-bounce-in">💰</div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Your Journey?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{content.cta.title}</h2>
           <p className="text-lg md:text-xl mb-8 opacity-90">
-            Join 10,000+ Nigerians wey don achieve their financial goals with Alajo.
-            <br className="hidden md:block" />
-            E go reach your turn! 🚀
+            {content.cta.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
             <a
               href="/onboarding"
               className="px-8 py-4 bg-white text-primary rounded-full hover:bg-gray-100 transition font-semibold text-lg active:scale-95 shadow-xl"
             >
-              Create Free Account Now
+              {content.cta.button_text}
             </a>
             <a
               href="/login"
@@ -350,17 +359,8 @@ export default function Home() {
 
           {/* Trust Badges */}
           <div className="flex flex-wrap justify-center gap-6 mt-10 text-sm opacity-90">
-            <div className="flex items-center gap-2">
-              <span>🔒</span>
-              <span>Secure & Encrypted</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span>⚡</span>
-              <span>Instant Setup</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span>💯</span>
-              <span>No Hidden Fees</span>
+            <div className="text-center">
+              <span>{content.cta.subtext}</span>
             </div>
           </div>
         </div>
@@ -377,8 +377,11 @@ export default function Home() {
                 </div>
                 <span className="text-xl font-bold">Alajo</span>
               </div>
+              <p className="text-gray-400 text-sm mb-2 font-semibold">
+                {content.footer.tagline}
+              </p>
               <p className="text-gray-400 text-sm">
-                Your trusted digital ajo platform. Save together, prosper together.
+                {content.footer.description}
               </p>
             </div>
             <div>
@@ -407,7 +410,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
-            <p>&copy; 2024 Alajo. Savings Saves Life. All rights reserved. 💚</p>
+            <p>{content.footer.copyright}</p>
           </div>
         </div>
       </footer>

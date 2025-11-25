@@ -8,9 +8,12 @@ import {
   authenticateWithBiometric,
   getBiometricUser,
 } from '@/lib/biometricAuth'
+import { useAppSettings } from '@/contexts/AppSettingsContext'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { settings } = useAppSettings()
   const [formData, setFormData] = useState({
     phone: '',
     password: '',
@@ -164,7 +167,18 @@ export default function LoginPage() {
             <div className="text-center mb-8 animate-fade-in-up">
               <div className="relative inline-block mb-6">
                 <div className="w-24 h-24 bg-gradient-to-br from-purple-600 to-blue-600 rounded-3xl rotate-12 shadow-2xl flex items-center justify-center animate-bounce-in">
-                  <span className="text-5xl -rotate-12">💰</span>
+                  {settings?.app_logo ? (
+                    <div className="-rotate-12 w-16 h-16 relative">
+                      <Image
+                        src={settings.app_logo}
+                        alt={settings.app_name || 'Alajo'}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-5xl -rotate-12">💰</span>
+                  )}
                 </div>
                 <div className="absolute -top-2 -right-2 w-4 h-4 bg-yellow-400 rounded-full animate-ping-slow"></div>
                 <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-green-400 rounded-full animate-ping-slower"></div>

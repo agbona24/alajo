@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAppSettings } from '@/contexts/AppSettingsContext'
 
 const onboardingSlides = [
   {
     id: 1,
-    title: "Welcome to Alajo",
+    title: "Welcome to {APP_NAME}",
     subtitle: "Save Together, Prosper Together",
     quote: "\"Small drops of water make a mighty ocean\"",
     description: "Your mama taught you the power of ajo. Now save the modern way - anytime, anywhere, with people you trust.",
@@ -52,6 +53,7 @@ const onboardingSlides = [
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { settings } = useAppSettings()
   const [currentSlide, setCurrentSlide] = useState(0)
   const [touchStart, setTouchStart] = useState(0)
   const [touchEnd, setTouchEnd] = useState(0)
@@ -169,7 +171,7 @@ export default function OnboardingPage() {
                   </div>
                 </div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                  {slide.title}
+                  {slide.title.replace('{APP_NAME}', settings?.app_name || 'Alajo')}
                 </h1>
                 <h2 className={`text-2xl font-bold bg-gradient-to-r ${slide.gradient} bg-clip-text text-transparent mb-3`}>
                   {slide.subtitle}
