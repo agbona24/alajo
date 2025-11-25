@@ -164,6 +164,9 @@ Route::prefix('settings')->name('settings.')->group(function () {
     Route::post('/notifications', [SettingsController::class, 'updateNotifications'])->name('notifications.update');
     Route::get('/commissions', [SettingsController::class, 'commissions'])->name('commissions');
     Route::post('/commissions', [SettingsController::class, 'updateCommissions'])->name('commissions.update');
+    Route::get('/apk', [SettingsController::class, 'apk'])->name('apk');
+    Route::post('/apk', [SettingsController::class, 'updateApk'])->name('apk.update');
+    Route::delete('/apk', [SettingsController::class, 'deleteApk'])->name('apk.delete');
     Route::post('/clear-cache', [SettingsController::class, 'clearCache'])->name('clear-cache');
 });
 

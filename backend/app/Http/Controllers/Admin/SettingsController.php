@@ -223,6 +223,113 @@ class SettingsController extends Controller
     }
 
     /**
+     * APK management page.
+     */
+    public function apk()
+    {
+        $settings = Setting::getByGroup('apk');
+
+        // Get APK file info if exists
+        $apkPath = Setting::get('android_apk_path');
+        $apkInfo = null;
+
+        if ($apkPath && \Storage::disk('public')->exists($apkPath)) {
+            $fullPath = storage_path('app/public/' . $apkPath);
+            $apkInfo = [
+                'path' => $apkPath,
+                'url' => asset('storage/' . $apkPath),
+                'size' => \Storage::disk('public')->size($apkPath),
+                'size_formatted' => $this->formatBytes(\Storage::disk('public')->size($apkPath)),
+                'last_modified' => \Storage::disk('public')->lastModified($apkPath),
+                'version' => Setting::get('android_apk_version'),
+            ];
+        }
+
+        return view('admin.settings.apk', compact('settings', 'apkInfo'));
+    }
+
+    /**
+     * Update APK file.
+     */
+    public function updateApk(Request $request)
+    {
+        $request->validate([
+            'android_apk' => 'required|file|max:102400', // Max 100MB
+            'version' => 'nullable|string|max:50',
+        ]);
+
+        try {
+            $file = $request->file('android_apk');
+
+            // Check if file extension is .apk
+            if (strtolower($file->getClientOriginalExtension()) !== 'apk') {
+                return back()->with('error', 'Only APK files are allowed.');
+            }
+
+            // Delete old APK if exists
+            $oldApkPath = Setting::get('android_apk_path');
+            if ($oldApkPath && \Storage::disk('public')->exists($oldApkPath)) {
+                \Storage::disk('public')->delete($oldApkPath);
+            }
+
+            // Store new APK with a fixed name to maintain consistent URL
+            $fileName = 'alajo-app.apk';
+            $path = $file->storeAs('downloads', $fileName, 'public');
+
+            // Update settings
+            Setting::set('android_apk_path', $path, 'apk');
+            Setting::set('android_apk_version', $request->input('version') ?? 'v1.0.0', 'apk');
+            Setting::set('android_apk_size', \Storage::disk('public')->size($path), 'apk');
+            Setting::set('android_apk_updated_at', now()->toDateTimeString(), 'apk');
+
+            // Clear all caches to ensure settings are refreshed
+            \Cache::flush();
+
+            return back()->with('success', 'Android APK uploaded successfully. The app is now available for download.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to upload APK: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete APK file.
+     */
+    public function deleteApk()
+    {
+        try {
+            $apkPath = Setting::get('android_apk_path');
+
+            if ($apkPath && \Storage::disk('public')->exists($apkPath)) {
+                \Storage::disk('public')->delete($apkPath);
+            }
+
+            // Remove settings
+            Setting::where('key', 'android_apk_path')->delete();
+            Setting::where('key', 'android_apk_version')->delete();
+            Setting::where('key', 'android_apk_size')->delete();
+            Setting::where('key', 'android_apk_updated_at')->delete();
+
+            return back()->with('success', 'Android APK deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to delete APK: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Format bytes to human readable format.
+     */
+    private function formatBytes($bytes, $precision = 2)
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+
+        return round($bytes, $precision) . ' ' . $units[$i];
+    }
+
+    /**
      * Clear application cache.
      */
     public function clearCache()

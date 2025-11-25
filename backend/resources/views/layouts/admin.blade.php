@@ -106,6 +106,9 @@
                         <a href="{{ route('admin.settings.commissions') }}" class="flex items-center pl-14 pr-6 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.settings.commissions*') ? 'text-white bg-gray-800' : '' }}">
                             Commissions
                         </a>
+                        <a href="{{ route('admin.settings.apk') }}" class="flex items-center pl-14 pr-6 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.settings.apk*') ? 'text-white bg-gray-800' : '' }}">
+                            APK Management
+                        </a>
                     </div>
                 </div>
 
