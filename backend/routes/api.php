@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\DailyPaymentController;
 use App\Http\Controllers\Api\TwoFactorController;
+use App\Http\Controllers\Api\AppSettingsController;
+use App\Http\Controllers\Api\LandingPageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +35,16 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/biometric-login', [AuthController::class, 'biometricLogin']);
 Route::get('/collectors', [AuthController::class, 'getCollectors']);
+
+// App settings (public - for branding)
+Route::get('/app-settings', [AppSettingsController::class, 'index']);
+Route::get('/app-settings/logo', [AppSettingsController::class, 'getLogo']);
+Route::get('/app-settings/favicon', [AppSettingsController::class, 'getFavicon']);
+
+// Landing page content (public - for landing page)
+Route::get('/landing-page', [LandingPageController::class, 'index']);
+Route::get('/landing-page/{section}', [LandingPageController::class, 'getSection']);
+Route::get('/landing-page/{section}/{key}', [LandingPageController::class, 'getContent']);
 
 // 2FA routes (public - for login flow)
 Route::post('/2fa/send-login-code', [TwoFactorController::class, 'sendLoginCode']);

@@ -19,28 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => function () {
-        $origins = [
-            'http://localhost:3000',
-            'http://localhost:3001',
-        ];
-
-        if ($frontendUrl = env('FRONTEND_URL')) {
-            $origins[] = $frontendUrl;
-        }
-
-        // Add production domains from SANCTUM_STATEFUL_DOMAINS
-        if ($statefulDomains = env('SANCTUM_STATEFUL_DOMAINS')) {
-            $domains = explode(',', $statefulDomains);
-            foreach ($domains as $domain) {
-                $domain = trim($domain);
-                $origins[] = 'https://' . $domain;
-                $origins[] = 'http://' . $domain;
-            }
-        }
-
-        return $origins;
-    },
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [
         '/^https:\/\/.*\.vercel\.app$/',

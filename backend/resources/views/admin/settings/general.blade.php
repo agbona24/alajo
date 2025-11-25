@@ -32,9 +32,45 @@
             <p class="text-sm text-gray-500 mt-1">Configure your platform's basic information.</p>
         </div>
 
-        <form action="{{ route('admin.settings.general.update') }}" method="POST" class="p-6 space-y-6">
+        <form action="{{ route('admin.settings.general.update') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
             @csrf
 
+            <!-- Branding Section -->
+            <div class="pb-6 border-b border-gray-200">
+                <h4 class="text-md font-semibold text-gray-900 mb-4">Branding</h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- App Logo -->
+                    <div>
+                        <label for="app_logo" class="block text-sm font-medium text-gray-700 mb-2">Application Logo</label>
+                        @if(isset($settings['app_logo']) && $settings['app_logo'])
+                            <div class="mb-3">
+                                <img src="{{ asset('storage/' . $settings['app_logo']) }}" alt="Current Logo" class="h-20 w-auto border border-gray-200 rounded-lg p-2 bg-white">
+                                <p class="text-xs text-gray-500 mt-1">Current logo</p>
+                            </div>
+                        @endif
+                        <input type="file" name="app_logo" id="app_logo" accept="image/jpeg,image/png,image/jpg,image/svg+xml"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        <p class="mt-1 text-sm text-gray-500">Upload a logo (JPG, PNG, SVG - Max 2MB). Recommended: 512x512px</p>
+                    </div>
+
+                    <!-- App Favicon -->
+                    <div>
+                        <label for="app_favicon" class="block text-sm font-medium text-gray-700 mb-2">Favicon</label>
+                        @if(isset($settings['app_favicon']) && $settings['app_favicon'])
+                            <div class="mb-3">
+                                <img src="{{ asset('storage/' . $settings['app_favicon']) }}" alt="Current Favicon" class="h-12 w-auto border border-gray-200 rounded-lg p-2 bg-white">
+                                <p class="text-xs text-gray-500 mt-1">Current favicon</p>
+                            </div>
+                        @endif
+                        <input type="file" name="app_favicon" id="app_favicon" accept="image/jpeg,image/png,image/jpg,image/x-icon,image/svg+xml"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        <p class="mt-1 text-sm text-gray-500">Upload a favicon (ICO, PNG, SVG - Max 512KB). Recommended: 32x32px</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- General Information -->
             <div>
                 <label for="app_name" class="block text-sm font-medium text-gray-700 mb-2">Application Name</label>
                 <input type="text" name="app_name" id="app_name" value="{{ $settings['app_name'] ?? 'Alajo' }}"

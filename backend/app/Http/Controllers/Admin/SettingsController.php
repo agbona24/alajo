@@ -38,10 +38,27 @@ class SettingsController extends Controller
             'support_email' => 'nullable|email',
             'support_phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
+            'app_favicon' => 'nullable|image|mimes:jpeg,png,jpg,ico,svg|max:512',
         ]);
 
-        foreach ($validated as $key => $value) {
-            Setting::set($key, $value, 'general');
+        // Handle logo upload
+        if ($request->hasFile('app_logo')) {
+            $logoPath = $request->file('app_logo')->store('branding', 'public');
+            Setting::set('app_logo', $logoPath, 'general');
+        }
+
+        // Handle favicon upload
+        if ($request->hasFile('app_favicon')) {
+            $faviconPath = $request->file('app_favicon')->store('branding', 'public');
+            Setting::set('app_favicon', $faviconPath, 'general');
+        }
+
+        // Update other settings
+        foreach (['app_name', 'app_description', 'support_email', 'support_phone', 'address'] as $key) {
+            if (isset($validated[$key])) {
+                Setting::set($key, $validated[$key], 'general');
+            }
         }
 
         return back()->with('success', 'General settings updated successfully.');

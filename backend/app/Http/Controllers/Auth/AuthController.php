@@ -37,6 +37,13 @@ class AuthController extends Controller
 
         Auth::login($user);
 
+        // Redirect based on user role
+        if ($user->role === User::ROLE_ADMIN) {
+            return redirect('/admin')->with('success', 'Registration successful!');
+        } elseif ($user->role === User::ROLE_COLLECTOR) {
+            return redirect('/collector')->with('success', 'Registration successful!');
+        }
+
         return redirect('/dashboard')->with('success', 'Registration successful!');
     }
 
@@ -49,6 +56,16 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+
+            // Redirect based on user role
+            $user = Auth::user();
+
+            if ($user->role === User::ROLE_ADMIN) {
+                return redirect()->intended('/admin');
+            } elseif ($user->role === User::ROLE_COLLECTOR) {
+                return redirect()->intended('/collector');
+            }
+
             return redirect()->intended('/dashboard');
         }
 

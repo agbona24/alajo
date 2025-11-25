@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\WithdrawalController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\CashbookController;
 use App\Http\Controllers\Admin\EarningsController;
+use App\Http\Controllers\Admin\LandingPageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -164,4 +165,14 @@ Route::prefix('settings')->name('settings.')->group(function () {
     Route::get('/commissions', [SettingsController::class, 'commissions'])->name('commissions');
     Route::post('/commissions', [SettingsController::class, 'updateCommissions'])->name('commissions.update');
     Route::post('/clear-cache', [SettingsController::class, 'clearCache'])->name('clear-cache');
+});
+
+// Landing Page Content Management
+Route::prefix('landing-page')->name('landing-page.')->group(function () {
+    Route::get('/', [LandingPageController::class, 'index'])->name('index');
+    Route::get('/section/{section}', [LandingPageController::class, 'editSection'])->name('edit-section');
+    Route::put('/section/{section}', [LandingPageController::class, 'updateSection'])->name('update-section');
+    Route::get('/content/{id}/edit', [LandingPageController::class, 'edit'])->name('edit');
+    Route::put('/content/{id}', [LandingPageController::class, 'update'])->name('update');
+    Route::post('/content/{id}/toggle', [LandingPageController::class, 'toggleActive'])->name('toggle-active');
 });
