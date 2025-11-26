@@ -3,10 +3,10 @@
 import { useLandingPageContent } from '@/hooks/useLandingPageContent'
 
 export default function Home() {
-  const { content, loading } = useLandingPageContent()
+  const { content, loading, error } = useLandingPageContent()
 
-  // Show loading state
-  if (loading || !content) {
+  // Show loading state or error
+  if (loading || !content || !content.hero || !content.hero.title_line1) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
@@ -82,7 +82,7 @@ export default function Home() {
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
                 {content.hero.title_line1}{' '}
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  {content.hero.title_line1.split(' ').slice(-2).join(' ')}
+                  {content.hero.title_line1?.split(' ')?.slice(-2)?.join(' ') || ''}
                 </span>
                 <br />
                 <span className="text-3xl md:text-4xl lg:text-5xl">{content.hero.title_line2}</span>
