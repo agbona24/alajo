@@ -1,12 +1,35 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useLandingPageContent } from '@/hooks/useLandingPageContent'
+import DeveloperCredit from '@/components/DeveloperCredit'
 
 export default function Home() {
+  const router = useRouter()
   const { content, loading, error } = useLandingPageContent()
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true)
 
-  // Show loading state or error
-  if (loading || !content || !content.hero || !content.hero.title_line1) {
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      router.push('/dashboard')
+      return
+    }
+
+    // Check if user has completed onboarding
+    const onboardingCompleted = localStorage.getItem('onboarding_completed')
+    if (!onboardingCompleted) {
+      router.push('/onboarding')
+      return
+    }
+
+    setCheckingOnboarding(false)
+  }, [router])
+
+  // Show loading state while checking onboarding or loading content
+  if (checkingOnboarding || loading || !content || !content.hero || !content.hero.title_line1) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
@@ -409,8 +432,11 @@ export default function Home() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
-            <p>{content.footer.copyright}</p>
+          <div className="border-t border-gray-800 pt-8">
+            <DeveloperCredit variant="footer" className="mb-4" />
+            <p className="text-center text-xs text-gray-500 mt-4">
+              © 2025 Alajo. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>

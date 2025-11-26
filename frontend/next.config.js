@@ -8,6 +8,7 @@ const withPWA = require('next-pwa')({
 
 const nextConfig = {
   reactStrictMode: true,
+  // output: 'export', // Disabled - using live server mode for Capacitor
   images: {
     domains: ['localhost'],
   },

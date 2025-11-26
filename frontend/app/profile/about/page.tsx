@@ -1,6 +1,7 @@
 'use client'
 
 import AppHeader from '@/components/AppHeader'
+import Link from 'next/link'
 
 export default function AboutPage() {
   return (
@@ -103,10 +104,59 @@ export default function AboutPage() {
           </div>
         </div>
 
+        {/* Developer Credit */}
+        <div className="mt-8 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+          <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-8 text-white shadow-xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">💻</span>
+              </div>
+              <h2 className="text-xl font-bold mb-2">Development Partner</h2>
+              <p className="text-white/90 text-sm">Powered by cutting-edge technology</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">H</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Harzotech</h3>
+                  <p className="text-white/80 text-sm">Software Development Company</p>
+                </div>
+              </div>
+              <p className="text-white/90 text-sm leading-relaxed mb-4">
+                Building innovative fintech solutions for Africa. We specialize in creating secure, scalable, and user-friendly applications that empower businesses and individuals.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
+                  Next.js
+                </span>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
+                  Laravel
+                </span>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
+                  React Native
+                </span>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
+                  Cloud Infrastructure
+                </span>
+              </div>
+            </div>
+
+            <Link
+              href="/credits"
+              className="block w-full py-3 bg-white text-purple-600 rounded-xl font-semibold text-center hover:shadow-lg transition-all active:scale-95"
+            >
+              View Full Credits & Tech Stack
+            </Link>
+          </div>
+        </div>
+
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-gray-500">
-          <p>Made with ❤️ in Nigeria</p>
-          <p className="mt-1">© 2024 Alajo. All rights reserved.</p>
+          <p>Made with ❤️ in Nigeria by <span className="font-semibold text-purple-600">Harzotech</span></p>
+          <p className="mt-1">© 2025 Alajo. All rights reserved.</p>
         </div>
       </div>
     </div>

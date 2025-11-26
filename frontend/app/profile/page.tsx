@@ -20,6 +20,12 @@ export default function ProfilePage() {
   const [biometricAvailable, setBiometricAvailable] = useState(false)
   const [biometricEnabled, setBiometricEnabled] = useState(false)
   const [biometricLoading, setBiometricLoading] = useState(false)
+  const [contributionReminderEnabled, setContributionReminderEnabled] = useState(false)
+  const [contributionReminderDays, setContributionReminderDays] = useState(3)
+  const [reminderSaving, setReminderSaving] = useState(false)
+  const [emailNotificationsContributions, setEmailNotificationsContributions] = useState(true)
+  const [emailNotificationsWithdrawals, setEmailNotificationsWithdrawals] = useState(true)
+  const [notificationsSaving, setNotificationsSaving] = useState(false)
   const [notifications, setNotifications] = useState({
     contributions: true,
     withdrawals: true,
@@ -43,6 +49,22 @@ export default function ProfilePage() {
         ])
 
         setUser(userData)
+
+        // Load contribution reminder settings
+        if (userData.contribution_reminder_enabled !== undefined) {
+          setContributionReminderEnabled(userData.contribution_reminder_enabled)
+        }
+        if (userData.contribution_reminder_days !== undefined) {
+          setContributionReminderDays(userData.contribution_reminder_days)
+        }
+
+        // Load email notification preferences
+        if (userData.email_notifications_contributions !== undefined) {
+          setEmailNotificationsContributions(userData.email_notifications_contributions)
+        }
+        if (userData.email_notifications_withdrawals !== undefined) {
+          setEmailNotificationsWithdrawals(userData.email_notifications_withdrawals)
+        }
 
         // Calculate stats
         const plans = plansData || []
@@ -97,6 +119,133 @@ export default function ProfilePage() {
       alert(error.message || 'Failed to update biometric settings')
     } finally {
       setBiometricLoading(false)
+    }
+  }
+
+  const handleContributionReminderToggle = async () => {
+    if (!user) return
+
+    setReminderSaving(true)
+    try {
+      const newEnabled = !contributionReminderEnabled
+      await authAPI.getUser() // Use profileAPI for update
+
+      // Update via profile API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          contribution_reminder_enabled: newEnabled,
+          contribution_reminder_days: contributionReminderDays
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update reminder settings')
+      }
+
+      setContributionReminderEnabled(newEnabled)
+      alert(newEnabled ? 'Contribution reminders enabled' : 'Contribution reminders disabled')
+    } catch (error: any) {
+      console.error('Reminder toggle error:', error)
+      alert(error.message || 'Failed to update reminder settings')
+    } finally {
+      setReminderSaving(false)
+    }
+  }
+
+  const handleReminderDaysChange = async (days: number) => {
+    if (!user || days < 1 || days > 30) return
+
+    setReminderSaving(true)
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          contribution_reminder_enabled: contributionReminderEnabled,
+          contribution_reminder_days: days
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update reminder days')
+      }
+
+      setContributionReminderDays(days)
+    } catch (error: any) {
+      console.error('Reminder days error:', error)
+      alert(error.message || 'Failed to update reminder days')
+    } finally {
+      setReminderSaving(false)
+    }
+  }
+
+  const handleContributionEmailToggle = async () => {
+    if (!user) return
+
+    setNotificationsSaving(true)
+    try {
+      const newValue = !emailNotificationsContributions
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          email_notifications_contributions: newValue
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update notification settings')
+      }
+
+      setEmailNotificationsContributions(newValue)
+    } catch (error: any) {
+      console.error('Notification toggle error:', error)
+      alert(error.message || 'Failed to update notification settings')
+    } finally {
+      setNotificationsSaving(false)
+    }
+  }
+
+  const handleWithdrawalEmailToggle = async () => {
+    if (!user) return
+
+    setNotificationsSaving(true)
+    try {
+      const newValue = !emailNotificationsWithdrawals
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          email_notifications_withdrawals: newValue
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update notification settings')
+      }
+
+      setEmailNotificationsWithdrawals(newValue)
+    } catch (error: any) {
+      console.error('Notification toggle error:', error)
+      alert(error.message || 'Failed to update notification settings')
+    } finally {
+      setNotificationsSaving(false)
     }
   }
 
@@ -255,21 +404,75 @@ export default function ProfilePage() {
         <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           <h3 className="text-sm font-bold text-gray-500 uppercase mb-3 px-2">Notifications</h3>
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            {/* Contribution Reminders with Days Selector */}
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
+                  💰
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900">Contribution Reminders</div>
+                  <p className="text-sm text-gray-500">Get notified when you miss contributions</p>
+                </div>
+                <div
+                  onClick={handleContributionReminderToggle}
+                  className={`w-12 h-7 rounded-full transition-colors cursor-pointer ${
+                    contributionReminderEnabled ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200 mt-1 ${
+                      contributionReminderEnabled ? 'translate-x-6 ml-1' : 'translate-x-1'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {contributionReminderEnabled && (
+                <div className="ml-14 mt-3 pt-3 border-t border-gray-100">
+                  <label className="text-sm text-gray-700 mb-2 block">
+                    Send reminder after:
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={contributionReminderDays}
+                      onChange={(e) => {
+                        const days = parseInt(e.target.value)
+                        if (days >= 1 && days <= 30) {
+                          setContributionReminderDays(days)
+                        }
+                      }}
+                      onBlur={() => handleReminderDaysChange(contributionReminderDays)}
+                      disabled={reminderSaving}
+                      className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center font-semibold text-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                    <span className="text-sm text-gray-600">days without contributing</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {reminderSaving ? 'Saving...' : 'Changes save automatically'}
+                  </p>
+                </div>
+              )}
+            </div>
+
             <SettingItem
-              icon="💰"
-              label="Contribution Reminders"
-              description="Get notified when it's time to save"
+              icon="📧"
+              label="Contribution Emails"
+              description={notificationsSaving ? 'Saving...' : 'Get email when you make contributions'}
               hasToggle
-              toggleValue={notifications.contributions}
-              onToggle={() => setNotifications({...notifications, contributions: !notifications.contributions})}
+              toggleValue={emailNotificationsContributions}
+              onToggle={handleContributionEmailToggle}
             />
             <SettingItem
               icon="💸"
-              label="Withdrawal Updates"
-              description="Status of your withdrawal requests"
+              label="Withdrawal Emails"
+              description={notificationsSaving ? 'Saving...' : 'Get email updates on withdrawal status'}
               hasToggle
-              toggleValue={notifications.withdrawals}
-              onToggle={() => setNotifications({...notifications, withdrawals: !notifications.withdrawals})}
+              toggleValue={emailNotificationsWithdrawals}
+              onToggle={handleWithdrawalEmailToggle}
             />
             <SettingItem
               icon="🏆"
@@ -328,9 +531,10 @@ export default function ProfilePage() {
             <SettingItem
               icon="ℹ️"
               label="About Alajo"
-              description="Version 1.0.0"
+              description="App info & developer credits"
               onClick={() => router.push('/profile/about')}
               showBorder={false}
+              badge="New"
             />
           </div>
         </div>
@@ -346,9 +550,18 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* App Version */}
-        <div className="text-center mt-6 text-sm text-gray-500">
-          Alajo v1.0.0 - Savings Saves Life
+        {/* App Version & Credits */}
+        <div className="text-center mt-6 space-y-2">
+          <p className="text-sm text-gray-500">Alajo v1.0.0 - Savings Saves Life</p>
+          <p className="text-xs text-gray-400">
+            Made with <span className="text-red-500">❤️</span> in Nigeria by{' '}
+            <button
+              onClick={() => router.push('/credits')}
+              className="text-purple-600 font-medium hover:underline"
+            >
+              Harzotech
+            </button>
+          </p>
         </div>
       </div>
 

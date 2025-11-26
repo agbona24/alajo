@@ -92,10 +92,18 @@ export default function OnboardingPage() {
   }
 
   const skip = () => {
+    // Mark onboarding as completed
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('onboarding_completed', 'true')
+    }
     router.push('/login')
   }
 
   const getStarted = () => {
+    // Mark onboarding as completed
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('onboarding_completed', 'true')
+    }
     router.push('/register')
   }
 
@@ -239,7 +247,12 @@ export default function OnboardingPage() {
 
         {/* Already have account */}
         <button
-          onClick={() => router.push('/login')}
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('onboarding_completed', 'true')
+            }
+            router.push('/login')
+          }}
           className="w-full mt-3 py-3 text-gray-600 font-semibold"
         >
           Already have an account? <span className="text-primary">Sign In</span>

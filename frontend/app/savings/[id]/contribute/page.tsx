@@ -392,7 +392,20 @@ export default function ContributePage() {
                   </div>
                 </div>
 
-                <div className="mt-4 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
+                {/* Important Warning */}
+                <div className="mt-4 p-4 bg-red-50 rounded-xl border-2 border-red-200">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">🚨</span>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-red-900 mb-1">IMPORTANT: Read Before Transferring!</h4>
+                      <p className="text-sm text-red-800 leading-relaxed">
+                        <strong>ONLY transfer to the account shown above.</strong> Sending money to any other account number or bank will delay or prevent your payment from being confirmed. Always double-check the account details before making any transfer. Stick to the rules to avoid issues!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
                   <div className="flex items-start gap-2 text-sm text-yellow-800">
                     <span>⚠️</span>
                     <p>After transfer, your contribution go reflect for your account within minutes. If e no show, contact support.</p>

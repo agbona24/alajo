@@ -57,6 +57,23 @@ export const authAPI = {
     const response = await api.post('/biometric-login', data)
     return response.data
   },
+
+  // Request password reset
+  requestPasswordReset: async (data: { phone: string }) => {
+    const response = await api.post('/password/request-reset', data)
+    return response.data
+  },
+
+  // Reset password
+  resetPassword: async (data: {
+    phone: string
+    reset_code: string
+    password: string
+    password_confirmation: string
+  }) => {
+    const response = await api.post('/password/reset', data)
+    return response.data
+  },
 }
 
 export const savingsAPI = {
@@ -318,6 +335,8 @@ export const profileAPI = {
     city?: string
     state?: string
     postal_code?: string
+    contribution_reminder_enabled?: boolean
+    contribution_reminder_days?: number
   }) => {
     const response = await api.put('/profile', data)
     return response.data

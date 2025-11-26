@@ -2,6 +2,16 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { appSettingsAPI } from '@/lib/api'
+import { initCurrency, formatCurrency as formatCurrencyUtil, getCurrencySymbol, getCurrencyCode } from '@/lib/currency'
+
+interface CurrencySettings {
+  symbol: string
+  code: string
+  position: 'before' | 'after'
+  thousand_separator: string
+  decimal_separator: string
+  decimal_places: number
+}
 
 interface AppSettings {
   app_name: string
@@ -10,6 +20,8 @@ interface AppSettings {
   app_favicon: string | null
   support_email: string | null
   support_phone: string | null
+  currency: CurrencySettings
+  // Legacy support
   currency_symbol: string
   currency_code: string
 }
@@ -28,6 +40,14 @@ const defaultSettings: AppSettings = {
   app_favicon: null,
   support_email: null,
   support_phone: null,
+  currency: {
+    symbol: '₦',
+    code: 'NGN',
+    position: 'before',
+    thousand_separator: ',',
+    decimal_separator: '.',
+    decimal_places: 2,
+  },
   currency_symbol: '₦',
   currency_code: 'NGN',
 }
@@ -57,12 +77,21 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setLoading(true)
       setError(null)
       const response = await appSettingsAPI.getSettings()
-      setSettings(response.data)
+      const fetchedSettings = response.data
+
+      // Initialize currency utility with fetched settings
+      if (fetchedSettings.currency) {
+        initCurrency(fetchedSettings.currency)
+      }
+
+      setSettings(fetchedSettings)
     } catch (err: any) {
       console.error('Failed to fetch app settings:', err)
       setError(err.response?.data?.message || 'Failed to load app settings')
       // Keep default settings on error
       setSettings(defaultSettings)
+      // Initialize with default currency
+      initCurrency(defaultSettings.currency)
     } finally {
       setLoading(false)
     }
@@ -84,4 +113,13 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       {children}
     </AppSettingsContext.Provider>
   )
+}
+
+// Hook for currency formatting
+export const useCurrency = () => {
+  return {
+    format: formatCurrencyUtil,
+    symbol: getCurrencySymbol,
+    code: getCurrencyCode,
+  }
 }

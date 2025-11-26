@@ -27,6 +27,14 @@ export default function LoginPage() {
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [initialCheckDone, setInitialCheckDone] = useState(false)
 
+  // Check if user is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      router.push('/dashboard')
+    }
+  }, [router])
+
   const handleBiometricLogin = useCallback(async () => {
     setBiometricLoading(true)
     setErrors([])
@@ -339,6 +347,7 @@ export default function LoginPage() {
                   <div className="text-right">
                     <button
                       type="button"
+                      onClick={() => router.push('/forgot-password')}
                       className="text-sm font-semibold text-purple-600 hover:text-purple-700 active:scale-95 transition"
                     >
                       Forgot password?
@@ -387,20 +396,6 @@ export default function LoginPage() {
                   >
                     Create Account 🚀
                   </button>
-                </div>
-
-                {/* Dev Mode Bypass */}
-                <div className="mt-6">
-                  <button
-                    onClick={() => router.push('/dashboard')}
-                    className="w-full py-3 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-xl font-bold hover:shadow-lg active:scale-98 transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>🛠️</span>
-                    <span>Skip Login (Dev Mode)</span>
-                  </button>
-                  <p className="text-xs text-center text-gray-500 mt-2">
-                    For testing - bypasses authentication
-                  </p>
                 </div>
               </>
             )}

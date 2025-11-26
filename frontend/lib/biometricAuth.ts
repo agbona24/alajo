@@ -15,9 +15,23 @@ interface BiometricUser {
 }
 
 /**
+ * Check if we're in a secure context (required for WebAuthn)
+ */
+const isSecureContext = (): boolean => {
+  // Check if running in a secure context (HTTPS or localhost)
+  return window.isSecureContext
+}
+
+/**
  * Check if the device supports biometric authentication
  */
 export const isBiometricAvailable = async (): Promise<boolean> => {
+  // Must be in a secure context
+  if (!isSecureContext()) {
+    console.log('Not in secure context (HTTPS required except for localhost)')
+    return false
+  }
+
   // Check if WebAuthn is available
   if (!window.PublicKeyCredential) {
     console.log('WebAuthn not supported')
@@ -89,6 +103,22 @@ const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
 }
 
 /**
+ * Get the proper RP ID for WebAuthn
+ */
+const getRpId = (): string => {
+  const hostname = window.location.hostname
+
+  // For localhost, use 'localhost'
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'localhost'
+  }
+
+  // For IP addresses, don't use them (WebAuthn doesn't support IPs except localhost)
+  // Return the hostname without port
+  return hostname.split(':')[0]
+}
+
+/**
  * Enroll biometric authentication for the current user
  */
 export const enrollBiometric = async (user: { id: number; phone: string; name: string }): Promise<boolean> => {
@@ -99,13 +129,16 @@ export const enrollBiometric = async (user: { id: number; phone: string; name: s
   try {
     const challenge = generateChallenge()
     const userId = new TextEncoder().encode(user.id.toString())
+    const rpId = getRpId()
+
+    console.log('Setting up biometric with RP ID:', rpId)
 
     // Create credential options
     const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
       challenge: challenge as BufferSource,
       rp: {
         name: 'Alajo - Digital Savings',
-        id: window.location.hostname,
+        id: rpId,
       },
       user: {
         id: userId as BufferSource,
@@ -151,12 +184,20 @@ export const enrollBiometric = async (user: { id: number; phone: string; name: s
 
     // Handle specific errors
     if (error.name === 'NotAllowedError') {
-      throw new Error('Biometric authentication was cancelled or denied')
+      throw new Error('Biometric authentication was cancelled or denied. Please grant permission in your browser.')
     } else if (error.name === 'InvalidStateError') {
-      throw new Error('A credential already exists for this account')
+      throw new Error('A credential already exists for this account. Try disabling and re-enabling biometric login.')
+    } else if (error.name === 'NotSupportedError') {
+      throw new Error('Your device or browser does not support this type of biometric authentication.')
+    } else if (error.name === 'SecurityError') {
+      throw new Error('Security error: Please make sure you are using HTTPS or localhost.')
+    } else if (error.name === 'AbortError') {
+      throw new Error('Biometric setup was aborted. Please try again.')
     }
 
-    throw new Error('Failed to set up biometric authentication')
+    // Provide more details in the error message
+    const errorMessage = error.message || 'Unknown error occurred'
+    throw new Error(`Failed to set up biometric authentication: ${errorMessage}. Please try again or contact support.`)
   }
 }
 

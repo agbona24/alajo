@@ -29,6 +29,14 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
+  // Check if user is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      router.push('/dashboard')
+    }
+  }, [router])
+
   useEffect(() => {
     const fetchCollectors = async () => {
       try {
