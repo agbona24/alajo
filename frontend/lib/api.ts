@@ -58,6 +58,18 @@ export const authAPI = {
     return response.data
   },
 
+  // Verify email
+  verifyEmail: async (data: { phone: string; verification_code: string }) => {
+    const response = await api.post('/verify-email', data)
+    return response.data
+  },
+
+  // Resend verification code
+  resendVerification: async (data: { phone: string }) => {
+    const response = await api.post('/resend-verification', data)
+    return response.data
+  },
+
   // Request password reset
   requestPasswordReset: async (data: { phone: string }) => {
     const response = await api.post('/password/request-reset', data)

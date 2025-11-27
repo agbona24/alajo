@@ -175,7 +175,7 @@ export default function ContributePage() {
     }
   }
 
-  const newTotal = (plan?.current_amount || 0) + (parseFloat(amount) || 0)
+  const newTotal = (Number(plan?.current_amount) || 0) + (Number(amount) || 0)
   const newProgress = plan ? Math.min(Math.round((newTotal / plan.target_amount) * 100), 100) : 0
 
   if (loading) {

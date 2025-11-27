@@ -70,19 +70,25 @@ export default function RegisterPage() {
       const submitData = {
         name: formData.name,
         phone: formData.phone,
-        email: formData.email || undefined,
+        email: formData.email,
         password: formData.password,
         password_confirmation: formData.password_confirmation,
         collector_id: formData.collector_id ? parseInt(formData.collector_id) : undefined,
       }
       const response = await authAPI.register(submitData)
 
-      if (response.token) {
+      // Check if email verification is required
+      if (response.requires_verification) {
+        // Store user info for verification page
+        localStorage.setItem('pending_verification_phone', formData.phone)
+        localStorage.setItem('pending_verification_email', response.email_masked)
+        router.push('/verify-email')
+      } else if (response.token) {
+        // Old flow - direct login (backwards compatibility)
         localStorage.setItem('auth_token', response.token)
         localStorage.setItem('user', JSON.stringify(response.user))
+        router.push('/dashboard')
       }
-
-      router.push('/dashboard')
     } catch (error: any) {
       console.error('Registration error:', error)
       if (error.response?.data?.errors) {
@@ -215,10 +221,10 @@ export default function RegisterPage() {
                 <p className="text-xs text-gray-500 mt-1 ml-1">This will be used for login</p>
               </div>
 
-              {/* Email Field (Optional) */}
+              {/* Email Field (Required) */}
               <div className="relative">
                 <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">
-                  📧 Email Address (Optional)
+                  📧 Email Address
                 </label>
                 <input
                   type="email"
@@ -226,9 +232,11 @@ export default function RegisterPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  required
                   className="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none transition text-base"
                   placeholder="you@example.com"
                 />
+                <p className="text-xs text-gray-500 mt-1 ml-1">Required for account verification and recovery</p>
               </div>
 
               {/* Password Field */}
