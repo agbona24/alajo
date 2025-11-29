@@ -121,8 +121,12 @@ export default function PassbookPage() {
   }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-NG', { day: '2-digit', month: 'short' })
+    // Handle virtual dates (e.g., "2025-11-31" for day 31 in November)
+    const [year, month, day] = dateString.split('-').map(Number)
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    // Return formatted date string directly to preserve month context
+    return `${String(day).padStart(2, '0')} ${monthNames[month - 1]}`
   }
 
   const handleExportPDF = () => {

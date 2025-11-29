@@ -85,9 +85,9 @@ export default function AboutPage() {
         <div className="bg-white rounded-2xl shadow-sm p-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
           <h2 className="text-lg font-bold text-gray-800 mb-4">Contact Us</h2>
           <div className="space-y-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <span className="text-xl">📍</span>
-              <span className="text-sm text-gray-600">Lagos, Nigeria</span>
+              <span className="text-sm text-gray-600">2, Azeez Olaoluwa Str, Orisunbare, Ayobo, Lagos.</span>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xl">📞</span>
