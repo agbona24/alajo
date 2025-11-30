@@ -79,7 +79,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                                ₦{{ number_format($group->contribution_amount, 0) }}
+                                {{ currency($group->contribution_amount) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-3 py-1 rounded-full text-xs font-bold uppercase

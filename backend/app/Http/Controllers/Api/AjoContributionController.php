@@ -162,7 +162,7 @@ class AjoContributionController extends Controller
                 $groupId,
                 Auth::id(),
                 'contribution_made',
-                Auth::user()->name . " contributed ₦" . number_format($validated['amount'], 2) . " for cycle {$currentCycle}",
+                Auth::user()->name . " contributed " . currency($validated['amount']) . " for cycle {$currentCycle}",
                 [
                     'amount' => $validated['amount'],
                     'cycle_number' => $currentCycle,

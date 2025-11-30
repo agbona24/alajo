@@ -84,7 +84,55 @@ class NotificationService
     }
 
     /**
-     * Send payment confirmation email.
+     * Send contribution received email (when user makes a contribution).
+     */
+    public function sendContributionReceived(Contribution $contribution): bool
+    {
+        if (!$this->emailNotificationsEnabled() || !$this->isSmtpConfigured()) {
+            return false;
+        }
+
+        $user = $contribution->user;
+        if (empty($user->email)) {
+            Log::info('No email address for user ' . $user->id . ', skipping contribution received email');
+            return false;
+        }
+
+        // Check user's email notification preference for contributions
+        if (!$user->email_notifications_contributions) {
+            Log::info('User ' . $user->id . ' has disabled contribution emails');
+            return false;
+        }
+
+        try {
+            $plan = $contribution->savingsPlan;
+            Mail::raw(
+                "Hello {$user->name},\n\n" .
+                "Your contribution has been received and is awaiting approval.\n\n" .
+                "Contribution Details:\n" .
+                "Plan: {$plan->name}\n" .
+                "Amount: " . currency_symbol() . number_format($contribution->amount, 0) . "\n" .
+                "Payment Method: " . ucfirst($contribution->payment_method) . "\n" .
+                "Reference: {$contribution->reference}\n" .
+                "Status: Pending Approval\n\n" .
+                "You will receive another email once your contribution is approved.\n\n" .
+                "Thank you for saving with Alajo!\n" .
+                "- Alajo Team",
+                function ($message) use ($user) {
+                    $message->to($user->email)
+                        ->subject('Contribution Received - Awaiting Approval');
+                }
+            );
+            Log::info('Contribution received email sent to ' . $user->email);
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send contribution received email: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send payment confirmation email (when admin approves contribution).
      */
     public function sendPaymentConfirmation(Contribution $contribution): bool
     {
@@ -99,6 +147,12 @@ class NotificationService
         $user = $contribution->user;
         if (empty($user->email)) {
             Log::info('No email address for user ' . $user->id . ', skipping payment confirmation');
+            return false;
+        }
+
+        // Check user's email notification preference for contributions
+        if (!$user->email_notifications_contributions) {
+            Log::info('User ' . $user->id . ' has disabled contribution emails');
             return false;
         }
 
@@ -124,6 +178,12 @@ class NotificationService
         $user = $withdrawal->user;
         if (empty($user->email)) {
             Log::info('No email address for user ' . $user->id . ', skipping withdrawal request email');
+            return false;
+        }
+
+        // Check user's email notification preference for withdrawals
+        if (!$user->email_notifications_withdrawals) {
+            Log::info('User ' . $user->id . ' has disabled withdrawal emails');
             return false;
         }
 
@@ -153,6 +213,12 @@ class NotificationService
         $user = $withdrawal->user;
         if (empty($user->email)) {
             Log::info('No email address for user ' . $user->id . ', skipping withdrawal completed email');
+            return false;
+        }
+
+        // Check user's email notification preference for withdrawals
+        if (!$user->email_notifications_withdrawals) {
+            Log::info('User ' . $user->id . ' has disabled withdrawal emails');
             return false;
         }
 

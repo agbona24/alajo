@@ -45,6 +45,13 @@ class User extends Authenticatable
         'two_factor_code',
         'two_factor_code_expires_at',
         'two_factor_verified_at',
+        'contribution_reminder_enabled',
+        'contribution_reminder_days',
+        'email_notifications_contributions',
+        'email_notifications_withdrawals',
+        'email_verification_code',
+        'email_verification_code_expires_at',
+        'email_verified',
     ];
 
     /**
@@ -73,6 +80,12 @@ class User extends Authenticatable
             'two_factor_enabled' => 'boolean',
             'two_factor_code_expires_at' => 'datetime',
             'two_factor_verified_at' => 'datetime',
+            'contribution_reminder_enabled' => 'boolean',
+            'contribution_reminder_days' => 'integer',
+            'email_notifications_contributions' => 'boolean',
+            'email_notifications_withdrawals' => 'boolean',
+            'email_verification_code_expires_at' => 'datetime',
+            'email_verified' => 'boolean',
         ];
     }
 

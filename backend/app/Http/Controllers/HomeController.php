@@ -13,10 +13,19 @@ class HomeController extends Controller
         $appDescription = Setting::get('app_description', 'Your trusted savings and contribution platform');
         $logo = Setting::get('app_logo');
 
-        // Get APK URL from settings (uploaded via admin panel)
-        $apkPath = Setting::get('android_apk_path');
-        $androidApkUrl = $apkPath ? asset('storage/' . $apkPath) : null;
+        // Get download type and URL
+        $downloadType = Setting::get('app_download_type', 'file');
+        $androidApkUrl = null;
 
-        return view('home', compact('appName', 'appDescription', 'logo', 'androidApkUrl'));
+        if ($downloadType === 'playstore') {
+            // Use Play Store link
+            $androidApkUrl = Setting::get('playstore_link');
+        } else {
+            // Use uploaded APK file
+            $apkPath = Setting::get('android_apk_path');
+            $androidApkUrl = $apkPath ? asset('storage/' . $apkPath) : null;
+        }
+
+        return view('home', compact('appName', 'appDescription', 'logo', 'androidApkUrl', 'downloadType'));
     }
 }

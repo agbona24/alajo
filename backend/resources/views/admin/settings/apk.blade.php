@@ -31,8 +31,8 @@
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Android App (APK) Management</h3>
-            <p class="text-sm text-gray-500 mt-1">Upload and manage your Android application APK file.</p>
+            <h3 class="text-lg font-semibold text-gray-900">Android App Management</h3>
+            <p class="text-sm text-gray-500 mt-1">Upload APK file directly or provide a Play Store link for users to download your app.</p>
         </div>
 
         <!-- Current APK Info -->
@@ -138,35 +138,72 @@
             </div>
             @endif
 
+            <!-- Download Type Selection -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">Download Option</label>
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="relative flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-purple-400 transition" onclick="showUploadOption('file')">
+                        <input type="radio" name="download_type" value="file" class="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500" {{ (!isset($settings['app_download_type']) || $settings['app_download_type'] === 'file') ? 'checked' : '' }}>
+                        <div class="ml-3">
+                            <div class="text-sm font-medium text-gray-900">Upload APK File</div>
+                            <div class="text-xs text-gray-500">Host the APK on your server</div>
+                        </div>
+                    </label>
+                    <label class="relative flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-purple-400 transition" onclick="showUploadOption('playstore')">
+                        <input type="radio" name="download_type" value="playstore" class="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500" {{ (isset($settings['app_download_type']) && $settings['app_download_type'] === 'playstore') ? 'checked' : '' }}>
+                        <div class="ml-3">
+                            <div class="text-sm font-medium text-gray-900">Play Store Link</div>
+                            <div class="text-xs text-gray-500">Link to Google Play Store</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
             <div>
                 <label for="version" class="block text-sm font-medium text-gray-700 mb-2">App Version (Optional)</label>
-                <input type="text" name="version" id="version" value="{{ $apkInfo['version'] ?? '' }}" placeholder="e.g., v1.0.0, 2.3.1"
+                <input type="text" name="version" id="version" value="{{ $apkInfo['version'] ?? $settings['android_apk_version'] ?? '' }}" placeholder="e.g., v1.0.0, 2.3.1"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                 <p class="mt-1 text-sm text-gray-500">Specify the version number of your app for reference.</p>
             </div>
 
-            <div>
-                <label for="android_apk" class="block text-sm font-medium text-gray-700 mb-2">
-                    APK File
-                    @if($apkInfo)
-                    <span class="text-orange-600 font-semibold">(Upload to Replace Current APK)</span>
-                    @endif
-                </label>
-                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-purple-400 transition">
-                    <div class="space-y-1 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <div class="flex text-sm text-gray-600">
-                            <label for="android_apk" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500">
-                                <span>Upload an APK file</span>
-                                <input id="android_apk" name="android_apk" type="file" accept=".apk" class="sr-only" required onchange="displayFileName(this)">
-                            </label>
-                            <p class="pl-1">or drag and drop</p>
+            <!-- APK File Upload Section -->
+            <div id="file-upload-section" style="display: {{ (!isset($settings['app_download_type']) || $settings['app_download_type'] === 'file') ? 'block' : 'none' }};">
+                <div>
+                    <label for="android_apk" class="block text-sm font-medium text-gray-700 mb-2">
+                        APK File
+                        @if($apkInfo)
+                        <span class="text-orange-600 font-semibold">(Upload to Replace Current APK)</span>
+                        @endif
+                    </label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-purple-400 transition">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="android_apk" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500">
+                                    <span>Upload an APK file</span>
+                                    <input id="android_apk" name="android_apk" type="file" accept=".apk" class="sr-only" onchange="displayFileName(this)">
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">APK file up to 100MB</p>
+                            <p id="file-name" class="text-sm font-medium text-purple-600 mt-2"></p>
                         </div>
-                        <p class="text-xs text-gray-500">APK file up to 100MB</p>
-                        <p id="file-name" class="text-sm font-medium text-purple-600 mt-2"></p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Play Store Link Section -->
+            <div id="playstore-link-section" style="display: {{ (isset($settings['app_download_type']) && $settings['app_download_type'] === 'playstore') ? 'block' : 'none' }};">
+                <div>
+                    <label for="playstore_link" class="block text-sm font-medium text-gray-700 mb-2">
+                        Google Play Store URL
+                    </label>
+                    <input type="url" name="playstore_link" id="playstore_link" value="{{ $settings['playstore_link'] ?? '' }}"
+                        placeholder="https://play.google.com/store/apps/details?id=com.your.app"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <p class="mt-1 text-sm text-gray-500">Enter the full URL to your app on Google Play Store.</p>
                 </div>
             </div>
 
@@ -192,9 +229,9 @@
             <div class="flex items-center justify-end pt-4 border-t border-gray-200">
                 <button type="submit" class="px-6 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
                     </svg>
-                    Upload APK
+                    <span id="submit-btn-text">Save Settings</span>
                 </button>
             </div>
         </form>
@@ -216,6 +253,23 @@ function copyToClipboard(text) {
     }, function(err) {
         console.error('Could not copy text: ', err);
     });
+}
+
+function showUploadOption(type) {
+    const fileSection = document.getElementById('file-upload-section');
+    const playstoreSection = document.getElementById('playstore-link-section');
+    const apkInput = document.getElementById('android_apk');
+
+    if (type === 'file') {
+        fileSection.style.display = 'block';
+        playstoreSection.style.display = 'none';
+        // APK is not required anymore since user can choose playstore
+        // apkInput.required = true;
+    } else {
+        fileSection.style.display = 'none';
+        playstoreSection.style.display = 'block';
+        apkInput.required = false;
+    }
 }
 </script>
 @endsection

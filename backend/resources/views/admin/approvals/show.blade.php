@@ -263,11 +263,26 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-500">Balance Before</p>
-                        <p class="text-gray-900">{{ number_format($transaction->balance_before) }}</p>
+                        <p class="text-gray-900">{{ currency($transaction->balance_before) }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500">Balance After</p>
-                        <p class="text-gray-900">{{ number_format($transaction->balance_after) }}</p>
+                        @php
+                            // Calculate expected balance after approval
+                            $expectedBalanceAfter = $transaction->balance_after;
+                            if ($contribution->status === 'pending' && $contribution->savingsPlan) {
+                                // Get company fee if any
+                                $companyFee = $contribution->earnings->where('type', 'company_fee')->first();
+                                $memberAmount = $contribution->amount - ($companyFee ? $companyFee->amount : 0);
+                                $expectedBalanceAfter = $transaction->balance_before + $memberAmount;
+                            }
+                        @endphp
+                        <p class="text-gray-900">
+                            {{ currency($expectedBalanceAfter) }}
+                            @if($contribution->status === 'pending')
+                                <span class="text-xs text-gray-500">(after approval)</span>
+                            @endif
+                        </p>
                     </div>
                 </div>
             </div>

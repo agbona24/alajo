@@ -23,7 +23,7 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
                 <div class="text-sm text-white/80 mb-1">Daily Amount</div>
-                <div class="text-3xl font-bold">{{ currency($group->contribution_amount, 0) }}</div>
+                <div class="text-3xl font-bold">₦{{ number_format($group->contribution_amount, 0) }}</div>
                 <div class="text-sm text-white/90 mt-1">per member per day</div>
             </div>
             <div>
@@ -32,11 +32,11 @@
             </div>
             <div>
                 <div class="text-sm text-white/80 mb-1">Daily Target</div>
-                <div class="text-3xl font-bold">{{ currency($group->contribution_amount * $members->count(), 0) }}</div>
+                <div class="text-3xl font-bold">₦{{ number_format($group->contribution_amount * $members->count(), 0) }}</div>
             </div>
             <div>
                 <div class="text-sm text-white/80 mb-1">Month Target</div>
-                <div class="text-3xl font-bold">{{ currency($group->contribution_amount * $members->count() * $daysInMonth, 0) }}</div>
+                <div class="text-3xl font-bold">₦{{ number_format($group->contribution_amount * $members->count() * $daysInMonth, 0) }}</div>
             </div>
         </div>
     </div>
@@ -163,7 +163,7 @@
             <div class="text-center">
                 <div class="text-3xl mb-2">💰</div>
                 <div class="text-sm text-gray-600 mb-1">Expected/Day</div>
-                <div class="text-2xl font-bold text-gray-900">{{ currency($group->contribution_amount * $members->count(), 0) }}</div>
+                <div class="text-2xl font-bold text-gray-900">₦{{ number_format($group->contribution_amount * $members->count(), 0) }}</div>
             </div>
             <div class="text-center">
                 <div class="text-3xl mb-2">📅</div>
@@ -173,7 +173,7 @@
             <div class="text-center">
                 <div class="text-3xl mb-2">💵</div>
                 <div class="text-sm text-gray-600 mb-1">Month Target</div>
-                <div class="text-2xl font-bold text-gray-900">{{ currency($group->contribution_amount * $members->count() * $daysInMonth, 0) }}</div>
+                <div class="text-2xl font-bold text-gray-900">₦{{ number_format($group->contribution_amount * $members->count() * $daysInMonth, 0) }}</div>
             </div>
         </div>
     </div>

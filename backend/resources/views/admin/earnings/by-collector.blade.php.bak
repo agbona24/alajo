@@ -92,7 +92,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-lg font-bold text-green-600">
-                                        N{{ number_format($collector->earnings_sum ?? 0)  }}
+                                        N{{ number_format($collector->earnings_sum ?? 0, 2) }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">

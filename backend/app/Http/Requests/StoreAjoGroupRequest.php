@@ -45,7 +45,7 @@ class StoreAjoGroupRequest extends FormRequest
         return [
             'name.required' => 'Please provide a name for your Ajo group',
             'contribution_amount.required' => 'Contribution amount is required',
-            'contribution_amount.min' => 'Contribution amount must be at least ₦100',
+            'contribution_amount.min' => 'Contribution amount must be at least ' . currency_symbol() . '100',
             'group_size.min' => 'Group must have at least 3 members',
             'group_size.max' => 'Group cannot exceed 50 members',
             'start_date.after_or_equal' => 'Start date cannot be in the past',

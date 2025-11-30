@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\CashbookController;
 use App\Http\Controllers\Admin\EarningsController;
 use App\Http\Controllers\Admin\LandingPageController;
+use App\Http\Controllers\Admin\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,15 @@ use App\Http\Controllers\Admin\LandingPageController;
 
 // Dashboard
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+// Admin Profile Management
+Route::prefix('profile')->name('profile.')->group(function () {
+    Route::get('/', [ProfileController::class, 'show'])->name('show');
+    Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');
+    Route::put('/update', [ProfileController::class, 'update'])->name('update');
+    Route::get('/change-password', [ProfileController::class, 'changePasswordForm'])->name('change-password');
+    Route::post('/change-password', [ProfileController::class, 'changePassword'])->name('change-password.update');
+});
 
 // Earnings Management
 Route::prefix('earnings')->name('earnings.')->group(function () {

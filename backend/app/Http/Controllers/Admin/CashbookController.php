@@ -120,6 +120,8 @@ class CashbookController extends Controller
 
         // Always use 31 days per month (Ajo policy: 1 month = 31 days)
         $daysInMonth = 31;
+        $calendarDaysInMonth = Carbon::create($year, $month)->daysInMonth;
+        $startDate = Carbon::create($year, $month, 1);
 
         // Build detailed view for each plan
         $planData = [];
@@ -145,11 +147,18 @@ class CashbookController extends Controller
                     }
                 }
 
-                $date = Carbon::create($year, $month, $day);
+                // For days within calendar month, use real dates
+                // For extra days, keep the same month context
+                if ($day <= $calendarDaysInMonth) {
+                    $date = $startDate->copy()->addDays($day - 1);
+                } else {
+                    // Create a Carbon instance with the same month but virtual day number
+                    $date = $startDate->copy()->setDate($year, $month, min($day, $calendarDaysInMonth));
+                }
 
                 $dailyStatus[$day] = [
                     'date' => $date,
-                    'day_name' => $date->format('D'),
+                    'day_name' => $day <= $calendarDaysInMonth ? $date->format('D') : 'Extra',
                     'status' => $status,
                     'amount' => $amount,
                     'paid_at' => $paidAt,

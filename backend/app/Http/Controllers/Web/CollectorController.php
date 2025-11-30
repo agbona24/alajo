@@ -68,8 +68,8 @@ class CollectorController extends Controller
             ->where('is_admin', true)
             ->firstOrFail();
 
-        // Generate 30-day payment tracking
-        $daysInMonth = 30;
+        // Generate 31-day payment tracking (Alajo policy)
+        $daysInMonth = 31;
         $currentMonth = now()->format('F Y');
         $startDate = now()->startOfMonth();
 

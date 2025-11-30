@@ -128,6 +128,9 @@ class ReportController extends Controller
             }
         }
 
+        // Ensure maxCollection is at least 1 to prevent division by zero
+        $maxCollection = max($maxCollection, 1);
+
         // Group Stats
         $groupStats = [
             'total' => AjoGroup::count() ?: SavingsPlan::count(),
@@ -151,7 +154,7 @@ class ReportController extends Controller
                     ->sum('amount');
 
                 // Count groups created by collector
-                $groupsCount = AjoGroup::where('created_by', $collector->id)->count();
+                $groupsCount = AjoGroup::where('creator_id', $collector->id)->count();
 
                 return [
                     'name' => $collector->name,

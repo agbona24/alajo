@@ -32,8 +32,12 @@ use App\Http\Controllers\Api\LandingPageController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
+Route::post('/resend-verification', [AuthController::class, 'resendVerificationCode']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/biometric-login', [AuthController::class, 'biometricLogin']);
+Route::post('/password/request-reset', [AuthController::class, 'requestPasswordReset']);
+Route::post('/password/reset', [AuthController::class, 'resetPassword']);
 Route::get('/collectors', [AuthController::class, 'getCollectors']);
 
 // App settings (public - for branding)

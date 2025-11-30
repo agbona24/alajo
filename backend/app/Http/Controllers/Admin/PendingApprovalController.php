@@ -79,7 +79,7 @@ class PendingApprovalController extends Controller
      */
     public function show(Contribution $contribution)
     {
-        $contribution->load(['user', 'savingsPlan', 'ajoGroup']);
+        $contribution->load(['user', 'savingsPlan', 'ajoGroup', 'earnings']);
 
         // Get related passbook records for this contribution
         $passbookRecords = PassbookRecord::where('contribution_id', $contribution->id)->get();

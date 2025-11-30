@@ -146,7 +146,7 @@ class AjoPayoutController extends Controller
                 $groupId,
                 Auth::id(),
                 'payout_created',
-                "Payout of ₦" . number_format($netAmount, 2) . " scheduled for " . $recipient->user->name . " (Cycle {$cycleNumber})",
+                "Payout of " . currency($netAmount) . " scheduled for " . $recipient->user->name . " (Cycle {$cycleNumber})",
                 [
                     'cycle_number' => $cycleNumber,
                     'recipient_id' => $recipient->user_id,
@@ -249,7 +249,7 @@ class AjoPayoutController extends Controller
                 $groupId,
                 Auth::id(),
                 'payout_completed',
-                $payout->user->name . " received payout of ₦" . number_format($payout->net_amount, 2),
+                $payout->user->name . " received payout of " . currency($payout->net_amount),
                 [
                     'cycle_number' => $payout->cycle_number,
                     'amount' => $payout->net_amount,

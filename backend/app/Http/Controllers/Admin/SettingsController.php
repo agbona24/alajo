@@ -37,6 +37,7 @@ class SettingsController extends Controller
             'app_description' => 'nullable|string',
             'support_email' => 'nullable|email',
             'support_phone' => 'nullable|string|max:20',
+            'official_whatsapp' => 'nullable|string|max:20',
             'address' => 'nullable|string',
             'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
             'app_favicon' => 'nullable|image|mimes:jpeg,png,jpg,ico,svg|max:512',
@@ -55,7 +56,7 @@ class SettingsController extends Controller
         }
 
         // Update other settings
-        foreach (['app_name', 'app_description', 'support_email', 'support_phone', 'address'] as $key) {
+        foreach (['app_name', 'app_description', 'support_email', 'support_phone', 'official_whatsapp', 'address'] as $key) {
             if (isset($validated[$key])) {
                 Setting::set($key, $validated[$key], 'general');
             }
@@ -229,6 +230,11 @@ class SettingsController extends Controller
     {
         $settings = Setting::getByGroup('apk');
 
+        // Add general settings for download type
+        $settings['app_download_type'] = Setting::get('app_download_type', 'file');
+        $settings['playstore_link'] = Setting::get('playstore_link');
+        $settings['android_apk_version'] = Setting::get('android_apk_version');
+
         // Get APK file info if exists
         $apkPath = Setting::get('android_apk_path');
         $apkInfo = null;
@@ -249,45 +255,76 @@ class SettingsController extends Controller
     }
 
     /**
-     * Update APK file.
+     * Update APK file or Play Store link.
      */
     public function updateApk(Request $request)
     {
         $request->validate([
-            'android_apk' => 'required|file|max:102400', // Max 100MB
+            'download_type' => 'required|in:file,playstore',
+            'android_apk' => 'required_if:download_type,file|file|max:102400', // Max 100MB
+            'playstore_link' => 'required_if:download_type,playstore|url',
             'version' => 'nullable|string|max:50',
+        ], [
+            'android_apk.required_if' => 'Please upload an APK file.',
+            'playstore_link.required_if' => 'Please provide a Play Store link.',
+            'playstore_link.url' => 'Please enter a valid URL.',
         ]);
 
         try {
-            $file = $request->file('android_apk');
+            $downloadType = $request->input('download_type');
 
-            // Check if file extension is .apk
-            if (strtolower($file->getClientOriginalExtension()) !== 'apk') {
-                return back()->with('error', 'Only APK files are allowed.');
-            }
-
-            // Delete old APK if exists
-            $oldApkPath = Setting::get('android_apk_path');
-            if ($oldApkPath && \Storage::disk('public')->exists($oldApkPath)) {
-                \Storage::disk('public')->delete($oldApkPath);
-            }
-
-            // Store new APK with a fixed name to maintain consistent URL
-            $fileName = 'alajo-app.apk';
-            $path = $file->storeAs('downloads', $fileName, 'public');
-
-            // Update settings
-            Setting::set('android_apk_path', $path, 'apk');
+            // Save download type
+            Setting::set('app_download_type', $downloadType, 'apk');
             Setting::set('android_apk_version', $request->input('version') ?? 'v1.0.0', 'apk');
-            Setting::set('android_apk_size', \Storage::disk('public')->size($path), 'apk');
-            Setting::set('android_apk_updated_at', now()->toDateTimeString(), 'apk');
+
+            if ($downloadType === 'file') {
+                $file = $request->file('android_apk');
+
+                // Check if file extension is .apk
+                if (strtolower($file->getClientOriginalExtension()) !== 'apk') {
+                    return back()->with('error', 'Only APK files are allowed.');
+                }
+
+                // Delete old APK if exists
+                $oldApkPath = Setting::get('android_apk_path');
+                if ($oldApkPath && \Storage::disk('public')->exists($oldApkPath)) {
+                    \Storage::disk('public')->delete($oldApkPath);
+                }
+
+                // Store new APK with a fixed name to maintain consistent URL
+                $fileName = 'alajo-app.apk';
+                $path = $file->storeAs('downloads', $fileName, 'public');
+
+                // Update settings
+                Setting::set('android_apk_path', $path, 'apk');
+                Setting::set('android_apk_size', \Storage::disk('public')->size($path), 'apk');
+                Setting::set('android_apk_updated_at', now()->toDateTimeString(), 'apk');
+
+                // Clear playstore link
+                Setting::where('key', 'playstore_link')->delete();
+
+                $message = 'Android APK uploaded successfully. The app is now available for download.';
+            } else {
+                // Play Store link
+                Setting::set('playstore_link', $request->input('playstore_link'), 'apk');
+
+                // Clear APK file settings
+                $oldApkPath = Setting::get('android_apk_path');
+                if ($oldApkPath && \Storage::disk('public')->exists($oldApkPath)) {
+                    \Storage::disk('public')->delete($oldApkPath);
+                }
+                Setting::where('key', 'android_apk_path')->delete();
+                Setting::where('key', 'android_apk_size')->delete();
+
+                $message = 'Play Store link saved successfully. Users will be redirected to the Play Store.';
+            }
 
             // Clear all caches to ensure settings are refreshed
             \Cache::flush();
 
-            return back()->with('success', 'Android APK uploaded successfully. The app is now available for download.');
+            return back()->with('success', $message);
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to upload APK: ' . $e->getMessage());
+            return back()->with('error', 'Failed to save settings: ' . $e->getMessage());
         }
     }
 

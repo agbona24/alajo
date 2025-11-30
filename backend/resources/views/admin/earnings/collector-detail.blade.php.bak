@@ -69,7 +69,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-500">Total Earnings</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ currency($summary['total']) }}</p>
+                    <p class="text-2xl font-bold text-gray-900">N{{ number_format($summary['total'], 2) }}</p>
                 </div>
             </div>
         </div>
@@ -83,7 +83,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-500">Pending Payout</p>
-                    <p class="text-2xl font-bold text-yellow-600">{{ currency($summary['pending']) }}</p>
+                    <p class="text-2xl font-bold text-yellow-600">N{{ number_format($summary['pending'], 2) }}</p>
                 </div>
             </div>
         </div>
@@ -97,7 +97,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-500">Paid Out</p>
-                    <p class="text-2xl font-bold text-blue-600">{{ currency($summary['paid_out']) }}</p>
+                    <p class="text-2xl font-bold text-blue-600">N{{ number_format($summary['paid_out'], 2) }}</p>
                 </div>
             </div>
         </div>
@@ -146,7 +146,7 @@
                                     <div class="text-sm text-gray-900">{{ $earning->savingsPlan->name ?? 'N/A' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-bold text-green-600">{{ currency($earning->amount) }}</div>
+                                    <div class="text-sm font-bold text-green-600">N{{ number_format($earning->amount, 2) }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php

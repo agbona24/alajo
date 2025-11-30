@@ -103,6 +103,14 @@
             </div>
 
             <div>
+                <label for="official_whatsapp" class="block text-sm font-medium text-gray-700 mb-2">Official WhatsApp Number</label>
+                <input type="text" name="official_whatsapp" id="official_whatsapp" value="{{ $settings['official_whatsapp'] ?? '' }}"
+                    placeholder="+234 XXX XXX XXXX"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                <p class="mt-1 text-sm text-gray-500">Official WhatsApp number for payment receipt verification. Users will be asked to send receipts here.</p>
+            </div>
+
+            <div>
                 <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Business Address</label>
                 <textarea name="address" id="address" rows="2"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">{{ $settings['address'] ?? '' }}</textarea>

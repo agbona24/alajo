@@ -55,7 +55,7 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20|unique:users',
-            'email' => 'nullable|string|email|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:users', // NOW REQUIRED
             'password' => 'required|string|min:8|confirmed',
             'collector_id' => 'nullable|exists:users,id',
         ]);
@@ -71,32 +71,42 @@ class AuthController extends Controller
             }
         }
 
+        // Generate 6-digit email verification code
+        $verificationCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
         $user = User::create([
             'name' => $request->name,
             'phone' => $request->phone,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'collector_id' => $request->collector_id,
+            'email_verification_code' => $verificationCode,
+            'email_verification_code_expires_at' => now()->addMinutes(15),
+            'email_verified' => false,
         ]);
 
         // Load the collector relationship for the response
         $user->load('collector:id,name');
 
-        $token = $user->createToken('auth-token')->plainTextToken;
-
-        // Send welcome email
+        // Send verification code email
         try {
-            $notificationService = app(NotificationService::class);
-            $notificationService->sendWelcomeEmail($user);
+            \Mail::raw(
+                "Welcome to Alajo!\n\nYour email verification code is: {$verificationCode}\n\nThis code will expire in 15 minutes.\n\nIf you didn't create this account, please ignore this email.",
+                function ($mail) use ($user) {
+                    $mail->to($user->email)->subject('Alajo - Verify Your Email');
+                }
+            );
         } catch (\Exception $e) {
             // Log but don't fail registration
-            \Log::warning('Failed to send welcome email: ' . $e->getMessage());
+            \Log::error('Failed to send verification email: ' . $e->getMessage());
         }
 
+        // Don't create token yet - user needs to verify email first
         return response()->json([
-            'message' => 'Registration successful',
+            'message' => 'Registration successful. Please verify your email.',
             'user' => $user,
-            'token' => $token,
+            'requires_verification' => true,
+            'email_masked' => $this->maskEmail($user->email),
         ], 201);
     }
 
@@ -314,5 +324,308 @@ class AuthController extends Controller
             'user' => $user,
             'token' => $token,
         ]);
+    }
+
+    /**
+     * Request password reset
+     *
+     * Request a password reset using phone number. If the user has an email, a reset code will be sent.
+     * If no email is registered, the user will need to contact their collector or admin.
+     *
+     * @unauthenticated
+     *
+     * @bodyParam phone string required The user's phone number. Example: 08012345678
+     *
+     * @response 200 scenario="Email Available" {
+     *   "message": "Password reset code sent to your email",
+     *   "has_email": true,
+     *   "email_masked": "jo***@example.com"
+     * }
+     * @response 200 scenario="No Email" {
+     *   "message": "No email registered. Please contact your collector or admin for password reset.",
+     *   "has_email": false,
+     *   "collector": {
+     *     "name": "Collector Name",
+     *     "phone": "08012345678"
+     *   }
+     * }
+     * @response 404 {
+     *   "message": "User not found with this phone number"
+     * }
+     */
+    public function requestPasswordReset(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string',
+        ]);
+
+        $user = User::where('phone', $request->phone)->with('collector')->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found with this phone number',
+            ], 404);
+        }
+
+        // If user has email, send reset code
+        if ($user->email) {
+            // Generate 6-digit reset code
+            $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            $user->update([
+                'password_reset_token' => $code,
+                'password_reset_token_expires_at' => now()->addMinutes(15),
+            ]);
+
+            // Send code via email
+            try {
+                \Mail::raw(
+                    "Your password reset code is: {$code}\n\nThis code will expire in 15 minutes.\n\nIf you didn't request this code, please ignore this email and your password will remain unchanged.",
+                    function ($mail) use ($user) {
+                        $mail->to($user->email)->subject('Alajo - Password Reset Code');
+                    }
+                );
+            } catch (\Exception $e) {
+                \Log::error('Failed to send password reset email: ' . $e->getMessage());
+                return response()->json([
+                    'message' => 'Failed to send reset code. Please try again.',
+                ], 500);
+            }
+
+            // Mask email for response
+            $parts = explode('@', $user->email);
+            $name = $parts[0];
+            $domain = $parts[1];
+            $maskedEmail = substr($name, 0, 2) . str_repeat('*', max(strlen($name) - 2, 3)) . '@' . $domain;
+
+            return response()->json([
+                'message' => 'Password reset code sent to your email',
+                'has_email' => true,
+                'email_masked' => $maskedEmail,
+            ]);
+        }
+
+        // No email - user needs to contact collector or admin
+        $collectorInfo = null;
+        if ($user->collector) {
+            $collectorInfo = [
+                'name' => $user->collector->name,
+                'phone' => $user->collector->phone,
+            ];
+        }
+
+        return response()->json([
+            'message' => 'No email registered. Please contact your collector or admin for password reset.',
+            'has_email' => false,
+            'collector' => $collectorInfo,
+        ]);
+    }
+
+    /**
+     * Reset password
+     *
+     * Reset user password using the reset code sent via email.
+     *
+     * @unauthenticated
+     *
+     * @bodyParam phone string required The user's phone number. Example: 08012345678
+     * @bodyParam reset_code string required The 6-digit reset code sent to email. Example: 123456
+     * @bodyParam password string required The new password (minimum 8 characters). Example: newpassword123
+     * @bodyParam password_confirmation string required Password confirmation. Example: newpassword123
+     *
+     * @response 200 {
+     *   "message": "Password reset successful. You can now login with your new password."
+     * }
+     * @response 422 {
+     *   "message": "Invalid or expired reset code"
+     * }
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string',
+            'reset_code' => 'required|string|size:6',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::where('phone', $request->phone)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'phone' => ['User not found with this phone number.'],
+            ]);
+        }
+
+        // Verify reset code
+        if (!$user->password_reset_token ||
+            $user->password_reset_token !== $request->reset_code ||
+            !$user->password_reset_token_expires_at ||
+            now()->isAfter($user->password_reset_token_expires_at)) {
+            throw ValidationException::withMessages([
+                'reset_code' => ['Invalid or expired reset code.'],
+            ]);
+        }
+
+        // Reset password
+        $user->update([
+            'password' => Hash::make($request->password),
+            'password_reset_token' => null,
+            'password_reset_token_expires_at' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Password reset successful. You can now login with your new password.',
+        ]);
+    }
+
+    /**
+     * Verify email with code
+     *
+     * Verify user email using the verification code sent during registration.
+     *
+     * @unauthenticated
+     *
+     * @bodyParam phone string required The user's phone number. Example: 08012345678
+     * @bodyParam verification_code string required The 6-digit verification code. Example: 123456
+     *
+     * @response 200 {
+     *   "message": "Email verified successfully",
+     *   "user": {...},
+     *   "token": "1|abc123..."
+     * }
+     */
+    public function verifyEmail(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string',
+            'verification_code' => 'required|string|size:6',
+        ]);
+
+        $user = User::where('phone', $request->phone)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'phone' => ['User not found.'],
+            ]);
+        }
+
+        // Check if already verified
+        if ($user->email_verified) {
+            $token = $user->createToken('auth-token')->plainTextToken;
+            return response()->json([
+                'message' => 'Email already verified',
+                'user' => $user,
+                'token' => $token,
+            ]);
+        }
+
+        // Verify code
+        if (!$user->email_verification_code ||
+            $user->email_verification_code !== $request->verification_code ||
+            !$user->email_verification_code_expires_at ||
+            now()->isAfter($user->email_verification_code_expires_at)) {
+            throw ValidationException::withMessages([
+                'verification_code' => ['Invalid or expired verification code.'],
+            ]);
+        }
+
+        // Mark email as verified
+        $user->update([
+            'email_verified' => true,
+            'email_verification_code' => null,
+            'email_verification_code_expires_at' => null,
+            'email_verified_at' => now(),
+        ]);
+
+        // Create token
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        // Send welcome email
+        try {
+            $notificationService = app(NotificationService::class);
+            $notificationService->sendWelcomeEmail($user);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send welcome email: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'message' => 'Email verified successfully',
+            'user' => $user,
+            'token' => $token,
+        ]);
+    }
+
+    /**
+     * Resend verification code
+     *
+     * Resend email verification code to user's email.
+     *
+     * @unauthenticated
+     *
+     * @bodyParam phone string required The user's phone number. Example: 08012345678
+     *
+     * @response 200 {
+     *   "message": "Verification code sent to your email",
+     *   "email_masked": "jo***@example.com"
+     * }
+     */
+    public function resendVerificationCode(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string',
+        ]);
+
+        $user = User::where('phone', $request->phone)->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        if ($user->email_verified) {
+            return response()->json([
+                'message' => 'Email already verified',
+            ], 400);
+        }
+
+        // Generate new code
+        $verificationCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        $user->update([
+            'email_verification_code' => $verificationCode,
+            'email_verification_code_expires_at' => now()->addMinutes(15),
+        ]);
+
+        // Send code
+        try {
+            \Mail::raw(
+                "Your new email verification code is: {$verificationCode}\n\nThis code will expire in 15 minutes.",
+                function ($mail) use ($user) {
+                    $mail->to($user->email)->subject('Alajo - Email Verification Code');
+                }
+            );
+        } catch (\Exception $e) {
+            \Log::error('Failed to send verification email: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to send verification code. Please try again.',
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Verification code sent to your email',
+            'email_masked' => $this->maskEmail($user->email),
+        ]);
+    }
+
+    /**
+     * Mask email for privacy
+     */
+    private function maskEmail($email)
+    {
+        $parts = explode('@', $email);
+        $name = $parts[0];
+        $domain = $parts[1];
+        return substr($name, 0, 2) . str_repeat('*', max(strlen($name) - 2, 3)) . '@' . $domain;
     }
 }

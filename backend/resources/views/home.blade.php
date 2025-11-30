@@ -265,7 +265,7 @@
             <!-- Primary Download Button (Large & Animated) -->
             <div class="mb-8 animate-scale-in" style="animation-delay: 0.3s;">
                 @if($androidApkUrl)
-                <a href="{{ $androidApkUrl }}" download
+                <a href="{{ $androidApkUrl }}" {{ ($downloadType ?? 'file') === 'file' ? 'download' : '' }}
                    class="download-btn inline-flex items-center gap-4 px-12 py-6 bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500 text-gray-900 rounded-3xl shadow-2xl text-xl md:text-2xl font-bold">
                     <span class="relative z-10 flex items-center gap-3">
                         <svg class="w-10 h-10 animate-bounce-slow" viewBox="0 0 24 24" fill="currentColor">
@@ -357,7 +357,7 @@
             <!-- Second Download CTA -->
             <div class="text-center animate-scale-in">
                 @if($androidApkUrl)
-                <a href="{{ $androidApkUrl }}" download
+                <a href="{{ $androidApkUrl }}" {{ ($downloadType ?? 'file') === 'file' ? 'download' : '' }}
                    class="download-btn inline-flex items-center gap-4 px-10 py-5 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white rounded-2xl shadow-2xl text-lg font-bold">
                     <span class="relative z-10 flex items-center gap-3">
                         <span class="text-3xl animate-bounce-slow">📱</span>
@@ -466,7 +466,7 @@
             <!-- Third Download CTA -->
             <div class="text-center animate-scale-in" style="animation-delay: 0.6s;">
                 @if($androidApkUrl)
-                <a href="{{ $androidApkUrl }}" download
+                <a href="{{ $androidApkUrl }}" {{ ($downloadType ?? 'file') === 'file' ? 'download' : '' }}
                    class="download-btn inline-flex items-center gap-4 px-12 py-6 bg-white text-purple-600 rounded-3xl shadow-2xl text-xl md:text-2xl font-bold">
                     <span class="relative z-10 flex items-center gap-3">
                         <span class="text-4xl animate-wiggle">🎉</span>
@@ -504,7 +504,7 @@
 
             @if($androidApkUrl)
             <div class="space-y-6 animate-scale-in" style="animation-delay: 0.2s;">
-                <a href="{{ $androidApkUrl }}" download
+                <a href="{{ $androidApkUrl }}" {{ ($downloadType ?? 'file') === 'file' ? 'download' : '' }}
                    class="download-btn inline-flex items-center gap-5 px-16 py-8 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white rounded-full shadow-2xl text-2xl md:text-3xl font-bold">
                     <span class="relative z-10 flex items-center gap-4">
                         <span class="text-5xl animate-bounce-slow">📱</span>

@@ -27,6 +27,10 @@ class ProfileController extends Controller
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
             'postal_code' => 'nullable|string|max:20',
+            'contribution_reminder_enabled' => 'sometimes|boolean',
+            'contribution_reminder_days' => 'sometimes|integer|min:1|max:30',
+            'email_notifications_contributions' => 'sometimes|boolean',
+            'email_notifications_withdrawals' => 'sometimes|boolean',
         ]);
 
         $user->update($validated);

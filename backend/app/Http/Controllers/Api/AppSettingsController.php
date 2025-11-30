@@ -35,6 +35,19 @@ class AppSettingsController extends Controller
      */
     public function index()
     {
+        // Get download type and URL
+        $downloadType = Setting::get('app_download_type', 'file');
+        $androidApkUrl = null;
+
+        if ($downloadType === 'playstore') {
+            // Use Play Store link
+            $androidApkUrl = Setting::get('playstore_link');
+        } else {
+            // Use uploaded APK file
+            $apkPath = Setting::get('android_apk_path');
+            $androidApkUrl = $apkPath ? $this->getAssetUrl($apkPath) : null;
+        }
+
         $settings = [
             'app_name' => Setting::get('app_name', 'Alajo'),
             'app_description' => Setting::get('app_description', 'Digital Savings Platform'),
@@ -42,8 +55,20 @@ class AppSettingsController extends Controller
             'app_favicon' => $this->getAssetUrl(Setting::get('app_favicon')),
             'support_email' => Setting::get('support_email'),
             'support_phone' => Setting::get('support_phone'),
+            'currency' => [
+                'symbol' => Setting::get('currency_symbol', '₦'),
+                'code' => Setting::get('default_currency', 'NGN'),
+                'position' => Setting::get('currency_position', 'before'),
+                'thousand_separator' => Setting::get('thousand_separator', ','),
+                'decimal_separator' => Setting::get('decimal_separator', '.'),
+                'decimal_places' => (int) Setting::get('decimal_places', 2),
+            ],
+            // Legacy support - keeping these for backwards compatibility
             'currency_symbol' => Setting::get('currency_symbol', '₦'),
             'currency_code' => Setting::get('default_currency', 'NGN'),
+            'android_download_url' => $androidApkUrl,
+            'download_type' => $downloadType,
+            'app_version' => Setting::get('android_apk_version', 'v1.0.0'),
         ];
 
         return response()->json([

@@ -51,7 +51,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
-                                ₦{{ number_format($collector->total_collected ?? 0, 0) }}
+                                {{ currency($collector->total_collected ?? 0) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {{ $collector->created_at->format('M d, Y') }}

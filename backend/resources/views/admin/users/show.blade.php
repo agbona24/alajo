@@ -98,7 +98,7 @@
                         <p class="text-sm text-gray-500">{{ $transaction->created_at->format('M d, Y H:i') }}</p>
                     </div>
                     <div class="text-right">
-                        <p class="font-semibold {{ $transaction->type === 'credit' ? 'text-green-600' : 'text-gray-900' }}">₦{{ number_format($transaction->amount) }}</p>
+                        <p class="font-semibold {{ $transaction->type === 'credit' ? 'text-green-600' : 'text-gray-900' }}">{{ currency($transaction->amount) }}</p>
                         <span class="px-2 py-1 text-xs font-medium rounded-full {{ $transaction->status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">{{ ucfirst($transaction->status) }}</span>
                     </div>
                 </div>

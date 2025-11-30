@@ -78,7 +78,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-500">Today's Collection</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1">₦{{ number_format($stats['today_payments_amount']) }}</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1">{{ currency($stats['today_payments_amount']) }}</p>
                     <p class="text-sm text-gray-500 mt-2">{{ $stats['today_payments'] }} payments</p>
                 </div>
                 <div class="p-4 bg-yellow-100 rounded-xl">
@@ -100,7 +100,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                 </svg>
             </div>
-            <p class="text-4xl font-bold">₦{{ number_format($stats['total_volume']) }}</p>
+            <p class="text-4xl font-bold">{{ currency($stats['total_volume']) }}</p>
             <p class="text-sm opacity-75 mt-2">{{ number_format($stats['total_transactions']) }} total transactions</p>
         </div>
 
@@ -175,7 +175,7 @@
                         <div class="flex items-center text-xs text-gray-500">
                             <span>{{ $group->group_size }} members</span>
                             <span class="mx-2">•</span>
-                            <span>₦{{ number_format($group->contribution_amount) }}/day</span>
+                            <span>{{ currency($group->contribution_amount) }}/day</span>
                         </div>
                     </div>
                 @empty
@@ -194,7 +194,7 @@
                 @forelse($recentTransactions as $transaction)
                     <div class="px-6 py-4 hover:bg-gray-50">
                         <div class="flex items-center justify-between mb-1">
-                            <p class="text-sm font-medium text-gray-900">₦{{ number_format($transaction->amount) }}</p>
+                            <p class="text-sm font-medium text-gray-900">{{ currency($transaction->amount) }}</p>
                             <span class="px-2 py-1 text-xs font-medium rounded-full {{ $transaction->status === 'completed' ? 'bg-green-100 text-green-700' : ($transaction->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') }}">
                                 {{ ucfirst($transaction->status) }}
                             </span>

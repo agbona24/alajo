@@ -35,7 +35,7 @@ class SavingsPlanController extends Controller
             'description' => 'nullable|string',
         ], [
             'frequency.in' => 'Only daily savings is currently available. Weekly and monthly plans are coming soon!',
-            'daily_amount.min' => 'Minimum daily contribution is ₦' . SavingsPlan::MINIMUM_DAILY_CONTRIBUTION,
+            'daily_amount.min' => 'Minimum daily contribution is ' . currency_symbol() . SavingsPlan::MINIMUM_DAILY_CONTRIBUTION,
         ]);
 
         $validated['user_id'] = Auth::id();
@@ -112,9 +112,10 @@ class SavingsPlanController extends Controller
             'amount' => "required|numeric|min:{$minAmount}",
             'payment_method' => 'required|in:card,bank_transfer,wallet,cash',
             'reference' => 'nullable|string',
-            'receipt' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+            'receipt' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max - REQUIRED
         ], [
-            'amount.min' => "Minimum contribution for daily savings is ₦{$minAmount}",
+            'amount.min' => "Minimum contribution for daily savings is " . currency_symbol() . "{$minAmount}",
+            'receipt.required' => 'Payment receipt is required. Please attach a valid payment receipt.',
             'receipt.image' => 'Receipt must be an image file',
             'receipt.max' => 'Receipt image cannot exceed 5MB',
         ]);
@@ -279,6 +280,15 @@ class SavingsPlanController extends Controller
 
             DB::commit();
 
+            // Send email notification to user about contribution received
+            try {
+                $contribution->load(['user', 'savingsPlan']);
+                $notificationService = app(NotificationService::class);
+                $notificationService->sendContributionReceived($contribution);
+            } catch (\Exception $emailError) {
+                \Log::error('Failed to send contribution received email: ' . $emailError->getMessage());
+            }
+
             $message = $effectiveDaysCovered > 1
                 ? "Payment submitted! Your payment covers {$effectiveDaysCovered} days. Awaiting confirmation."
                 : 'Payment submitted! Awaiting confirmation.';
@@ -300,6 +310,11 @@ class SavingsPlanController extends Controller
                 'member_savings' => $memberAmount,
                 'passbook_records' => count($passbookRecords),
                 'plan' => $plan->fresh(),
+                'payment_instructions' => [
+                    'notice' => 'IMPORTANT: This is the ONLY official Alajo account for contributions.',
+                    'whatsapp_notice' => 'Please also send your payment receipt to our official WhatsApp for faster verification.',
+                    'whatsapp_number' => \App\Models\Setting::get('official_whatsapp', '+234 XXX XXX XXXX'),
+                ],
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -322,7 +337,8 @@ class SavingsPlanController extends Controller
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
 
-        $daysInMonth = \Carbon\Carbon::create($year, $month)->daysInMonth;
+        // Alajo policy: Every month has 31 days for consistency
+        $daysInMonth = 31;
 
         // Get passbook records for this month
         $records = $plan->passbookRecords()
@@ -337,9 +353,28 @@ class SavingsPlanController extends Controller
         $totalPaid = 0;
         $daysPaid = 0;
 
+        // Get actual calendar days in the selected month
+        $calendarDaysInMonth = \Carbon\Carbon::create($year, $month)->daysInMonth;
+        $startDate = \Carbon\Carbon::create($year, $month, 1);
+        $monthName = $startDate->format('M');
+
         for ($day = 1; $day <= $daysInMonth; $day++) {
             $record = $records->get($day);
-            $date = \Carbon\Carbon::create($year, $month, $day);
+
+            // For days within the calendar month, use real dates
+            // For days beyond (e.g., day 31 in Nov), keep the month context
+            if ($day <= $calendarDaysInMonth) {
+                $date = $startDate->copy()->addDays($day - 1);
+                $dateStr = $date->format('Y-m-d');
+                $dayName = $date->format('D');
+                $isFuture = $date->isFuture();
+            } else {
+                // Virtual date for days beyond calendar month
+                // Keep the same month for display consistency
+                $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $day);
+                $dayName = 'Extra';
+                $isFuture = false; // Extra days are always considered current month cycle
+            }
 
             $status = 'pending';
             $amount = 0;
@@ -355,11 +390,11 @@ class SavingsPlanController extends Controller
 
             $dailyStatus[] = [
                 'day' => $day,
-                'date' => $date->format('Y-m-d'),
-                'day_name' => $date->format('D'),
+                'date' => $dateStr,
+                'day_name' => $dayName,
                 'amount' => $amount,
                 'status' => $status,
-                'is_future' => $date->isFuture(),
+                'is_future' => $isFuture,
             ];
         }
 
