@@ -343,9 +343,10 @@ export default function PassbookPage() {
                     onChange={(e) => setSelectedYear(Number(e.target.value))}
                     className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium"
                   >
-                    {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
+                    <option value={2024}>2024</option>
+                    <option value={2025}>2025</option>
+                    <option value={2026}>2026</option>
+                    <option value={2027}>2027</option>
                   </select>
                 </div>
                 <button

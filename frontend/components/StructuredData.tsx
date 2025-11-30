@@ -7,7 +7,37 @@ export default function StructuredData() {
     url: 'https://alajo.ng',
     logo: 'https://alajo.ng/logo.png',
     image: 'https://alajo.ng/og-image.png',
-    telephone: '+234-XXX-XXX-XXXX',
+    telephone: '+234-907-114-2022',
+    email: 'hello@alajo.ng',
+    foundingDate: '2024',
+    founder: [
+      {
+        '@type': 'Person',
+        name: 'Yemi Dada',
+        jobTitle: 'Co-Founder & CEO',
+        alumniOf: {
+          '@type': 'EducationalOrganization',
+          name: 'Lagos State University',
+        },
+        knowsAbout: ['Financial Services', 'Savings', 'Ajo', 'Microfinance', 'Insurance'],
+      },
+      {
+        '@type': 'Person',
+        name: 'Azeez Agbona O.',
+        jobTitle: 'Co-Founder & CTO',
+        knowsAbout: ['Software Development', 'SaaS', 'Fintech', 'Enterprise Architecture', 'Cloud Computing'],
+        affiliation: [
+          {
+            '@type': 'Organization',
+            name: 'Harzotech Nigeria Ltd',
+          },
+          {
+            '@type': 'Organization',
+            name: 'Harzotech Innovative Solutions UK',
+          },
+        ],
+      },
+    ],
     address: {
       '@type': 'PostalAddress',
       streetAddress: '2, Azeez Olaoluwa Str, Orisunbare',
