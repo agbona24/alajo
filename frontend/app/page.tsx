@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLandingPageContent } from '@/hooks/useLandingPageContent'
 import DeveloperCredit from '@/components/DeveloperCredit'
+import StructuredData from '@/components/StructuredData'
 
 export default function Home() {
   const router = useRouter()
@@ -43,8 +44,10 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 overflow-hidden">
-      {/* Floating Background Elements */}
+    <>
+      <StructuredData />
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 overflow-hidden">
+        {/* Floating Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 text-6xl opacity-10 animate-float">💰</div>
         <div className="absolute top-40 right-20 text-4xl opacity-10 animate-float" style={{ animationDelay: '1s' }}>🎯</div>
@@ -440,7 +443,8 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   )
 }
 
