@@ -262,7 +262,7 @@ class SettingsController extends Controller
         $request->validate([
             'download_type' => 'required|in:file,playstore',
             'android_apk' => 'required_if:download_type,file|file|max:102400', // Max 100MB
-            'playstore_link' => 'required_if:download_type,playstore|url',
+            'playstore_link' => 'required_if:download_type,playstore|nullable|url',
             'version' => 'nullable|string|max:50',
         ], [
             'android_apk.required_if' => 'Please upload an APK file.',

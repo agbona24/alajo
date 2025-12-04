@@ -444,7 +444,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'phone' => 'required|string',
-            'reset_code' => 'required|string|size:6',
+            'reset_code' => 'required|string',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -456,9 +456,13 @@ class AuthController extends Controller
             ]);
         }
 
+        // Trim and normalize the reset code
+        $inputCode = trim($request->reset_code);
+        $storedCode = trim($user->password_reset_token ?? '');
+
         // Verify reset code
         if (!$user->password_reset_token ||
-            $user->password_reset_token !== $request->reset_code ||
+            $storedCode !== $inputCode ||
             !$user->password_reset_token_expires_at ||
             now()->isAfter($user->password_reset_token_expires_at)) {
             throw ValidationException::withMessages([
@@ -498,7 +502,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'phone' => 'required|string',
-            'verification_code' => 'required|string|size:6',
+            'verification_code' => 'required|string',
         ]);
 
         $user = User::where('phone', $request->phone)->first();
@@ -519,9 +523,13 @@ class AuthController extends Controller
             ]);
         }
 
+        // Trim and normalize the verification code
+        $inputCode = trim($request->verification_code);
+        $storedCode = trim($user->email_verification_code ?? '');
+
         // Verify code
         if (!$user->email_verification_code ||
-            $user->email_verification_code !== $request->verification_code ||
+            $storedCode !== $inputCode ||
             !$user->email_verification_code_expires_at ||
             now()->isAfter($user->email_verification_code_expires_at)) {
             throw ValidationException::withMessages([

@@ -3,6 +3,9 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # Enable following symlinks (required for storage link)
+    Options +FollowSymLinks
+
     RewriteEngine On
 
     # Handle Authorization Header
@@ -42,9 +45,15 @@ Options -Indexes
 
 # Set PHP values (adjust if needed based on your cPanel limits)
 <IfModule mod_php.c>
-    php_value upload_max_filesize 120M
-    php_value post_max_size 120M
+    php_value upload_max_filesize 150M
+    php_value post_max_size 150M
     php_value max_execution_time 300
     php_value max_input_time 300
     php_value memory_limit 256M
+</IfModule>
+
+# Set MIME types for downloads
+<IfModule mod_mime.c>
+    AddType application/vnd.android.package-archive .apk
+    AddType application/octet-stream .apk
 </IfModule>

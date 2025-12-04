@@ -134,7 +134,15 @@ class WithdrawalController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Withdrawal marked as sent. Awaiting member confirmation.');
+            // Send email notification to user
+            try {
+                $withdrawal->load(['user', 'savingsPlan', 'bankAccount']);
+                $this->notificationService->sendWithdrawalProcessing($withdrawal);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send withdrawal processing notification: ' . $e->getMessage());
+            }
+
+            return back()->with('success', 'Withdrawal marked as sent. Member has been notified.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -153,24 +161,53 @@ class WithdrawalController extends Controller
 
         DB::beginTransaction();
         try {
+            $plan = $withdrawal->savingsPlan;
+
+            // Check if transaction already exists (to avoid duplicate deduction)
+            $existingTransaction = Transaction::where('reference', $withdrawal->reference)->first();
+
+            if (!$existingTransaction) {
+                // Deduct from savings plan
+                $balanceBefore = $plan->current_amount;
+                $plan->current_amount -= $withdrawal->amount;
+                $plan->save();
+
+                // Create transaction record
+                $plan->transactions()->create([
+                    'user_id' => $withdrawal->user_id,
+                    'reference' => $withdrawal->reference,
+                    'type' => 'withdrawal',
+                    'amount' => $withdrawal->amount,
+                    'balance_before' => $balanceBefore,
+                    'balance_after' => $plan->current_amount,
+                    'status' => 'completed',
+                    'description' => "Withdrawal from {$plan->name}",
+                    'completed_at' => now(),
+                ]);
+            } else {
+                // Transaction exists, just update its status
+                $existingTransaction->update([
+                    'status' => 'completed',
+                    'completed_at' => now(),
+                ]);
+            }
+
             $withdrawal->update([
                 'status' => 'completed',
                 'completed_at' => now(),
             ]);
 
-            // Update transaction if exists
-            Transaction::where('reference', $withdrawal->reference)
-                ->update([
-                    'status' => 'completed',
-                    'completed_at' => now(),
-                ]);
-
             DB::commit();
 
             // Send notification to user
-            $this->notificationService->sendWithdrawalCompleted($withdrawal);
+            try {
+                $withdrawal->load(['user', 'savingsPlan', 'bankAccount']);
+                $this->notificationService->sendWithdrawalCompleted($withdrawal);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send withdrawal completed notification: ' . $e->getMessage());
+            }
 
-            return back()->with('success', 'Withdrawal completed. Member has been notified.');
+            return back()->with('success', 'Withdrawal completed. Balance deducted and member notified.');
 
         } catch (\Exception $e) {
             DB::rollBack();

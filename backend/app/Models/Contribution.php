@@ -55,4 +55,9 @@ class Contribution extends Model
     {
         return $this->belongsTo(AjoGroup::class);
     }
+
+    public function earnings()
+    {
+        return $this->hasMany(Earning::class);
+    }
 }

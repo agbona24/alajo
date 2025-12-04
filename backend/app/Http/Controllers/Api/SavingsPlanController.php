@@ -172,6 +172,7 @@ class SavingsPlanController extends Controller
 
             if ($canCreatePassbookRecords) {
                 $currentDate = $startDate->copy();
+                $companyEarningsThisPayment = []; // Track company earnings for this payment
 
                 while ($actualDaysCovered < $daysCovered && $attempts < $maxAttempts) {
                     $attempts++;
@@ -182,6 +183,22 @@ class SavingsPlanController extends Controller
                     }
 
                     $dateString = $currentDate->format('Y-m-d');
+                    $isFirstDayOfMonth = $currentDate->day === 1;
+
+                    // Day 1 of every month is company earning - skip it for user contribution
+                    if ($isFirstDayOfMonth) {
+                        // Create company earning record for day 1
+                        $companyEarningsThisPayment[] = [
+                            'month' => $currentDate->month,
+                            'year' => $currentDate->year,
+                            'date' => $dateString,
+                            'amount' => $dailyAmount,
+                        ];
+
+                        // Move to next day without counting this as user contribution
+                        $currentDate->addDay();
+                        continue;
+                    }
 
                     // Use updateOrCreate to avoid race conditions with unique constraint
                     try {
@@ -213,35 +230,32 @@ class SavingsPlanController extends Controller
 
                     $currentDate->addDay();
                 }
+
+                // Create company earning records for all day 1s encountered
+                foreach ($companyEarningsThisPayment as $earning) {
+                    Earning::create([
+                        'user_id' => Auth::id(),
+                        'savings_plan_id' => $plan->id,
+                        'contribution_id' => $contribution->id,
+                        'amount' => $earning['amount'],
+                        'type' => Earning::TYPE_COMPANY_FEE,
+                        'status' => Earning::STATUS_PENDING,
+                        'reference' => Earning::generateReference(),
+                        'description' => "Company fee for {$plan->name} - Day 1 of " . date('F Y', strtotime($earning['date'])),
+                        'earning_date' => $earning['date'],
+                    ]);
+                }
             }
 
             // Update days covered to actual count (minimum 1 for the contribution record)
             $effectiveDaysCovered = $actualDaysCovered > 0 ? $actualDaysCovered : $daysCovered;
 
-            // Handle company fee - first day's contribution goes to company
-            $companyFeeAmount = 0;
-            $memberAmount = $totalAmount;
+            // Calculate total company fees from day 1s encountered
+            $companyFeeAmount = count($companyEarningsThisPayment) * $dailyAmount;
+            $memberAmount = $totalAmount - $companyFeeAmount;
 
-            if (!$plan->company_fee_collected) {
-                // First contribution - one day's amount goes to company
-                $companyFeeAmount = $dailyAmount;
-                $memberAmount = $totalAmount - $dailyAmount;
-
-                // Create company fee earning record
-                Earning::create([
-                    'user_id' => Auth::id(),
-                    'savings_plan_id' => $plan->id,
-                    'contribution_id' => $contribution->id,
-                    'amount' => $companyFeeAmount,
-                    'type' => Earning::TYPE_COMPANY_FEE,
-                    'status' => Earning::STATUS_PENDING,
-                    'reference' => Earning::generateReference(),
-                    'description' => "Company fee from {$plan->name} - First day contribution",
-                    'earning_date' => now()->toDateString(),
-                ]);
-
-                // Mark company fee as collected
-                $plan->company_fee_collected = true;
+            // Update first contribution date if not set
+            if (!$plan->first_contribution_date) {
                 $plan->first_contribution_date = now();
             }
 
@@ -294,7 +308,12 @@ class SavingsPlanController extends Controller
                 : 'Payment submitted! Awaiting confirmation.';
 
             if ($companyFeeAmount > 0) {
-                $message .= " Note: First day (NGN" . number_format($companyFeeAmount) . ") is company service fee.";
+                $companyDaysCount = count($companyEarningsThisPayment);
+                if ($companyDaysCount > 1) {
+                    $message .= " Note: Day 1 of each month ({$companyDaysCount} days totaling NGN" . number_format($companyFeeAmount) . ") is company service fee.";
+                } else {
+                    $message .= " Note: Day 1 of month (NGN" . number_format($companyFeeAmount) . ") is company service fee.";
+                }
             }
 
             if (!$canCreatePassbookRecords && $actualDaysCovered === 0) {

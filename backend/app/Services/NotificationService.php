@@ -198,6 +198,59 @@ class NotificationService
     }
 
     /**
+     * Send withdrawal processing email (when admin marks as sent).
+     */
+    public function sendWithdrawalProcessing(Withdrawal $withdrawal): bool
+    {
+        if (!$this->emailNotificationsEnabled() || !$this->isSmtpConfigured()) {
+            return false;
+        }
+
+        $user = $withdrawal->user;
+        if (empty($user->email)) {
+            Log::info('No email address for user ' . $user->id . ', skipping withdrawal processing email');
+            return false;
+        }
+
+        // Check user's email notification preference for withdrawals
+        if (!$user->email_notifications_withdrawals) {
+            Log::info('User ' . $user->id . ' has disabled withdrawal emails');
+            return false;
+        }
+
+        try {
+            $plan = $withdrawal->savingsPlan;
+            $bankAccount = $withdrawal->bankAccount;
+
+            Mail::raw(
+                "Hello {$user->name},\n\n" .
+                "Your withdrawal request has been processed and payment has been sent!\n\n" .
+                "Withdrawal Details:\n" .
+                "Amount: " . currency_symbol() . number_format($withdrawal->amount, 0) . "\n" .
+                "From: {$plan->name}\n" .
+                "Reference: {$withdrawal->reference}\n\n" .
+                "Bank Details:\n" .
+                "Bank: {$bankAccount->bank_name}\n" .
+                "Account: {$bankAccount->account_number}\n" .
+                "Account Name: {$bankAccount->account_name}\n\n" .
+                "The payment should reflect in your account within the next few hours. " .
+                "If you don't receive the payment, please contact us.\n\n" .
+                "Thank you for trusting Alajo with your savings!\n" .
+                "- Alajo Team",
+                function ($message) use ($user) {
+                    $message->to($user->email)
+                        ->subject('Withdrawal Payment Sent');
+                }
+            );
+            Log::info('Withdrawal processing email sent to ' . $user->email);
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send withdrawal processing email: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Send withdrawal completed email.
      */
     public function sendWithdrawalCompleted(Withdrawal $withdrawal): bool

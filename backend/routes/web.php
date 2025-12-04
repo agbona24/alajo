@@ -6,6 +6,20 @@ use App\Http\Controllers\HomeController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// APK Download Route (bypass symlink issues)
+Route::get('/storage/downloads/alajo-app.apk', function () {
+    $filePath = storage_path('app/public/downloads/alajo-app.apk');
+
+    if (!file_exists($filePath)) {
+        abort(404, 'APK file not found');
+    }
+
+    return response()->download($filePath, 'alajo-app.apk', [
+        'Content-Type' => 'application/vnd.android.package-archive',
+        'Content-Disposition' => 'attachment; filename="alajo-app.apk"'
+    ]);
+})->name('download.apk');
+
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);

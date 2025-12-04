@@ -117,7 +117,7 @@ class TwoFactorController extends Controller
     public function verifyEnable(Request $request)
     {
         $request->validate([
-            'code' => 'required|string|size:6',
+            'code' => 'required|string',
         ]);
 
         $user = Auth::user();
@@ -138,7 +138,11 @@ class TwoFactorController extends Controller
             ], 400);
         }
 
-        if ($user->two_factor_code !== $request->code) {
+        // Trim and normalize codes
+        $inputCode = trim($request->code);
+        $storedCode = trim($user->two_factor_code ?? '');
+
+        if ($storedCode !== $inputCode) {
             return response()->json([
                 'message' => 'Invalid verification code.',
             ], 400);
@@ -291,7 +295,7 @@ class TwoFactorController extends Controller
     {
         $request->validate([
             'phone' => 'required|string',
-            'code' => 'required|string|size:6',
+            'code' => 'required|string',
         ]);
 
         $user = User::where('phone', $request->phone)->first();
@@ -318,7 +322,11 @@ class TwoFactorController extends Controller
             ], 400);
         }
 
-        if ($user->two_factor_code !== $request->code) {
+        // Trim and normalize codes
+        $inputCode = trim($request->code);
+        $storedCode = trim($user->two_factor_code ?? '');
+
+        if ($storedCode !== $inputCode) {
             return response()->json([
                 'message' => 'Invalid verification code.',
             ], 400);
