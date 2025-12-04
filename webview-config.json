@@ -1,0 +1,101 @@
+{
+  "// NOTE": "This config works with WebViewGold, Gonative.io, and similar URL-to-App converters",
+
+  "general": {
+    "app_name": "Alajo",
+    "app_url": "https://alajo.ng",
+    "app_version": "1.0.0",
+    "package_name": "com.alajo.app",
+    "orientation": "portrait"
+  },
+
+  "appearance": {
+    "theme_color": "#9333ea",
+    "background_color": "#ffffff",
+    "navigation_bar_color": "#ffffff",
+    "status_bar_color": "#9333ea",
+    "status_bar_style": "light",
+    "hide_url_bar": true,
+    "hide_loading_bar": false,
+    "pull_to_refresh": true
+  },
+
+  "splash_screen": {
+    "enabled": true,
+    "background_color": "#9333ea",
+    "logo": "https://alajo.ng/icons/icon-512x512.png",
+    "duration": 3000,
+    "fade_out": 500
+  },
+
+  "navigation": {
+    "enable_swipe_back": false,
+    "enable_zoom": false,
+    "enable_javascript": true,
+    "open_external_links_in_browser": true,
+    "allowed_domains": [
+      "alajo.ng",
+      "*.alajo.ng",
+      "paystack.com",
+      "flutterwave.com"
+    ]
+  },
+
+  "features": {
+    "push_notifications": true,
+    "biometric_auth": true,
+    "camera_access": true,
+    "file_upload": true,
+    "geolocation": false,
+    "local_storage": true,
+    "cookies": true
+  },
+
+  "offline": {
+    "enable_offline_mode": true,
+    "cache_pages": true,
+    "offline_message": "No internet connection. Please check your network.",
+    "offline_page": "https://alajo.ng/offline.html"
+  },
+
+  "security": {
+    "enforce_https": true,
+    "allow_self_signed_ssl": false,
+    "prevent_screenshots": false
+  },
+
+  "icons": {
+    "app_icon": "https://alajo.ng/icons/icon-512x512.png",
+    "notification_icon": "https://alajo.ng/icons/icon-192x192.png"
+  },
+
+  "contact": {
+    "developer": "Harzotech",
+    "email": "info@harzotech.com",
+    "website": "https://harzotech.com",
+    "support_email": "support@alajo.ng"
+  },
+
+  "legal": {
+    "privacy_policy": "https://alajo.ng/privacy",
+    "terms_of_service": "https://alajo.ng/terms"
+  },
+
+  "store_listing": {
+    "short_description": "Save money with flexible contribution plans",
+    "full_description": "Alajo is a comprehensive contribution savings platform that allows you to save money on a flexible schedule (daily, weekly, monthly) with automated tracking, withdrawals, and payment processing. Save Together, Prosper Together!",
+    "keywords": [
+      "savings",
+      "money",
+      "finance",
+      "ajo",
+      "contribution",
+      "thrift",
+      "piggybank",
+      "budget",
+      "goals"
+    ],
+    "category": "Finance",
+    "content_rating": "Everyone"
+  }
+}

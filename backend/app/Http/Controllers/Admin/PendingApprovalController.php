@@ -120,21 +120,27 @@ class PendingApprovalController extends Controller
             $savingsPlan = $contribution->savingsPlan;
             $newBalance = 0;
             if ($savingsPlan) {
-                // Calculate member amount (excluding company fee if applicable)
+                // Calculate member amount (excluding company fees if applicable)
                 $memberAmount = (float) $contribution->amount;
 
-                // Check if company fee was part of this contribution
-                $companyFee = Earning::where('contribution_id', $contribution->id)
+                // Get ALL company fees for this contribution (could be multiple if payment covers multiple months)
+                $companyFees = Earning::where('contribution_id', $contribution->id)
                     ->where('type', Earning::TYPE_COMPANY_FEE)
-                    ->first();
+                    ->get();
 
-                if ($companyFee) {
-                    $memberAmount = (float) $contribution->amount - (float) $companyFee->amount;
+                if ($companyFees->count() > 0) {
+                    // Calculate total company fees
+                    $totalCompanyFees = $companyFees->sum('amount');
+                    $memberAmount = (float) $contribution->amount - (float) $totalCompanyFees;
 
-                    // Mark earning as processed
-                    $companyFee->update([
-                        'status' => Earning::STATUS_PROCESSED,
-                    ]);
+                    // Mark all earnings as processed
+                    Earning::where('contribution_id', $contribution->id)
+                        ->where('type', Earning::TYPE_COMPANY_FEE)
+                        ->update([
+                            'status' => Earning::STATUS_PROCESSED,
+                        ]);
+
+                    \Log::info("Deducted {$companyFees->count()} company fees totaling {$totalCompanyFees} from contribution {$contribution->id}");
                 }
 
                 // Update plan balance using increment for reliability with decimal fields
@@ -257,13 +263,19 @@ class PendingApprovalController extends Controller
                     if ($savingsPlan) {
                         $memberAmount = (float) $contribution->amount;
 
-                        $companyFee = Earning::where('contribution_id', $contribution->id)
+                        // Get ALL company fees for this contribution
+                        $companyFees = Earning::where('contribution_id', $contribution->id)
                             ->where('type', Earning::TYPE_COMPANY_FEE)
-                            ->first();
+                            ->get();
 
-                        if ($companyFee) {
-                            $memberAmount = (float) $contribution->amount - (float) $companyFee->amount;
-                            $companyFee->update(['status' => Earning::STATUS_PROCESSED]);
+                        if ($companyFees->count() > 0) {
+                            $totalCompanyFees = $companyFees->sum('amount');
+                            $memberAmount = (float) $contribution->amount - (float) $totalCompanyFees;
+
+                            // Mark all earnings as processed
+                            Earning::where('contribution_id', $contribution->id)
+                                ->where('type', Earning::TYPE_COMPANY_FEE)
+                                ->update(['status' => Earning::STATUS_PROCESSED]);
                         }
 
                         if ($memberAmount > 0) {

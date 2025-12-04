@@ -1,0 +1,87 @@
+{
+  "appId": "com.alajo.app",
+  "appName": "Alajo",
+  "webDir": "frontend/out",
+  "bundledWebRuntime": false,
+  "npmClient": "npm",
+  "server": {
+    "url": "https://alajo.ng",
+    "cleartext": false,
+    "allowNavigation": [
+      "https://alajo.ng",
+      "https://*.alajo.ng",
+      "https://paystack.com",
+      "https://flutterwave.com"
+    ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#9333ea",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "androidSpinnerStyle": "large",
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#ffffff",
+      "splashFullScreen": true,
+      "splashImmersive": true,
+      "layoutName": "launch_screen",
+      "useDialog": true
+    },
+    "StatusBar": {
+      "style": "LIGHT",
+      "backgroundColor": "#9333ea"
+    },
+    "Keyboard": {
+      "resize": "body",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#9333ea"
+    },
+    "Camera": {
+      "saveToGallery": true,
+      "quality": 90,
+      "allowEditing": false,
+      "resultType": "base64"
+    },
+    "Filesystem": {
+      "androidExternalStoragePermission": "photos"
+    },
+    "Browser": {
+      "toolbarColor": "#9333ea",
+      "showTitle": true,
+      "enableBrowserUI": true
+    }
+  },
+  "cordova": {},
+  "android": {
+    "buildOptions": {
+      "keystorePath": "",
+      "keystorePassword": "",
+      "keystoreAlias": "",
+      "keystoreAliasPassword": "",
+      "releaseType": "APK"
+    },
+    "minWebViewVersion": 60,
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false,
+    "backgroundColor": "#ffffff"
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "allowsLinkPreview": false,
+    "scrollEnabled": true,
+    "backgroundColor": "#ffffff",
+    "scheme": "Alajo",
+    "limitsNavigationsToAppBoundDomains": true
+  }
+}

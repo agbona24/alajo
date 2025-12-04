@@ -1,8 +1,8 @@
-# Hajo - Development Guidelines
+# Alajo - Development Guidelines
 
 ## Project Overview
 
-**Hajo** is a modern digital ajo (contribution savings) platform that brings traditional Nigerian savings culture into the digital age. The platform enables both personal savings goals and community-based group ajo with a mobile-native experience.
+**Alajo** is a modern digital ajo (contribution savings) platform that brings traditional Nigerian savings culture into the digital age. The platform enables both personal savings goals and community-based group ajo with a mobile-native experience.
 
 **Slogan**: "Savings Saves Life" 💚
 
@@ -144,7 +144,7 @@
 ### Inspired by Traditional Y-DEE VENTURES Passbook
 
 #### Front Cover Elements
-- **Platform Name**: Hajo
+- **Platform Name**: Alajo
 - **Slogan**: "Savings Saves Life"
 - **Services Listed**:
   - Daily contribution
@@ -691,4 +691,4 @@ When adding new features:
 
 **Last Updated**: 2024
 **Version**: 1.0
-**Maintained By**: Hajo Development Team
+**Maintained By**: Alajo Development Team

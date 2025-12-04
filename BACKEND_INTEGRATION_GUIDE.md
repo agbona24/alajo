@@ -1,6 +1,6 @@
 # Backend Integration Guide - Laravel APIs
 
-This guide shows all the Laravel API endpoints you need to create to connect with the Hajo frontend.
+This guide shows all the Laravel API endpoints you need to create to connect with the Alajo frontend.
 
 ## Setup
 

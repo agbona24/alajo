@@ -1,0 +1,81 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'frontend/**'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install frontend dependencies
+      working-directory: frontend
+      run: npm ci
+
+    - name: Sync Capacitor
+      working-directory: frontend
+      run: |
+        npx cap sync android
+
+    - name: Grant execute permission for gradlew
+      working-directory: frontend/android
+      run: chmod +x gradlew
+
+    - name: Build Debug APK
+      working-directory: frontend/android
+      run: ./gradlew assembleDebug --stacktrace
+
+    - name: Build Release APK (unsigned)
+      working-directory: frontend/android
+      run: ./gradlew assembleRelease --stacktrace
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: alajo-debug-apk
+        path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
+
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: alajo-release-apk-unsigned
+        path: frontend/android/app/build/outputs/apk/release/app-release-unsigned.apk
+        retention-days: 30
+
+    - name: Get APK info
+      working-directory: frontend/android
+      run: |
+        echo "📦 APK Build Complete!"
+        echo ""
+        echo "Debug APK size:"
+        ls -lh app/build/outputs/apk/debug/app-debug.apk | awk '{print $5}'
+        echo ""
+        echo "Release APK size:"
+        ls -lh app/build/outputs/apk/release/app-release-unsigned.apk | awk '{print $5}'

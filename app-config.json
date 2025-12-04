@@ -1,0 +1,218 @@
+{
+  "appName": "Alajo",
+  "appId": "com.alajo.app",
+  "version": "1.0.0",
+  "description": "Contribution Savings App - Save Together, Prosper Together",
+
+  "url": {
+    "production": "https://alajo.ng",
+    "staging": "https://staging.alajo.ng",
+    "development": "http://localhost:3000"
+  },
+
+  "display": {
+    "orientation": "portrait",
+    "fullscreen": false,
+    "statusBar": {
+      "backgroundColor": "#9333ea",
+      "style": "light-content",
+      "overlay": false
+    },
+    "navigationBar": {
+      "backgroundColor": "#ffffff",
+      "style": "dark-content"
+    }
+  },
+
+  "theme": {
+    "primaryColor": "#9333ea",
+    "secondaryColor": "#3b82f6",
+    "accentColor": "#10b981",
+    "backgroundColor": "#ffffff",
+    "splashBackgroundColor": "#9333ea"
+  },
+
+  "splash": {
+    "enabled": true,
+    "duration": 3000,
+    "animation": "/animations/splash-screen.json",
+    "backgroundColor": "#9333ea",
+    "image": "/icons/icon-512x512.png",
+    "fadeOutDuration": 500
+  },
+
+  "icons": {
+    "android": {
+      "ldpi": "/icons/icon-36x36.png",
+      "mdpi": "/icons/icon-48x48.png",
+      "hdpi": "/icons/icon-72x72.png",
+      "xhdpi": "/icons/icon-96x96.png",
+      "xxhdpi": "/icons/icon-144x144.png",
+      "xxxhdpi": "/icons/icon-192x192.png"
+    },
+    "ios": {
+      "icon-20": "/icons/icon-20x20.png",
+      "icon-29": "/icons/icon-29x29.png",
+      "icon-40": "/icons/icon-40x40.png",
+      "icon-60": "/icons/icon-60x60.png",
+      "icon-76": "/icons/icon-76x76.png",
+      "icon-83.5": "/icons/icon-83.5x83.5.png",
+      "icon-1024": "/icons/icon-1024x1024.png"
+    },
+    "favicon": "/favicon.ico"
+  },
+
+  "permissions": {
+    "android": [
+      "android.permission.INTERNET",
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.CAMERA",
+      "android.permission.READ_EXTERNAL_STORAGE",
+      "android.permission.WRITE_EXTERNAL_STORAGE",
+      "android.permission.USE_FINGERPRINT",
+      "android.permission.USE_BIOMETRIC",
+      "android.permission.VIBRATE",
+      "android.permission.RECEIVE_BOOT_COMPLETED"
+    ],
+    "ios": [
+      "NSCameraUsageDescription",
+      "NSPhotoLibraryUsageDescription",
+      "NSFaceIDUsageDescription",
+      "NSLocationWhenInUseUsageDescription"
+    ]
+  },
+
+  "features": {
+    "pushNotifications": {
+      "enabled": true,
+      "firebaseCloudMessaging": true,
+      "apns": true
+    },
+    "biometrics": {
+      "enabled": true,
+      "fingerprint": true,
+      "faceId": true
+    },
+    "camera": {
+      "enabled": true,
+      "allowPhotoUpload": true
+    },
+    "geolocation": {
+      "enabled": false
+    },
+    "deepLinking": {
+      "enabled": true,
+      "scheme": "alajo",
+      "host": "app"
+    },
+    "sharing": {
+      "enabled": true
+    },
+    "downloads": {
+      "enabled": true
+    },
+    "fileUpload": {
+      "enabled": true,
+      "maxFileSize": 10485760
+    }
+  },
+
+  "navigation": {
+    "type": "webview",
+    "pullToRefresh": true,
+    "swipeNavigation": false,
+    "showLoadingBar": true,
+    "hideUrlBar": true,
+    "enableZoom": false,
+    "hardwareAcceleration": true
+  },
+
+  "security": {
+    "ssl": {
+      "enforceHttps": true,
+      "allowSelfSigned": false
+    },
+    "certificatePinning": false,
+    "preventScreenshot": false,
+    "jailbreakDetection": false
+  },
+
+  "offline": {
+    "enabled": true,
+    "fallbackPage": "/offline.html",
+    "cacheStrategy": "networkFirst"
+  },
+
+  "analytics": {
+    "googleAnalytics": "",
+    "firebaseAnalytics": true,
+    "mixpanel": ""
+  },
+
+  "social": {
+    "facebook": {
+      "enabled": false,
+      "appId": ""
+    },
+    "twitter": {
+      "enabled": true,
+      "handle": "@AlajoApp"
+    },
+    "instagram": {
+      "enabled": false,
+      "handle": ""
+    }
+  },
+
+  "stores": {
+    "android": {
+      "packageName": "com.alajo.app",
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.alajo.app"
+    },
+    "ios": {
+      "bundleId": "com.alajo.app",
+      "appStoreUrl": "https://apps.apple.com/app/alajo/id123456789"
+    }
+  },
+
+  "developer": {
+    "name": "Harzotech",
+    "website": "https://harzotech.com",
+    "email": "info@harzotech.com",
+    "support": "support@alajo.ng"
+  },
+
+  "legal": {
+    "privacyPolicy": "https://alajo.ng/privacy",
+    "termsOfService": "https://alajo.ng/terms"
+  },
+
+  "advanced": {
+    "userAgent": "Alajo/1.0.0 (Mobile App)",
+    "clearCacheOnStartup": false,
+    "allowFileAccess": true,
+    "allowContentAccess": true,
+    "allowUniversalAccessFromFileURLs": false,
+    "mixedContentMode": "MIXED_CONTENT_NEVER_ALLOW",
+    "javascript": {
+      "enabled": true,
+      "canOpenWindowsAutomatically": false
+    },
+    "cookies": {
+      "enabled": true,
+      "thirdParty": false
+    }
+  },
+
+  "webview": {
+    "android": {
+      "minSdkVersion": 24,
+      "targetSdkVersion": 34,
+      "webViewEngine": "chromium"
+    },
+    "ios": {
+      "minVersion": "13.0",
+      "webViewEngine": "wkwebview"
+    }
+  }
+}
