@@ -9,6 +9,7 @@ use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SavingsPlanController extends Controller
 {
@@ -57,7 +58,7 @@ class SavingsPlanController extends Controller
             $plan->load('user');
             $notificationService->sendSavingsPlanCreated($plan);
         } catch (\Exception $e) {
-            \Log::warning('Failed to send savings plan created email: ' . $e->getMessage());
+            Log::warning('Failed to send savings plan created email: ' . $e->getMessage());
         }
 
         return response()->json($plan, 201);
@@ -163,39 +164,80 @@ class SavingsPlanController extends Controller
             $maxAttempts = $daysCovered * 3; // Safety limit to prevent infinite loops
             $attempts = 0;
 
+            // Calculate company fees based on months covered
+            // Company policy: 1 month = 31 days, every month has a company fee
+            $monthsCovered = (int) ceil($daysCovered / 31);
+            $companyFeeAmount = $monthsCovered * $dailyAmount;
+
+            // Create company earning records (one for each month covered)
+            $companyEarningsThisPayment = [];
+            $currentMonth = $startDate->copy()->startOfMonth();
+
+            for ($i = 0; $i < $monthsCovered; $i++) {
+                $companyEarningsThisPayment[] = [
+                    'month' => $currentMonth->month,
+                    'year' => $currentMonth->year,
+                    'date' => $currentMonth->format('Y-m-d'),
+                    'amount' => $dailyAmount,
+                ];
+                $currentMonth->addMonth();
+            }
+
+            // Create company earning records in database
+            foreach ($companyEarningsThisPayment as $earning) {
+                Earning::create([
+                    'user_id' => Auth::id(),
+                    'savings_plan_id' => $plan->id,
+                    'contribution_id' => $contribution->id,
+                    'amount' => $earning['amount'],
+                    'type' => Earning::TYPE_COMPANY_FEE,
+                    'status' => Earning::STATUS_PENDING,
+                    'reference' => Earning::generateReference(),
+                    'description' => "Company fee for {$plan->name} - Month " . date('F Y', mktime(0, 0, 0, $earning['month'], 1, $earning['year'])),
+                    'earning_date' => $earning['date'],
+                ]);
+            }
+
+            // Extend target_date if payment covers days beyond current target
+            $endDate = $startDate->copy()->addDays($daysCovered);
+            if ($plan->target_date && $endDate->gt($plan->target_date)) {
+                // Extend the plan to accommodate this payment
+                $plan->target_date = $endDate;
+                Log::info("Extended plan {$plan->id} target_date to {$endDate->format('Y-m-d')} to accommodate payment covering {$daysCovered} days");
+            }
+
             // Check if plan can still accept passbook records
             $canCreatePassbookRecords = true;
-            if ($plan->target_date && $startDate->gt($plan->target_date)) {
-                // Plan has exceeded target date - extend it or continue without passbook records
+            if ($plan->target_date && $startDate->gt($plan->target_date->copy()->addDays(62))) {
+                // Only block if we're way beyond target (2+ months)
                 $canCreatePassbookRecords = false;
             }
 
             if ($canCreatePassbookRecords) {
                 $currentDate = $startDate->copy();
-                $companyEarningsThisPayment = []; // Track company earnings for this payment
+
+                // Create a lookup array of month-year combinations that have company fees
+                $companyFeeMonths = [];
+                foreach ($companyEarningsThisPayment as $earning) {
+                    $key = $earning['year'] . '-' . str_pad($earning['month'], 2, '0', STR_PAD_LEFT);
+                    $companyFeeMonths[$key] = true;
+                }
 
                 while ($actualDaysCovered < $daysCovered && $attempts < $maxAttempts) {
                     $attempts++;
 
-                    // Skip if the date is beyond target_date + 31 days
-                    if ($plan->target_date && $currentDate->gt($plan->target_date->copy()->addDays(31))) {
+                    // Skip if the date is way beyond target_date (2+ months grace period)
+                    if ($plan->target_date && $currentDate->gt($plan->target_date->copy()->addDays(62))) {
+                        Log::warning("Stopping passbook creation at {$currentDate->format('Y-m-d')} - beyond target_date + 62 days");
                         break;
                     }
 
                     $dateString = $currentDate->format('Y-m-d');
+                    $monthKey = $currentDate->format('Y-m');
                     $isFirstDayOfMonth = $currentDate->day === 1;
 
-                    // Day 1 of every month is company earning - skip it for user contribution
-                    if ($isFirstDayOfMonth) {
-                        // Create company earning record for day 1
-                        $companyEarningsThisPayment[] = [
-                            'month' => $currentDate->month,
-                            'year' => $currentDate->year,
-                            'date' => $dateString,
-                            'amount' => $dailyAmount,
-                        ];
-
-                        // Move to next day without counting this as user contribution
+                    // Skip day 1 if this month has a company fee
+                    if ($isFirstDayOfMonth && isset($companyFeeMonths[$monthKey])) {
                         $currentDate->addDay();
                         continue;
                     }
@@ -225,25 +267,10 @@ class SavingsPlanController extends Controller
                         }
                     } catch (\Exception $recordError) {
                         // Log and continue - don't fail the whole contribution
-                        \Log::warning("Failed to create passbook record for {$dateString}: " . $recordError->getMessage());
+                        Log::warning("Failed to create passbook record for {$dateString}: " . $recordError->getMessage());
                     }
 
                     $currentDate->addDay();
-                }
-
-                // Create company earning records for all day 1s encountered
-                foreach ($companyEarningsThisPayment as $earning) {
-                    Earning::create([
-                        'user_id' => Auth::id(),
-                        'savings_plan_id' => $plan->id,
-                        'contribution_id' => $contribution->id,
-                        'amount' => $earning['amount'],
-                        'type' => Earning::TYPE_COMPANY_FEE,
-                        'status' => Earning::STATUS_PENDING,
-                        'reference' => Earning::generateReference(),
-                        'description' => "Company fee for {$plan->name} - Day 1 of " . date('F Y', strtotime($earning['date'])),
-                        'earning_date' => $earning['date'],
-                    ]);
                 }
             }
 
@@ -300,7 +327,7 @@ class SavingsPlanController extends Controller
                 $notificationService = app(NotificationService::class);
                 $notificationService->sendContributionReceived($contribution);
             } catch (\Exception $emailError) {
-                \Log::error('Failed to send contribution received email: ' . $emailError->getMessage());
+                Log::error('Failed to send contribution received email: ' . $emailError->getMessage());
             }
 
             $message = $effectiveDaysCovered > 1
@@ -308,11 +335,11 @@ class SavingsPlanController extends Controller
                 : 'Payment submitted! Awaiting confirmation.';
 
             if ($companyFeeAmount > 0) {
-                $companyDaysCount = count($companyEarningsThisPayment);
-                if ($companyDaysCount > 1) {
-                    $message .= " Note: Day 1 of each month ({$companyDaysCount} days totaling NGN" . number_format($companyFeeAmount) . ") is company service fee.";
+                $monthsCount = count($companyEarningsThisPayment);
+                if ($monthsCount > 1) {
+                    $message .= " Note: Company service fee for {$monthsCount} months (NGN" . number_format($companyFeeAmount) . " total).";
                 } else {
-                    $message .= " Note: Day 1 of month (NGN" . number_format($companyFeeAmount) . ") is company service fee.";
+                    $message .= " Note: Company service fee for 1 month (NGN" . number_format($companyFeeAmount) . ").";
                 }
             }
 
@@ -324,8 +351,10 @@ class SavingsPlanController extends Controller
                 'message' => $message,
                 'contribution' => $contribution,
                 'days_covered' => $effectiveDaysCovered,
+                'months_covered' => $monthsCovered,
                 'daily_amount' => $dailyAmount,
                 'company_fee' => $companyFeeAmount,
+                'company_fee_months' => $companyEarningsThisPayment, // Which months have company fees
                 'member_savings' => $memberAmount,
                 'passbook_records' => count($passbookRecords),
                 'plan' => $plan->fresh(),
@@ -337,7 +366,7 @@ class SavingsPlanController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error("Contribution failed for plan {$id}: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            Log::error("Contribution failed for plan {$id}: " . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'message' => 'Contribution failed. Please try again.',
                 'error' => $e->getMessage(),
